@@ -18,3 +18,13 @@ Version Updates:
   - Implemented User registration and login pages.
   - Implemented User password change options.
   - Implemented the Main UI and ability to add in expense categories.
+
+Installation Guide:
+
+To start the project change the target directory in your console/terminal to niner_finance then type in the following code:
+
+npm start 
+
+To begin the project
+
+ 
