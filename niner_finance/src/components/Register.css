@@ -1,0 +1,9 @@
+.register-root { display:flex; justify-content:center; padding:24px; }
+.register-form { width:100%; max-width:420px; border:1px solid #065f12; padding:16px; border-radius:6px; background:#177703; }
+.register-form h2 { margin-top:0 }
+.register-form label { display:block; margin-bottom:8px; font-size:14px }
+.register-form input[type="text"], .register-form input[type="password"], .register-form input[type="email"] { width:100%; padding:8px; margin-top:4px; box-sizing:border-box }
+.register-form .terms { font-size:13px; margin-top:8px }
+.register-form .error { background:rgb(255, 255, 255); color:#900; padding:8px; margin-bottom:8px }
+.register-form .success { background:#efe; color:#060; padding:8px; margin-bottom:8px }
+.register-form button { margin-top:8px; padding:8px 12px }
