@@ -8,6 +8,17 @@ const nodemailer = require('nodemailer');
 // This will be replaced with MySQL queries
 const tempUsers = new Map();
 
+const testEmail = 'insert-email';
+const testPassword = 'password123';
+
+const hashedPassword = bcrypt.hashSync(testPassword, 10);
+tempUsers.set(testEmail, {
+  email: testEmail,
+  password: hashedPassword,
+  resetToek: null,
+  resetTokenExpiration: null
+});
+
 const requestPasswordReset = async (req, res) => {
   try {
     const { email } = req.body;
@@ -32,7 +43,7 @@ const requestPasswordReset = async (req, res) => {
       });
     }
 
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiration = Date.now() + 3600000; // 1 hour
 
     // TODO: Replace with MySQL update when database is set up
@@ -45,7 +56,7 @@ const requestPasswordReset = async (req, res) => {
     tempUsers.set(email, { ...user, resetToken, resetTokenExpiration });
 
     // Email configuration - update with actual credentials
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER || 'your-email@gmail.com',
