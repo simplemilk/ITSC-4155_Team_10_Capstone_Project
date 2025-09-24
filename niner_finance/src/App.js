@@ -1,7 +1,16 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
+  const [summary, setSummary] = useState(null);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/finance/summary")
+      .then((res) => res.json())
+      .then((data) => setSummary(data))
+      .catch((err) => console.error("Error fetching summary:", err));
+  }, []);
+
   return (
     <div className="App">
       {/* Navbar */}
@@ -22,16 +31,24 @@ function App() {
         <h1>Welcome</h1>
         <p>Here is your summary report:</p>
 
-        <div className="summary-container">
-          <div className="summary-box">
-            <h3>Monthly Expenses</h3>
-            <p>$4000</p>
+        {!summary ? (
+          <p>Loading...</p>
+        ) : (
+          <div className="summary-container">
+            <div className="summary-box">
+              <h3>Monthly Expenses</h3>
+              <p>${summary.totalExpenses}</p>
+            </div>
+            <div className="summary-box">
+              <h3>Monthly Savings</h3>
+              <p>${summary.totalIncome}</p>
+            </div>
+            <div className="summary-box">
+              <h3>Balance</h3>
+              <p>${summary.balance}</p>
+            </div>
           </div>
-          <div className="summary-box">
-            <h3>Monthly Savings</h3>
-            <p>$2500</p>
-          </div>
-        </div>
+        )}
       </main>
 
       {/* Bottom Navigation */}
