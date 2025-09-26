@@ -7,6 +7,7 @@ export default function Navbar() {
         <nav className="navbar">
             <Link to="/register">Register</Link>
             <Link to="/index">Home</Link>
+            <Link to="/categories">Categories</Link>
         </nav>
     );
 }

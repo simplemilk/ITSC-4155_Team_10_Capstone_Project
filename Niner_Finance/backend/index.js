@@ -8,6 +8,9 @@ app.use(express.json());
 const authRoutes= require('./routes/auth');
 app.use('/api', authRoutes);
 
+const categoryRoutes = require('./routes/categoryRoutes');
+app.use('/api/categories', categoryRoutes);
+
 // Registration endpoint (if not using authRoutes)
 app.post('/api/register', (req, res) => {
   const { email, username, password } = req.body;
