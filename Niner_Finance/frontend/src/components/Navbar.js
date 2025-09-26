@@ -6,7 +6,7 @@ export default function Navbar() {
     return (
         <nav className="navbar">
             <Link to="/register">Register</Link>
-            <Link to="/index">Home</Link>
+            <Link to="/">Home</Link>
         </nav>
     );
 }
