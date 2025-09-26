@@ -21,10 +21,15 @@ Version Updates:
 
 Installation Guide:
 
-To start the project change the target directory in your console/terminal to niner_finance then type in the following code:
+To start the project, start two terminals one with the frontend folder and one with the backend folder.
 
+In one of the terminals change into the frontend folder and type in the following command to start the react page:
 npm start 
 
-To begin the project
+In the second terminal change into the backend folder and type in the following command to start the node.js as well as the database:
+
+node index.js
+
+The webpages should load as well as the database and backend afterwards!!!
 
  
