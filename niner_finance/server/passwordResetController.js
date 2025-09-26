@@ -8,14 +8,14 @@ const nodemailer = require('nodemailer');
 // This will be replaced with MySQL queries
 const tempUsers = new Map();
 
-const testEmail = 'insert-email';
-const testPassword = 'password123';
+const testEmail = 'a356c6e0d00cbc';
+const testPassword = '4635ed74adc97a';
 
 const hashedPassword = bcrypt.hashSync(testPassword, 10);
 tempUsers.set(testEmail, {
   email: testEmail,
   password: hashedPassword,
-  resetToek: null,
+  resetToken: null,
   resetTokenExpiration: null
 });
 
@@ -34,7 +34,7 @@ const requestPasswordReset = async (req, res) => {
     // TODO: Replace with MySQL query when database is set up
     // const user = await User.findOne({ where: { email } });
     // For now, simulate user lookup
-    const user = tempUsers.get(email) || { email, password: 'hashedpassword' };
+    const user = tempUsers.get(email);
     
     if (!user) {
       return res.status(404).json({ 
@@ -57,12 +57,14 @@ const requestPasswordReset = async (req, res) => {
 
     // Email configuration - update with actual credentials
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
       auth: {
-        user: process.env.EMAIL_USER || 'your-email@gmail.com',
-        pass: process.env.EMAIL_PASS || 'your-app-password',
-      },
-    });
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+  },
+});
+
 
     const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
     const mailOptions = {

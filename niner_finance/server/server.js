@@ -3,7 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const passwordResetRoutes = require('./routes/passwordReset');
+const passwordResetRoutes = require('./passwordReset');
 
 const app = express();
 const port = process.env.PORT || 5000;
