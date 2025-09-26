@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { Link, Outlet } from 'react-router-dom';
 import './Register.css';
 
 export default function Register() {
-  const [form, setForm] = useState({ email: '', username: '', password: '' });
+  const [form, setForm] = useState({ email: '', username: '', password: '', favoriteColor: '' });
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -12,21 +13,20 @@ export default function Register() {
 
   async function onSubmit(e) {
     e.preventDefault();
-    setMsg('');
     setLoading(true);
+    setMsg('');
     try {
-      const res = await fetch('http://localhost:4000/api/register', {
+      const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(form),
       });
       const data = await res.json();
-      setMsg(data.message || data.error);
-    } catch (err) {
-      setMsg('Registration failed.');
-    } finally {
-      setLoading(false);
+      setMsg(data.message || 'Registration complete.');
+    } catch {
+      setMsg('Error registering.');
     }
+    setLoading(false);
   }
 
   return (
@@ -63,11 +63,21 @@ export default function Register() {
             required
           />
         </label>
+        <label>
+          Security Question: What is your favorite color?
+          <input
+            name="favoriteColor"
+            type="text"
+            value={form.favoriteColor}
+            onChange={onChange}
+            required
+          />
+        </label>
         <button type="submit" disabled={loading}>
           {loading ? 'Registering...' : 'Register'}
         </button>
         {msg && (
-          <div className={`msg${msg.includes('successful') ? ' success' : ''}`}>
+          <div className={`msg${msg.includes('complete') ? ' success' : ''}`}>
             {msg}
           </div>
         )}

@@ -5,18 +5,31 @@
   align-items: center;
 }
 
-.navbar a {
-  color: #fff;
+.navbar-left {
+  display: flex;
+  gap: 12px;
+}
+
+.nav-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
   text-decoration: none;
-  margin-right: 20px;
-  font-size: 16px;
-  transition: color 0.2s;
 }
 
-.navbar a:last-child {
-  margin-right: 0;
+.login-btn {
+  background: black;
 }
 
-.navbar a:hover {
-  color: #c2ffc2;
+.login-btn:hover {
+  background: goldenrod;
+}
+
+.register-btn {
+  background: chocolate;
+}
+
+.register-btn:hover {
+  background: goldenrod;
 }

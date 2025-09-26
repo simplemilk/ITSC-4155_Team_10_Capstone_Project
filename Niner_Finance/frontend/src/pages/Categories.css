@@ -2,37 +2,65 @@
   padding: 32px;
   max-width: 500px;
   margin: 0 auto;
+  background: #f8f8f8;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
 
 .categories-root h1 {
   color: #177703;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  text-align: center;
 }
 
-.categories-root select {
-  padding: 8px;
-  margin-bottom: 16px;
-  width: 100%;
-  font-size: 16px;
+.categories-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.categories-root h2 {
-  margin-top: 24px;
-  color: #065f12;
+.form-row {
+  display: flex;
+  flex-direction: column;
 }
 
-.categories-root ul {
-  list-style: disc inside;
-  margin-top: 8px;
-  padding-left: 0;
-}
-
-.categories-root li {
-  font-size: 16px;
+label {
+  font-weight: 500;
   margin-bottom: 6px;
 }
 
-.categories-root p {
-  color: #900;
-  font-size: 15px;
+input, select {
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-top: 4px;
+}
+
+.submit-btn {
+  background: #177703;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 17px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+
+.submit-btn:hover {
+  background: #065f12;
+}
+
+.error {
+  color: #c00;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.success {
+  color: #177703;
+  margin-bottom: 12px;
+  text-align: center;
 }

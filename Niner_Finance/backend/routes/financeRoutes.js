@@ -1,19 +1,73 @@
 const express = require('express');
-modules.exports = router;
 const router = express.Router();
-
+const db = require('../db');
 
 
 const transactions = [
-  { id: 1, type: "income", category: "Salary", amount: 3000, date: "2025-09-01" },
-  { id: 2, type: "expense", category: "Food", amount: 500, date: "2025-09-05" },
-  { id: 3, type: "expense", category: "Rent", amount: 1200, date: "2025-09-01" },
-  { id: 4, type: "income", category: "Freelance", amount: 800, date: "2025-09-10" },
-  { id: 5, type: "expense", category: "Entertainment", amount: 300, date: "2025-09-12" },
-  { id: 6, type: "expense", category: "Transport", amount: 200, date: "2025-09-14" },
+  { type: "income", category: "Salary", categoryName: "Salary", amount: 3000, date: "2025-09-01" },
+  { type: "expense", category: "Food", categoryName: "Groceries", amount: 500, date: "2025-09-05" },
+  { type: "expense", category: "Rent", categoryName: "Apartment", amount: 1200, date: "2025-09-01" },
+  { type: "income", category: "Freelance", categoryName: "Freelance", amount: 800, date: "2025-09-10" },
+  { type: "expense", category: "Entertainment", categoryName: "Movies", amount: 300, date: "2025-09-12" },
+  { type: "expense", category: "Transport", categoryName: "Bus", amount: 200, date: "2025-09-14" },
 ];
 
-router.get("/summary", (req, res) => {
+async function seedTransactions() {
+  const [rows] = await db.query('SELECT COUNT(*) as count FROM transactions');
+  if (rows[0].count === 0) {
+    for (const t of transactions) {
+      await db.query(
+        'INSERT INTO transactions (type, category, amount, date) VALUES (?, ?, ?, ?)',
+        [t.type, t.category, t.amount, t.date]
+      );
+    }
+  }
+}
+
+router.get('/transactions/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC',
+      [userId]
+    );
+    return res.json({ success: true, transactions: rows });
+  } catch (err) {
+    console.error('Error fetching transactions:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+router.get('/summary/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const [income] = await db.query(
+      'SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = "income"',
+      [userId]
+    );
+    const [expenses] = await db.query(
+      'SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = "expense"',
+      [userId]
+    );
+    return res.json({
+      success: true,
+      summary: {
+        totalIncome: income[0].total,
+        totalExpenses: expenses[0].total,
+        balance: income[0].total - expenses[0].total
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching summary:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+router.get("/summary", async (req, res) => {
+  await seedTransactions();
+  const [rows] = await db.query('SELECT * FROM transactions');
+  const transactions = rows;
+
   const totalIncome = transactions
     .filter(t => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
@@ -27,7 +81,7 @@ router.get("/summary", (req, res) => {
   const categories = transactions
     .filter(t => t.type === "expense")
     .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
+      acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
       return acc;
     }, {});
 
@@ -45,4 +99,23 @@ router.get("/summary", (req, res) => {
   });
 });
 
-export default router;
+// POST
+router.post("/transaction", async (req, res) => {
+  const { type, category, categoryName, amount, date } = req.body;
+  if (!type || !category || !categoryName || !amount || !date) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+  try {
+    await db.query(
+      'INSERT INTO transactions (type, category, categoryName, amount, date) VALUES (?, ?, ?, ?, ?)',
+      [type, category, categoryName, amount, date]
+    );
+    res.status(201).json({ message: "Transaction added successfully" });
+  } catch (error) {
+    console.error("Error adding transaction:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+module.exports = router;
