@@ -1,0 +1,15 @@
+.home-root {
+  padding: 32px;
+  text-align: center;
+  background: white;
+}
+
+.home-root h1 {
+  color: #177703;
+  margin-bottom: 16px;
+}
+
+.home-root p {
+  color: #333;
+  font-size: 18px;
+}
