@@ -106,7 +106,7 @@ router.post('/login', async (req, res) => {
 
 // Add a transaction
 router.post('/transactions', async (req, res) => {
-  const { type, category, subcategory, amount, date, userId } = req.body; // Add userId
+  const { type, category, subcategory = null, amount, date, userId } = req.body; // Add userId
   if (!type || !category || !amount || !date || !userId) { // Check userId
     return res.status(400).json({ error: 'Missing required fields.' });
   }

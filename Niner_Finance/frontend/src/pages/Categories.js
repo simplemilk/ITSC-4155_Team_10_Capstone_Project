@@ -1,191 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import './Categories.css';
 
 export default function Categories() {
-  const [categories, setCategories] = useState([]);
   const [type, setType] = useState('expense');
-  const [category, setCategory] = useState('');
-  const [subcategory, setSubcategory] = useState('');
+  const [categoryName, setCategoryName] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check if user is logged in
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      navigate('/login');
-      return;
-    }
-    fetchCategories();
-  }, [navigate]);
-
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch('http://localhost:4000/api/categories');
-      const data = await res.json();
-      if (data.success) {
-        setCategories(data.categories || []);
-      }
-    } catch (err) {
-      console.error('Error fetching categories:', err);
-    }
-  };
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setLoading(true);
+    setError('');
+    setSuccess('');
+    if (!type || !categoryName || !amount || !date) {
+      setError('Please fill in all fields.');
+      return;
+    }
 
+    // Get userId from localStorage (set during login)
     const userId = localStorage.getItem('userId');
     if (!userId) {
-      setMessage('Please log in to add transactions.');
-      setLoading(false);
+      setError('Please log in first.');
       return;
     }
 
     try {
-      const res = await fetch('http://localhost:4000/api/transactions', {
+      const res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
-          category,
-          subcategory,
+          category: categoryName,
+          subcategory: null, // Add this since backend expects it
           amount: parseFloat(amount),
           date,
-          userId: parseInt(userId)
+          userId: parseInt(userId) // Add userId here
         })
       });
-
       const data = await res.json();
-      if (data.success) {
-        setMessage('Transaction added successfully!');
-        // Clear form
-        setCategory('');
-        setSubcategory('');
+      if (res.ok) {
+        setSuccess('Transaction saved!');
+        // Trigger home page refresh
+        window.dispatchEvent(new CustomEvent('transactionAdded'));
+        setType('expense');
+        setCategoryName('');
         setAmount('');
         setDate('');
       } else {
-        setMessage(data.error || 'Failed to add transaction.');
+        setError(data.error || 'Failed to save transaction.');
       }
-    } catch (err) {
-      console.error('Error adding transaction:', err);
-      setMessage('Error adding transaction.');
+    } catch {
+      setError('Failed to save transaction.');
     }
-    setLoading(false);
   };
 
   return (
-    <div className="categories-container">
+    <div className="categories-root">
       <h1>Add Transaction</h1>
-      
-      <form onSubmit={handleSubmit} className="transaction-form">
-        <div className="form-group">
-          <label>Type:</label>
-          <select 
-            value={type} 
-            onChange={(e) => setType(e.target.value)}
-            required
-          >
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
-          </select>
+      {error && <div className="error">{error}</div>}
+      {success && <div className="success">{success}</div>}
+      <form className="categories-form" onSubmit={handleSubmit}>
+        <div className="form-row">
+          <label>
+            Type:
+            <select value={type} onChange={e => setType(e.target.value)}>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+          </label>
         </div>
-
-        <div className="form-group">
-          <label>Category:</label>
-          <select 
-            value={category} 
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          >
-            <option value="">Select a category</option>
-            {categories
-              .filter(cat => cat.type === type)
-              .map(cat => (
-                <option key={cat.id} value={cat.name}>
-                  {cat.name}
-                </option>
-              ))
-            }
-          </select>
+        <div className="form-row">
+          <label>
+            Category Name:
+            <input
+              type="text"
+              value={categoryName}
+              onChange={e => setCategoryName(e.target.value)}
+              placeholder="Enter category name"
+              required
+            />
+          </label>
         </div>
-
-        <div className="form-group">
-          <label>Subcategory (Optional):</label>
-          <input
-            type="text"
-            value={subcategory}
-            onChange={(e) => setSubcategory(e.target.value)}
-            placeholder="e.g., Groceries, Gas, etc."
-          />
+        <div className="form-row">
+          <label>
+            Amount:
+            <input
+              type="number"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              min="0"
+              step="0.01"
+              required
+            />
+          </label>
         </div>
-
-        <div className="form-group">
-          <label>Amount:</label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            required
-          />
+        <div className="form-row">
+          <label>
+            Date:
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              required
+            />
+          </label>
         </div>
-
-        <div className="form-group">
-          <label>Date:</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? 'Adding...' : 'Add Transaction'}
-        </button>
+        <button className="submit-btn" type="submit">Submit</button>
       </form>
-
-      {message && (
-        <div className={`message ${message.includes('success') ? 'success' : 'error'}`}>
-          {message}
-        </div>
-      )}
-
-      <div className="available-categories">
-        <h2>Available Categories</h2>
-        <div className="category-lists">
-          <div className="income-categories">
-            <h3>Income Categories</h3>
-            <ul>
-              {categories
-                .filter(cat => cat.type === 'income')
-                .map(cat => (
-                  <li key={cat.id}>{cat.name}</li>
-                ))
-              }
-            </ul>
-          </div>
-          <div className="expense-categories">
-            <h3>Expense Categories</h3>
-            <ul>
-              {categories
-                .filter(cat => cat.type === 'expense')
-                .map(cat => (
-                  <li key={cat.id}>{cat.name}</li>
-                ))
-              }
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

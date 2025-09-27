@@ -13,12 +13,12 @@ const transactions = [
 ];
 
 async function seedTransactions() {
-  const [rows] = await db.query('SELECT COUNT(*) as count FROM transactions');
+  const [rows] = await db.query('SELECT COUNT(*) AS count FROM transactions');
   if (rows[0].count === 0) {
-    for (const t of transactions) {
+    for (const tx of defaultTransactions) {
       await db.query(
-        'INSERT INTO transactions (type, category, amount, date) VALUES (?, ?, ?, ?)',
-        [t.type, t.category, t.amount, t.date]
+        'INSERT INTO transactions (type, category, categoryName, amount, date, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+        [tx.type, tx.category, tx.categoryName, tx.amount, tx.date, 1] // Use user_id = 1 for default data
       );
     }
   }
