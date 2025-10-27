@@ -1,9 +1,11 @@
 from flask import Flask
 from models import db
+from routes import budget_bp
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///niner_finance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.register_blueprint(budget_bp)
 
 db.init_app(app)
 
