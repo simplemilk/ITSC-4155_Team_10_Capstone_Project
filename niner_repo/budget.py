@@ -8,10 +8,12 @@ import sqlite3
 bp = Blueprint('budget', __name__)
 
 @bp.route('/budget')
+@login_required
 def index():
     return render_template('home/index.html')
 
 @bp.route('/budget/create')
+@login_required
 def create():
     return render_template('home/create.html')
 

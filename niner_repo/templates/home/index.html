@@ -1,257 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Niner Finance - Budget & Profile Manager</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-</head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar" id="navbar" style="display: none;">
-        <div class="nav-brand">
-            <h2>Niner Finance</h2>
-        </div>
-        <div class="nav-links">
-            <span class="welcome-text" id="welcomeText"></span>
-            <button class="nav-btn active" id="budgetTab" onclick="showPage('budget')">
-                Weekly Budgets
-            </button>
-            <button class="nav-btn" id="profileTab" onclick="showPage('profile')">
-                Profile
-            </button>
-            <button class="nav-btn logout" onclick="logout()">
-                Logout
-            </button>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <!-- Login/Registration Page -->
-    <div id="loginPage" class="page-container">
-        <div class="login-container">
-            <div class="login-form">
-                <div class="form-header">
-                    <h2 id="authTitle">Welcome Back</h2>
-                    <p id="authSubtitle">Sign in to your account</p>
-                </div>
-                
-                <div id="errorMessage" class="error-message" style="display: none;"></div>
-                <div id="successMessage" class="success-message" style="display: none;"></div>
-                
-                <form id="authForm">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" name="username" placeholder="Enter your username" required>
-                    </div>
+{% block head %}
+<!-- Index Page Specific CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
 
-                    <div id="nameFields" style="display: none;">
-                        <div class="form-row">
-                            <div class="form-group half">
-                                <label for="firstName">First Name</label>
-                                <input type="text" id="firstName" name="firstName" placeholder="First name">
-                            </div>
-                            <div class="form-group half">
-                                <label for="lastName">Last Name</label>
-                                <input type="text" id="lastName" name="lastName" placeholder="Last name">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" placeholder="Enter your email">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
-                    </div>
-
-                    <button type="submit" id="authSubmitBtn" class="submit-btn">
-                        Sign In
-                    </button>
-                </form>
-
-                <div class="form-footer">
-                    <p>
-                        <span id="toggleText">Don't have an account?</span>
-                        <button type="button" id="toggleAuthBtn" class="toggle-btn" onclick="toggleAuthMode()">
-                            Sign Up
-                        </button>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Budget Management Page -->
-    <div id="budgetPage" class="page-container" style="display: none;">
-        <div class="budget-container">
-            <div class="budget-header">
-                <h2>Weekly Budget Management</h2>
-                <p>Manage your weekly budgets and track expenses</p>
-            </div>
-
-            <div id="budgetErrorMessage" class="error-message" style="display: none;"></div>
-            <div id="budgetSuccessMessage" class="success-message" style="display: none;"></div>
-
-            <!-- Budget Input Section -->
-            <div class="budget-input-section">
-                <div class="budget-input">
-                    <h3>Create New Weekly Budget</h3>
+{% block content %}
+{% if not g.user %}
+    <!-- Hero Section for non-authenticated users -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 hero-content">
+                    <h1 class="hero-title">
+                        <i class="fas fa-university me-3"></i>
+                        Welcome to Niner Finance
+                    </h1>
+                    <p class="hero-subtitle">Your personal budget and financial management solution</p>
                     
-                    <form id="budgetForm">
-                        <div class="form-group">
-                            <label for="weekStart">Week Start Date:</label>
-                            <input type="date" id="weekStart" name="weekStart" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="totalBudget">Total Budget:</label>
-                            <input type="number" id="totalBudget" name="totalBudget" step="0.01" min="0" placeholder="Enter total budget" required>
-                        </div>
-
-                        <div class="categories-section">
-                            <h4>Budget Categories</h4>
-                            <div id="categoriesContainer">
-                                <!-- Categories will be added dynamically -->
-                            </div>
-                            
-                            <button type="button" id="addCategoryBtn" class="add-category-btn" onclick="addCategory()">
-                                Add Category
-                            </button>
-                        </div>
-
-                        <button type="submit" class="create-budget-btn">
-                            Create Budget
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Budget Display Section -->
-            <div class="budget-display-section">
-                <div id="budgetSelector" class="budget-selector" style="display: none;">
-                    <label for="budgetSelect">Select Budget:</label>
-                    <select id="budgetSelect" onchange="loadSelectedBudget()">
-                        <!-- Options will be populated dynamically -->
-                    </select>
-                </div>
-
-                <div id="budgetTable" class="budget-table-container">
-                    <!-- Budget table will be populated here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Profile Management Page -->
-    <div id="profilePage" class="page-container" style="display: none;">
-        <div class="profile-container">
-            <div class="profile-header">
-                <h2>Profile Settings</h2>
-                <p>Manage your account information and preferences</p>
-            </div>
-
-            <div id="profileErrorMessage" class="error-message" style="display: none;"></div>
-            <div id="profileSuccessMessage" class="success-message" style="display: none;"></div>
-
-            <div class="profile-content">
-                <div class="profile-picture-section">
-                    <div class="picture-container">
-                        <div class="current-picture">
-                            <div id="profileImage" class="default-avatar">
-                                <!-- Profile image or initials will be set here -->
-                            </div>
-                        </div>
-                        
-                        <div class="picture-upload">
-                            <label for="profileUpload" class="upload-label">
-                                Choose New Picture
-                            </label>
-                            <input id="profileUpload" type="file" accept="image/*" class="file-input" onchange="handleFileSelect(event)">
-                            
-                            <div id="selectedFile" class="selected-file" style="display: none;">
-                                <span id="fileName"></span>
-                                <button type="button" class="upload-btn" onclick="uploadProfilePicture()">
-                                    Upload
-                                </button>
-                            </div>
-                        </div>
+                    <div class="auth-buttons">
+                        <a href="{{ url_for('auth.login') }}" class="auth-btn btn-login">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Login
+                        </a>
+                        <a href="{{ url_for('auth.register') }}" class="auth-btn btn-register">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Register
+                        </a>
                     </div>
                 </div>
-
-                <div class="profile-info-section">
-                    <div id="profileDisplay" class="profile-display">
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <label>Username:</label>
-                                <span id="displayUsername"></span>
-                            </div>
-                            <div class="info-item">
-                                <label>First Name:</label>
-                                <span id="displayFirstName"></span>
-                            </div>
-                            <div class="info-item">
-                                <label>Last Name:</label>
-                                <span id="displayLastName"></span>
-                            </div>
-                            <div class="info-item">
-                                <label>Email:</label>
-                                <span id="displayEmail"></span>
-                            </div>
-                            <div class="info-item">
-                                <label>Member Since:</label>
-                                <span id="displayMemberSince"></span>
-                            </div>
-                        </div>
-                        
-                        <button class="edit-btn" onclick="toggleEditMode(true)">
-                            Edit Profile
-                        </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div class="features-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center mb-5">
+                    <h2 class="section-title">Why Choose Niner Finance?</h2>
+                    <p class="section-subtitle">Powerful tools to manage your financial life</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card text-center">
+                        <i class="fas fa-chart-line feature-icon"></i>
+                        <h5 class="feature-title">Track Expenses</h5>
+                        <p class="feature-description">Monitor your spending patterns and stay within budget with detailed transaction tracking.</p>
                     </div>
-
-                    <form id="profileEditForm" class="profile-edit" style="display: none;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="editFirstName">First Name:</label>
-                                <input type="text" id="editFirstName" name="firstName" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="editLastName">Last Name:</label>
-                                <input type="text" id="editLastName" name="lastName" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editEmail">Email:</label>
-                            <input type="email" id="editEmail" name="email" required>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="submit" class="save-btn">
-                                Save Changes
-                            </button>
-                            <button type="button" class="cancel-btn" onclick="toggleEditMode(false)">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card text-center">
+                        <i class="fas fa-wallet feature-icon"></i>
+                        <h5 class="feature-title">Manage Budget</h5>
+                        <p class="feature-description">Create and manage weekly budgets for better financial control and planning.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card text-center">
+                        <i class="fas fa-chart-pie feature-icon"></i>
+                        <h5 class="feature-title">Financial Reports</h5>
+                        <p class="feature-description">View detailed reports and analytics to understand your financial health.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner">
-            <div class="spinner"></div>
-            <p>Loading...</p>
+{% else %}
+    <!-- Dashboard for authenticated users -->
+    <div class="dashboard-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 text-center">
+                    <h2 class="welcome-title">Welcome back, {{ g.user.username }}!</h2>
+                    <p class="lead">Choose a section to manage your finances</p>
+                    
+                    <div class="dashboard-grid">
+                        <a href="{{ url_for('transactions.index') }}" class="dashboard-card" data-tooltip="transactions">
+                            <i class="fas fa-exchange-alt dashboard-icon icon-primary"></i>
+                            <h6 class="dashboard-title">Transactions</h6>
+                        </a>
+                        <a href="{{ url_for('income.list_all') }}" class="dashboard-card" data-tooltip="income">
+                            <i class="fas fa-plus-circle dashboard-icon icon-success"></i>
+                            <h6 class="dashboard-title">Income</h6>
+                        </a>
+                        <a href="{{ url_for('budget.index') }}" class="dashboard-card" data-tooltip="budget">
+                            <i class="fas fa-wallet dashboard-icon icon-warning"></i>
+                            <h6 class="dashboard-title">Budget</h6>
+                        </a>
+                        <a href="{{ url_for('finance.index') }}" class="dashboard-card" data-tooltip="financial-split">
+                            <i class="fas fa-calculator dashboard-icon icon-info"></i>
+                            <h6 class="dashboard-title">Financial Split</h6>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+{% endif %}
 
-    <script src="script.js"></script>
-</body>
-</html>
+<!-- Index Page JavaScript -->
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}

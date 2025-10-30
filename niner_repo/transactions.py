@@ -17,6 +17,7 @@ except ImportError:
 bp = Blueprint('transactions', __name__)
 
 @bp.route('/visuals')
+@login_required
 def show_visuals():
     """Show transaction dashboard"""
     try:
@@ -26,6 +27,7 @@ def show_visuals():
         return render_template('home/dashboard.html')
 
 @bp.route('/transactions')
+@login_required
 def index():
     """Show all transactions"""
     transactions = []
@@ -33,23 +35,39 @@ def index():
     # Try to get transactions from database
     try:
         db = get_db()
-        if db:
-            transactions = db.execute(
-                'SELECT t.id, t.description, t.amount, t.category, t.date, t.type'
-                ' FROM transactions t'
-                ' ORDER BY t.date DESC'
-            ).fetchall()
+        if db and g.user:
+           # First, let's check what columns exist in the transactions table
+            cursor = db.execute("PRAGMA table_info(transactions)")
+            columns = [row[1] for row in cursor.fetchall()]
+            print(f"Available columns in transactions table: {columns}")
+            
+            base_columns = ['t.id', 't.description', 't.amount', 't.date', 't.type']
+            optional_columns = []
+
+            # Use only columns that actually exist
+            if 'category' in columns:
+                optional_columns.append('t.category')
+            if 'type' in columns:
+                optional_columns.append('t.type')
+            
+            all_columns = base_columns + optional_columns
+            query = f"SELECT {', '.join(all_columns)} FROM transactions t WHERE t.user_id = ? ORDER BY t.date DESC"
+            
+            transactions = db.execute(query, (g.user['id'],)).fetchall()
+                
     except Exception as e:
         flash(f'Error loading transactions: {str(e)}', 'error')
     
     return render_template('home/index.html', transactions=transactions)
 
 @bp.route('/transactions/update')
+@login_required
 def add():
     """Show add transaction form"""
     return render_template('home/update.html')
 
 @bp.route('/transactions/create', methods=('GET', 'POST'))
+@login_required
 def create():
     """Create a new transaction"""
     if request.method == 'POST':
@@ -99,6 +117,7 @@ def create():
     return render_template('home/update.html')
 
 @bp.route('/transactions/<int:id>')
+@login_required
 def detail(id):
     """Show transaction details"""
     transaction = None
@@ -120,6 +139,7 @@ def detail(id):
     return render_template('home/transaction.html', transaction=transaction)
 
 @bp.route('/transactions/<int:id>/edit')
+@login_required
 def edit(id):
     """Show edit transaction form"""
     transaction = None
@@ -141,6 +161,7 @@ def edit(id):
     return render_template('home/update.html', transaction=transaction)
 
 @bp.route('/transactions/<int:id>/update', methods=('GET', 'POST'))
+@login_required
 def update(id):
     """Update a transaction"""
     if request.method == 'POST':
@@ -190,6 +211,7 @@ def update(id):
     return redirect(url_for('transactions.edit', id=id))
 
 @bp.route('/transactions/<int:id>/delete', methods=('POST',))
+@login_required
 def delete(id):
     """Delete a transaction"""
     try:
@@ -211,6 +233,7 @@ def delete(id):
     return redirect(url_for('transactions.index'))
 
 @bp.route('/transactions/stats')
+@login_required
 def stats():
     """Show transaction statistics"""
     stats_data = {

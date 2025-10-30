@@ -1,14 +1,22 @@
-Flask==3.0.0
-Flask-Login==0.6.3
-Flask-WTF==1.1.1
-Flask-Bcrypt==1.0.1
+Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
-python-dotenv==1.0.0
-WTForms==3.0.1
-Werkzeug>=3.0.0
-SQLAlchemy==2.0.21
-email-validator==2.0.0
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+Flask-Bcrypt==1.0.1
+Flask-CORS==4.0.0
+Werkzeug==2.3.7
+WTForms==3.1.0
+bcrypt==4.0.1
+click==8.1.7
+itsdangerous==2.1.2
+Jinja2==3.1.2
+MarkupSafe==2.1.3
+SQLAlchemy==2.0.23
 
 # Additional dependencies can be added below as needed
 # Make sure to install using pip3 if using Python 3 environment instead of pip.
 # Install flask_bcrypt, flask_wtf, and flask_login as needed.
+# Make sure to upgrade sqlalchemy and flask_sqlalchemy to compatible versions for Python 3.13
+# Command to upgrade:
+    # pip3 install --upgrade sqlalchemy 
+    # pip3 install --upgrade flask-sqlalchemy

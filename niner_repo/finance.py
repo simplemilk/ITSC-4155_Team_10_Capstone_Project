@@ -110,10 +110,10 @@ def index():
         if db is None:
             flash("Database connection not available.", "error")
         
-        return render_template('home/finance-split.html')
+        return render_template('home/financial-split.html')
     except Exception as e:
         flash(f'Error loading finance page: {e}', 'error')
-        return render_template('home/financial-split.html')
+        return render_template('home/dashboard.html')
 
 @bp.route('/finance/dashboard')
 @login_required
