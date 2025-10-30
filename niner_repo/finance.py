@@ -1,9 +1,17 @@
 from decimal import Decimal
 from datetime import datetime
-from flask import Blueprint, g, render_template, redirect, jsonify, request
+from flask import Blueprint, g, render_template, redirect, jsonify, request, flash
 from auth import login_required
 from db import get_db
 
+try:
+    from db import get_db
+except ImportError:
+    def login_required(f):
+        return f
+    def get_db():
+        return None
+    
 bp = Blueprint('finance', __name__)
 
 def init_app(app):
@@ -93,11 +101,36 @@ def calculate_budget_allocations(user_id):
     
     return allocations
 
+@bp.route('/finance')
+@login_required
+def index():
+    """Show finance dashboard page"""
+    try:
+        db = get_db()
+        if db is None:
+            flash("Database connection not available.", "error")
+        
+        return render_template('home/finance-split.html')
+    except Exception as e:
+        flash(f'Error loading finance page: {e}', 'error')
+        return render_template('home/financial-split.html')
+
+@bp.route('/finance/dashboard')
+@login_required
+def dashboard():
+    """Show finance dashboard page"""
+    return render_template('home/dashboard.html')
+
+
 @bp.route('/finance/summary', methods=['GET'])
 @login_required
 def get_financial_summary():
     """Get comprehensive financial summary including income, expenses, savings, and budget."""
     try:
+        db = get_db()
+        if db is None:
+            return jsonify({'error': 'Database connection not available'}), 503
+        
         # Get date range parameters
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')

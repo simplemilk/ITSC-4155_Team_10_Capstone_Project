@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/financial-split.css') }}">
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/transaction.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -38,12 +39,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('transactions.show_transactions') }}">
+                            <a class="nav-link" href="{{ url_for('transactions.index') }}">
                                 <i class="fas fa-exchange-alt me-1"></i>Transactions
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('income.show_income') }}">
+                            <a class="nav-link" href="{{ url_for('income.list_all') }}">
                                 <i class="fas fa-plus-circle me-1"></i>Income
                             </a>
                         </li>
@@ -55,7 +56,7 @@
                                 <li><a class="dropdown-item" href="{{ url_for('budget.get_weekly_budget') }}">
                                     <i class="fas fa-calendar-week me-1"></i>Weekly Budget
                                 </a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('budget.get_budget_history') }}">
+                                <li><a class="dropdown-item" href="{{ url_for('budget.index') }}">
                                     <i class="fas fa-history me-1"></i>Budget History
                                 </a></li>
                             </ul>
@@ -66,7 +67,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('transactions.financial_split') }}">
+                            <a class="nav-link" href="{{ url_for('finance.index') }}">
                                 <i class="fas fa-calculator me-1"></i>Financial Split
                             </a>
                         </li>

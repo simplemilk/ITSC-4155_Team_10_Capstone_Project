@@ -23,7 +23,7 @@ def init_models(database):
     # Define User model
     class User(UserMixin, db.Model):
         __tablename__ = 'users'
-        
+        __table_args__ = {'extend_existing': True}
         id = db.Column(db.Integer, primary_key=True)
         username = db.Column(db.String(80), unique=True, nullable=False)
         email = db.Column(db.String(120), unique=True, nullable=False)
@@ -50,7 +50,8 @@ def init_models(database):
     # Define Income model
     class Income(db.Model):
         __tablename__ = 'income'
-        
+        __table_args__ = {'extend_existing': True}
+
         id = db.Column(db.Integer, primary_key=True)
         user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
         source = db.Column(db.String(100), nullable=False)
@@ -67,7 +68,8 @@ def init_models(database):
     # Define Transaction model
     class Transaction(db.Model):
         __tablename__ = 'transactions'
-        
+        __table_args__ = {'extend_existing': True}
+             
         id = db.Column(db.Integer, primary_key=True)
         user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
         description = db.Column(db.String(200), nullable=False)
@@ -84,7 +86,8 @@ def init_models(database):
     # Define Budget model
     class Budget(db.Model):
         __tablename__ = 'budgets'
-        
+        __table_args__ = {'extend_existing': True}
+             
         id = db.Column(db.Integer, primary_key=True)
         user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
         name = db.Column(db.String(100), nullable=False)
@@ -101,7 +104,8 @@ def init_models(database):
     # Define BudgetCategory model
     class BudgetCategory(db.Model):
         __tablename__ = 'budget_categories'
-        
+        __table_args__ = {'extend_existing': True}
+             
         id = db.Column(db.Integer, primary_key=True)
         budget_id = db.Column(db.Integer, db.ForeignKey('budgets.id'), nullable=False)
         category_name = db.Column(db.String(50), nullable=False)
@@ -115,7 +119,8 @@ def init_models(database):
     # Define FinancialGoal model  
     class FinancialGoal(db.Model):
         __tablename__ = 'financial_goals'
-        
+        __table_args__ = {'extend_existing': True}
+             
         id = db.Column(db.Integer, primary_key=True)
         user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
         name = db.Column(db.String(100), nullable=False)
@@ -131,7 +136,8 @@ def init_models(database):
     # Define Category model
     class Category(db.Model):
         __tablename__ = 'categories'
-        
+        __table_args__ = {'extend_existing': True}
+             
         id = db.Column(db.Integer, primary_key=True)
         name = db.Column(db.String(50), unique=True, nullable=False)
         type = db.Column(db.String(20), nullable=False)  # 'income' or 'expense'

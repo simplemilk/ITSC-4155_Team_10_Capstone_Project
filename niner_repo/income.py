@@ -132,6 +132,11 @@ def create():
 def list_all():
     """Get all income records for the current user."""
     try:
+        db = get_db()
+        if db is None:
+            flash('Database connection not available.', 'error')
+            return jsonify({'error': 'Database connection not available'}), 503
+
         # Get query parameters for filtering
         category_id = request.args.get('category_id', type=int)
         start_date = request.args.get('start_date')

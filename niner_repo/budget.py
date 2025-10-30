@@ -9,11 +9,11 @@ bp = Blueprint('budget', __name__)
 
 @bp.route('/budget')
 def index():
-    return render_template('budget/index.html')
+    return render_template('home/index.html')
 
 @bp.route('/budget/create')
 def create():
-    return render_template('budget/create.html')
+    return render_template('home/create.html')
 
 
 @bp.route('/weekly', methods=['GET'])

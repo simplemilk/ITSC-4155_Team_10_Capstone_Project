@@ -29,6 +29,7 @@
         </div>
 
         <form method="post" id="loginForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="form-floating">
                 <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
                 <label for="username"><i class="fas fa-user me-2"></i>Username</label>

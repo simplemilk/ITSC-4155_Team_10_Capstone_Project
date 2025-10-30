@@ -27,7 +27,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///niner_finance.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['WTF_CSRF_ENABLED'] = True
-    
+
     print(f"📊 Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
     
     # Initialize extensions with app

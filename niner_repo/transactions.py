@@ -16,14 +16,14 @@ except ImportError:
 
 bp = Blueprint('transactions', __name__)
 
-@bp.route('/')
+@bp.route('/visuals')
 def show_visuals():
     """Show transaction dashboard"""
     try:
-        return render_template('home/transaction.html')
+        return render_template('graphs/visuals.html')
     except:
         # Fallback if template doesn't exist
-        return render_template('transactions/dashboard.html')
+        return render_template('home/dashboard.html')
 
 @bp.route('/transactions')
 def index():
@@ -42,12 +42,12 @@ def index():
     except Exception as e:
         flash(f'Error loading transactions: {str(e)}', 'error')
     
-    return render_template('transactions/index.html', transactions=transactions)
+    return render_template('home/index.html', transactions=transactions)
 
-@bp.route('/transactions/add')
+@bp.route('/transactions/update')
 def add():
     """Show add transaction form"""
-    return render_template('transactions/add.html')
+    return render_template('home/update.html')
 
 @bp.route('/transactions/create', methods=('GET', 'POST'))
 def create():
@@ -96,7 +96,7 @@ def create():
             except Exception as e:
                 flash(f'Error saving transaction: {str(e)}', 'error')
     
-    return render_template('transactions/create.html')
+    return render_template('home/update.html')
 
 @bp.route('/transactions/<int:id>')
 def detail(id):
@@ -115,9 +115,9 @@ def detail(id):
             
     except Exception as e:
         flash(f'Error loading transaction: {str(e)}', 'error')
-        return redirect(url_for('transactions.index'))
+        return redirect(url_for('home/index.html'))
     
-    return render_template('transactions/detail.html', transaction=transaction)
+    return render_template('home/transaction.html', transaction=transaction)
 
 @bp.route('/transactions/<int:id>/edit')
 def edit(id):
@@ -138,7 +138,7 @@ def edit(id):
         flash(f'Error loading transaction: {str(e)}', 'error')
         return redirect(url_for('transactions.index'))
     
-    return render_template('transactions/edit.html', transaction=transaction)
+    return render_template('home/update.html', transaction=transaction)
 
 @bp.route('/transactions/<int:id>/update', methods=('GET', 'POST'))
 def update(id):
@@ -258,7 +258,7 @@ def stats():
     except Exception as e:
         flash(f'Error loading statistics: {str(e)}', 'error')
     
-    return render_template('transactions/stats.html', stats=stats_data)
+    return render_template('home/dashboard.html', stats=stats_data)
 
 # Helper function to get available categories
 def get_categories():
