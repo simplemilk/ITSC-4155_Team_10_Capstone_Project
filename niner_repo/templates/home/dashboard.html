@@ -1,81 +1,164 @@
 {% extends 'base.html' %}
 
-{% block header %}
-  <h1>{% block title %}Financial Dashboard{% endblock %}</h1>
-{% endblock %}
+{% block title %}Financial Dashboard - Niner Finance{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+
 <div class="dashboard-container">
   <!-- Financial Overview Section -->
   <section class="dashboard-section overview-section">
-    <h2>Financial Overview</h2>
+    <div class="section-header">
+      <h2><i class="fas fa-chart-line me-2"></i>Financial Overview</h2>
+      <button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
+        <i class="fas fa-sync-alt me-1"></i>Refresh
+      </button>
+    </div>
     <div class="overview-grid" id="financial-overview">
       <div class="overview-card total-income">
-        <h3>Total Income</h3>
-        <p class="amount">$<span id="total-income">0.00</span></p>
-        <p class="period">This Month</p>
+        <div class="card-icon">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="card-content">
+          <h3>Total Income</h3>
+          <p class="amount text-success">$<span id="total-income">0.00</span></p>
+          <p class="period">This Month</p>
+        </div>
       </div>
       <div class="overview-card total-expenses">
-        <h3>Total Expenses</h3>
-        <p class="amount">$<span id="total-expenses">0.00</span></p>
-        <p class="period">This Month</p>
+        <div class="card-icon">
+          <i class="fas fa-credit-card"></i>
+        </div>
+        <div class="card-content">
+          <h3>Total Expenses</h3>
+          <p class="amount text-danger">$<span id="total-expenses">0.00</span></p>
+          <p class="period">This Month</p>
+        </div>
       </div>
       <div class="overview-card total-savings">
-        <h3>Total Savings</h3>
-        <p class="amount">$<span id="total-savings">0.00</span></p>
-        <p class="savings-rate">Rate: <span id="savings-rate">0</span>%</p>
+        <div class="card-icon">
+          <i class="fas fa-piggy-bank"></i>
+        </div>
+        <div class="card-content">
+          <h3>Net Savings</h3>
+          <p class="amount text-info">$<span id="total-savings">0.00</span></p>
+          <p class="savings-rate">Rate: <span id="savings-rate">0</span>%</p>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- Income Breakdown Section -->
   <section class="dashboard-section income-section">
-    <h2>Income Sources</h2>
+    <div class="section-header">
+      <h2><i class="fas fa-chart-pie me-2"></i>Income Sources</h2>
+      <a href="{{ url_for('income.index') }}" class="btn btn-outline-success btn-sm">
+        <i class="fas fa-plus me-1"></i>Add Income
+      </a>
+    </div>
     <div class="income-chart-container">
       <canvas id="income-chart"></canvas>
     </div>
     <div class="income-list" id="income-breakdown">
-      <div class="loading">Loading income data...</div>
+      <div class="loading">
+        <i class="fas fa-spinner fa-spin me-2"></i>Loading income data...
+      </div>
     </div>
   </section>
 
   <!-- Budget Status Section -->
   <section class="dashboard-section budget-section">
-    <h2>Budget Status</h2>
+    <div class="section-header">
+      <h2><i class="fas fa-chart-bar me-2"></i>Budget Status</h2>
+      <a href="{{ url_for('budget.index') }}" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-cog me-1"></i>Manage Budget
+      </a>
+    </div>
     <div class="budget-grid" id="budget-status">
-      <div class="loading">Loading budget data...</div>
+      <div class="loading">
+        <i class="fas fa-spinner fa-spin me-2"></i>Loading budget data...
+      </div>
     </div>
   </section>
 
   <!-- Recent Activity Section -->
   <section class="dashboard-section activity-section">
-    <h2>Recent Activity</h2>
+    <div class="section-header">
+      <h2><i class="fas fa-history me-2"></i>Recent Activity</h2>
+      <a href="{{ url_for('transactions.index') }}" class="btn btn-outline-info btn-sm">
+        <i class="fas fa-list me-1"></i>View All
+      </a>
+    </div>
     <div class="activity-list" id="recent-activity">
-      <div class="loading">Loading recent activity...</div>
+      <div class="loading">
+        <i class="fas fa-spinner fa-spin me-2"></i>Loading recent activity...
+      </div>
     </div>
   </section>
 
-  <!-- Projected Savings Section -->
-  <section class="dashboard-section projections-section">
-    <h2>Projected Savings</h2>
-    <div class="projections-grid">
-      <div class="projection-card monthly">
-        <h3>Monthly Projection</h3>
-        <div class="projection-details" id="monthly-projection">
-          <div class="loading">Loading projections...</div>
+  <!-- Quick Actions Section -->
+  <section class="dashboard-section quick-actions-section">
+    <div class="section-header">
+      <h2><i class="fas fa-bolt me-2"></i>Quick Actions</h2>
+    </div>
+    <div class="quick-actions-grid">
+      <button class="quick-action-btn" onclick="showAddIncomeModal()">
+        <i class="fas fa-plus-circle"></i>
+        <span>Add Income</span>
+      </button>
+      <button class="quick-action-btn" onclick="showAddExpenseModal()">
+        <i class="fas fa-minus-circle"></i>
+        <span>Add Expense</span>
+      </button>
+      <button class="quick-action-btn" onclick="viewBudget()">
+        <i class="fas fa-chart-pie"></i>
+        <span>View Budget</span>
+      </button>
+      <button class="quick-action-btn" onclick="generateReport()">
+        <i class="fas fa-file-download"></i>
+        <span>Export Report</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Financial Goals Section -->
+  <section class="dashboard-section goals-section">
+    <div class="section-header">
+      <h2><i class="fas fa-target me-2"></i>Financial Goals</h2>
+      <button class="btn btn-outline-warning btn-sm" onclick="addGoal()">
+        <i class="fas fa-plus me-1"></i>Add Goal
+      </button>
+    </div>
+    <div class="goals-grid" id="financial-goals">
+      <div class="goal-card">
+        <h4>Emergency Fund</h4>
+        <div class="goal-progress">
+          <div class="progress mb-2">
+            <div class="progress-bar bg-success" style="width: 45%"></div>
+          </div>
+          <div class="goal-details">
+            <span class="current">$450</span>
+            <span class="target">/ $1,000</span>
+          </div>
         </div>
       </div>
-      <div class="projection-card annual">
-        <h3>Annual Projection</h3>
-        <div class="projection-details" id="annual-projection">
-          <div class="loading">Loading projections...</div>
+      <div class="goal-card">
+        <h4>Textbook Fund</h4>
+        <div class="goal-progress">
+          <div class="progress mb-2">
+            <div class="progress-bar bg-info" style="width: 70%"></div>
+          </div>
+          <div class="goal-details">
+            <span class="current">$350</span>
+            <span class="target">/ $500</span>
+          </div>
         </div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- Template for income breakdown item -->
+<!-- Templates for dynamic content -->
 <template id="income-item-template">
   <div class="income-item">
     <div class="income-category">
@@ -89,10 +172,10 @@
   </div>
 </template>
 
-<!-- Template for budget item -->
 <template id="budget-item-template">
   <div class="budget-item">
     <div class="budget-category">
+      <i class="category-icon"></i>
       <span class="category-name"></span>
     </div>
     <div class="budget-progress">
@@ -102,11 +185,11 @@
       <div class="budget-amounts">
         <span class="spent-amount"></span> / <span class="allocated-amount"></span>
       </div>
+      <div class="budget-status"></div>
     </div>
   </div>
 </template>
 
-<!-- Template for activity item -->
 <template id="activity-item-template">
   <div class="activity-item">
     <div class="activity-icon"></div>

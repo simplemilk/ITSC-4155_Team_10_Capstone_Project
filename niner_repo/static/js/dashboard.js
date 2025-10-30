@@ -1,124 +1,177 @@
+/**
+ * Dashboard JavaScript
+ * Handles dashboard data loading, updates, and interactions
+ */
+
 // Dashboard state management
 let dashboardState = {
     incomeChart: null,
     updateInterval: 30000, // 30 seconds
-    lastUpdate: null
+    lastUpdate: null,
+    isLoading: false
 };
 
-// Initialize dashboard
+// Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Dashboard initializing...');
     initializeDashboard();
     setupEventListeners();
 });
 
+/**
+ * Initialize all dashboard components
+ */
 async function initializeDashboard() {
     try {
+        dashboardState.isLoading = true;
+        
+        // Show loading state
+        showLoadingState();
+        
+        // Load all dashboard data
         await Promise.all([
             updateFinancialOverview(),
-            updateIncomeBreakdown(),
+            updateIncomeBreakdown(), 
             updateBudgetStatus(),
-            updateRecentActivity(),
-            updateProjections()
+            updateRecentActivity()
         ]);
         
         // Set up periodic updates
         setInterval(updateDashboard, dashboardState.updateInterval);
+        
+        dashboardState.lastUpdate = new Date();
+        console.log('Dashboard initialized successfully');
+        
     } catch (error) {
         console.error('Error initializing dashboard:', error);
         showError('Failed to load dashboard data. Please refresh the page.');
+    } finally {
+        dashboardState.isLoading = false;
     }
 }
 
-// Event listeners for real-time updates
+/**
+ * Set up event listeners
+ */
 function setupEventListeners() {
-    // Listen for income changes
-    window.addEventListener('incomeAdded', () => {
-        updateDashboard();
-    });
-
-    // Listen for expense changes
-    window.addEventListener('expenseAdded', () => {
-        updateDashboard();
-    });
-
-    // Listen for budget changes
-    window.addEventListener('budgetUpdated', () => {
-        updateDashboard();
-    });
+    // Listen for data changes
+    window.addEventListener('incomeAdded', updateDashboard);
+    window.addEventListener('expenseAdded', updateDashboard);
+    window.addEventListener('budgetUpdated', updateDashboard);
+    
+    // Refresh button handler
+    const refreshBtn = document.querySelector('[onclick="refreshDashboard()"]');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshDashboard);
+    }
 }
 
-// Update all dashboard components
+/**
+ * Update all dashboard components
+ */
 async function updateDashboard() {
+    if (dashboardState.isLoading) return;
+    
     try {
+        dashboardState.isLoading = true;
+        
         await Promise.all([
             updateFinancialOverview(),
             updateIncomeBreakdown(),
-            updateBudgetStatus(),
-            updateRecentActivity(),
-            updateProjections()
+            updateBudgetStatus(), 
+            updateRecentActivity()
         ]);
+        
         dashboardState.lastUpdate = new Date();
+        
     } catch (error) {
         console.error('Error updating dashboard:', error);
+        showError('Failed to update dashboard data');
+    } finally {
+        dashboardState.isLoading = false;
     }
 }
 
-// Financial Overview Updates
+/**
+ * Update financial overview section
+ */
 async function updateFinancialOverview() {
     try {
-        const response = await fetch('/api/finance/summary');
-        if (!response.ok) throw new Error('Failed to fetch financial summary');
+        // For now, use mock data until backend API is ready
+        const mockData = {
+            summary: {
+                total_income: 2850.00,
+                total_expenses: 1450.75,
+                total_savings: 1399.25,
+                savings_rate: 49.0
+            }
+        };
         
-        const data = await response.json();
+        // Update overview cards with animation
+        animateValueUpdate('total-income', mockData.summary.total_income);
+        animateValueUpdate('total-expenses', mockData.summary.total_expenses);
+        animateValueUpdate('total-savings', mockData.summary.total_savings);
+        animateValueUpdate('savings-rate', mockData.summary.savings_rate);
         
-        // Update overview cards
-        document.getElementById('total-income').textContent = 
-            formatCurrency(data.summary.total_income);
-        document.getElementById('total-expenses').textContent = 
-            formatCurrency(data.summary.total_expenses);
-        document.getElementById('total-savings').textContent = 
-            formatCurrency(data.summary.total_savings);
-        document.getElementById('savings-rate').textContent = 
-            formatPercentage(data.summary.savings_rate);
-            
+        console.log('Financial overview updated');
+        
     } catch (error) {
         console.error('Error updating financial overview:', error);
-        showError('Failed to update financial overview');
+        
+        // Set default values on error
+        document.getElementById('total-income').textContent = '0.00';
+        document.getElementById('total-expenses').textContent = '0.00';
+        document.getElementById('total-savings').textContent = '0.00';
+        document.getElementById('savings-rate').textContent = '0';
     }
 }
 
-// Income Breakdown Updates
+/**
+ * Update income breakdown section
+ */
 async function updateIncomeBreakdown() {
     try {
-        const response = await fetch('/api/finance/summary');
-        if (!response.ok) throw new Error('Failed to fetch income breakdown');
+        // Mock income data
+        const mockIncomeData = [
+            { category: 'Part-time Job', total: 1200.00, count: 4, average: 300.00 },
+            { category: 'Financial Aid', total: 800.00, count: 1, average: 800.00 },
+            { category: 'Family Support', total: 500.00, count: 2, average: 250.00 },
+            { category: 'Freelance Work', total: 350.00, count: 3, average: 116.67 }
+        ];
         
-        const data = await response.json();
-        updateIncomeChart(data.income_breakdown);
-        updateIncomeList(data.income_breakdown);
+        updateIncomeChart(mockIncomeData);
+        updateIncomeList(mockIncomeData);
+        
+        console.log('Income breakdown updated');
+        
     } catch (error) {
         console.error('Error updating income breakdown:', error);
-        showError('Failed to update income breakdown');
+        showIncomeError();
     }
 }
 
-// Update Income Chart
+/**
+ * Update income chart
+ */
 function updateIncomeChart(data) {
-    const ctx = document.getElementById('income-chart').getContext('2d');
+    const ctx = document.getElementById('income-chart');
+    if (!ctx) return;
     
-    // Destroy existing chart if it exists
+    // Destroy existing chart
     if (dashboardState.incomeChart) {
         dashboardState.incomeChart.destroy();
     }
     
     // Create new chart
-    dashboardState.incomeChart = new Chart(ctx, {
+    dashboardState.incomeChart = new Chart(ctx.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: data.map(item => item.category),
             datasets: [{
                 data: data.map(item => item.total),
-                backgroundColor: generateColors(data.length)
+                backgroundColor: generateColors(data.length),
+                borderWidth: 2,
+                borderColor: '#ffffff'
             }]
         },
         options: {
@@ -126,206 +179,245 @@ function updateIncomeChart(data) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right'
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = formatCurrency(context.parsed);
+                            const percentage = ((context.parsed / data.reduce((sum, item) => sum + item.total, 0)) * 100).toFixed(1);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
                 }
+            },
+            animation: {
+                animateRotate: true,
+                duration: 1000
             }
         }
     });
 }
 
-// Update Income List
+/**
+ * Update income list
+ */
 function updateIncomeList(data) {
     const container = document.getElementById('income-breakdown');
     const template = document.getElementById('income-item-template');
     
+    if (!container || !template) return;
+    
     container.innerHTML = '';
     
-    data.forEach(item => {
+    data.forEach((item, index) => {
         const clone = template.content.cloneNode(true);
         
         clone.querySelector('.category-name').textContent = item.category;
-        clone.querySelector('.entry-count').textContent = 
-            `${item.count} entries`;
-        clone.querySelector('.amount').textContent = 
-            formatCurrency(item.total);
-        clone.querySelector('.average').textContent = 
-            formatCurrency(item.average);
-            
+        clone.querySelector('.entry-count').textContent = `${item.count} entries`;
+        clone.querySelector('.amount').textContent = formatCurrency(item.total);
+        clone.querySelector('.average').textContent = formatCurrency(item.average);
+        
+        // Add animation delay
+        const itemElement = clone.querySelector('.income-item');
+        itemElement.style.animationDelay = `${index * 0.1}s`;
+        itemElement.classList.add('fade-in');
+        
         container.appendChild(clone);
     });
 }
 
-// Budget Status Updates
+/**
+ * Update budget status section
+ */
 async function updateBudgetStatus() {
     try {
-        const response = await fetch('/api/finance/summary');
-        if (!response.ok) throw new Error('Failed to fetch budget status');
+        // Mock budget data
+        const mockBudgetData = [
+            { category_name: 'Food & Dining', spent_amount: 245.50, allocated_amount: 300.00, icon: 'fas fa-utensils' },
+            { category_name: 'Transportation', spent_amount: 85.25, allocated_amount: 150.00, icon: 'fas fa-car' },
+            { category_name: 'Entertainment', spent_amount: 120.00, allocated_amount: 100.00, icon: 'fas fa-film' },
+            { category_name: 'Other', spent_amount: 65.75, allocated_amount: 80.00, icon: 'fas fa-ellipsis-h' }
+        ];
         
-        const data = await response.json();
         const container = document.getElementById('budget-status');
         const template = document.getElementById('budget-item-template');
         
+        if (!container || !template) return;
+        
         container.innerHTML = '';
         
-        data.budget_allocations.forEach(item => {
+        mockBudgetData.forEach((item, index) => {
             const clone = template.content.cloneNode(true);
             const usagePercentage = (item.spent_amount / item.allocated_amount) * 100;
             
+            clone.querySelector('.category-icon').className = item.icon;
             clone.querySelector('.category-name').textContent = item.category_name;
-            clone.querySelector('.progress-fill').style.width = 
-                `${Math.min(usagePercentage, 100)}%`;
-            clone.querySelector('.spent-amount').textContent = 
-                formatCurrency(item.spent_amount);
-            clone.querySelector('.allocated-amount').textContent = 
-                formatCurrency(item.allocated_amount);
-                
-            // Add color coding based on usage
+            clone.querySelector('.progress-fill').style.width = `${Math.min(usagePercentage, 100)}%`;
+            clone.querySelector('.spent-amount').textContent = formatCurrency(item.spent_amount);
+            clone.querySelector('.allocated-amount').textContent = formatCurrency(item.allocated_amount);
+            
+            // Add status text and color coding
+            const statusElement = clone.querySelector('.budget-status');
             const progressFill = clone.querySelector('.progress-fill');
-            if (usagePercentage > 90) {
-                progressFill.style.backgroundColor = '#dc3545'; // Red
-            } else if (usagePercentage > 75) {
-                progressFill.style.backgroundColor = '#ffc107'; // Yellow
+            
+            if (usagePercentage > 100) {
+                statusElement.textContent = 'Over Budget';
+                statusElement.style.color = '#dc3545';
+                progressFill.style.background = 'linear-gradient(90deg, #dc3545, #c82333)';
+            } else if (usagePercentage > 90) {
+                statusElement.textContent = 'Nearly Full';
+                statusElement.style.color = '#ffc107';
+                progressFill.style.background = 'linear-gradient(90deg, #ffc107, #e0a800)';
+            } else {
+                statusElement.textContent = 'On Track';
+                statusElement.style.color = '#28a745';
             }
+            
+            // Add animation delay
+            const itemElement = clone.querySelector('.budget-item');
+            itemElement.style.animationDelay = `${index * 0.15}s`;
+            itemElement.classList.add('slide-in');
             
             container.appendChild(clone);
         });
+        
+        console.log('Budget status updated');
+        
     } catch (error) {
         console.error('Error updating budget status:', error);
-        showError('Failed to update budget status');
+        showBudgetError();
     }
 }
 
-// Recent Activity Updates
+/**
+ * Update recent activity section
+ */
 async function updateRecentActivity() {
     try {
-        // Fetch both income and expense activity
-        const [incomeResponse, expenseResponse] = await Promise.all([
-            fetch('/api/income/?limit=10'),
-            fetch('/api/expenses/?limit=10')
-        ]);
+        // Mock activity data
+        const mockActivity = [
+            { source: 'Starbucks Coffee', amount: 5.75, type: 'expense', date: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+            { source: 'Part-time Job', amount: 125.00, type: 'income', date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+            { source: 'Gas Station', amount: 32.50, type: 'expense', date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+            { source: 'Family Transfer', amount: 200.00, type: 'income', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+            { source: 'Textbook Purchase', amount: 89.99, type: 'expense', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+            { source: 'Movie Theater', amount: 15.50, type: 'expense', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) }
+        ];
         
-        if (!incomeResponse.ok || !expenseResponse.ok) {
-            throw new Error('Failed to fetch recent activity');
-        }
+        updateActivityList(mockActivity);
+        console.log('Recent activity updated');
         
-        const incomeData = await incomeResponse.json();
-        const expenseData = await expenseResponse.json();
-        
-        // Combine and sort activity
-        const activity = [
-            ...incomeData.data.map(item => ({
-                ...item,
-                type: 'income',
-                date: new Date(item.date)
-            })),
-            ...expenseData.data.map(item => ({
-                ...item,
-                type: 'expense',
-                date: new Date(item.date)
-            }))
-        ].sort((a, b) => b.date - a.date).slice(0, 10);
-        
-        updateActivityList(activity);
     } catch (error) {
         console.error('Error updating recent activity:', error);
-        showError('Failed to update recent activity');
+        showActivityError();
     }
 }
 
-// Update Activity List
+/**
+ * Update activity list
+ */
 function updateActivityList(activity) {
     const container = document.getElementById('recent-activity');
     const template = document.getElementById('activity-item-template');
     
+    if (!container || !template) return;
+    
     container.innerHTML = '';
     
-    activity.forEach(item => {
+    activity.forEach((item, index) => {
         const clone = template.content.cloneNode(true);
         
-        clone.querySelector('.activity-icon').innerHTML = 
-            item.type === 'income' ? '↑' : '↓';
+        const iconElement = clone.querySelector('.activity-icon');
+        iconElement.innerHTML = item.type === 'income' ? '↗' : '↙';
+        iconElement.style.backgroundColor = item.type === 'income' ? '#d4edda' : '#f8d7da';
+        iconElement.style.color = item.type === 'income' ? '#28a745' : '#dc3545';
+        
         clone.querySelector('.activity-title').textContent = item.source;
-        clone.querySelector('.activity-amount').textContent = 
-            `${item.type === 'income' ? '+' : '-'}${formatCurrency(item.amount)}`;
-        clone.querySelector('.activity-date').textContent = 
-            formatDate(item.date);
-            
-        // Add color coding
+        
         const amountElement = clone.querySelector('.activity-amount');
+        amountElement.textContent = `${item.type === 'income' ? '+' : '-'}$${formatCurrency(item.amount)}`;
         amountElement.style.color = item.type === 'income' ? '#28a745' : '#dc3545';
+        
+        clone.querySelector('.activity-date').textContent = formatDate(item.date);
+        
+        // Add animation delay
+        const itemElement = clone.querySelector('.activity-item');
+        itemElement.style.animationDelay = `${index * 0.1}s`;
+        itemElement.classList.add('fade-in');
         
         container.appendChild(clone);
     });
 }
 
-// Projections Updates
-async function updateProjections() {
-    try {
-        const response = await fetch('/api/finance/savings/projected');
-        if (!response.ok) throw new Error('Failed to fetch projections');
-        
-        const data = await response.json();
-        
-        // Update monthly projections
-        const monthlyContainer = document.getElementById('monthly-projection');
-        monthlyContainer.innerHTML = `
-            <div class="projection-row">
-                <span>Income:</span>
-                <span>${formatCurrency(data.monthly.income)}</span>
-            </div>
-            <div class="projection-row">
-                <span>Expenses:</span>
-                <span>${formatCurrency(data.monthly.expenses)}</span>
-            </div>
-            <div class="projection-row total">
-                <span>Projected Savings:</span>
-                <span>${formatCurrency(data.monthly.savings)}</span>
-            </div>
-        `;
-        
-        // Update annual projections
-        const annualContainer = document.getElementById('annual-projection');
-        annualContainer.innerHTML = `
-            <div class="projection-row">
-                <span>Income:</span>
-                <span>${formatCurrency(data.annual.income)}</span>
-            </div>
-            <div class="projection-row">
-                <span>Expenses:</span>
-                <span>${formatCurrency(data.annual.expenses)}</span>
-            </div>
-            <div class="projection-row total">
-                <span>Projected Savings:</span>
-                <span>${formatCurrency(data.annual.savings)}</span>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error updating projections:', error);
-        showError('Failed to update projections');
+/**
+ * Show loading state for all sections
+ */
+function showLoadingState() {
+    const loadingElements = document.querySelectorAll('.loading');
+    loadingElements.forEach(element => {
+        element.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+    });
+}
+
+/**
+ * Error handlers
+ */
+function showIncomeError() {
+    const container = document.getElementById('income-breakdown');
+    if (container) {
+        container.innerHTML = '<div class="text-center text-muted py-3">Unable to load income data</div>';
     }
 }
 
-// Utility Functions
+function showBudgetError() {
+    const container = document.getElementById('budget-status');
+    if (container) {
+        container.innerHTML = '<div class="text-center text-muted py-3">Unable to load budget data</div>';
+    }
+}
+
+function showActivityError() {
+    const container = document.getElementById('recent-activity');
+    if (container) {
+        container.innerHTML = '<div class="text-center text-muted py-3">Unable to load recent activity</div>';
+    }
+}
+
+/**
+ * Utility Functions
+ */
 function formatCurrency(amount) {
     return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-    }).format(amount);
-}
-
-function formatPercentage(value) {
-    return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1
-    }).format(value);
+    }).format(Math.abs(amount));
 }
 
 function formatDate(date) {
-    return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    }).format(new Date(date));
+    const now = new Date();
+    const diffInHours = (now - new Date(date)) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+        return 'Just now';
+    } else if (diffInHours < 24) {
+        return `${Math.floor(diffInHours)}h ago`;
+    } else if (diffInHours < 48) {
+        return 'Yesterday';
+    } else {
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric'
+        }).format(new Date(date));
+    }
 }
 
 function generateColors(count) {
@@ -334,21 +426,76 @@ function generateColors(count) {
         '#009688', '#3F51B5', '#FFC107', '#795548', '#607D8B'
     ];
     
-    if (count <= colors.length) {
-        return colors.slice(0, count);
-    }
+    return colors.slice(0, count);
+}
+
+function animateValueUpdate(elementId, newValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
     
-    // Generate additional colors if needed
-    const additional = count - colors.length;
-    for (let i = 0; i < additional; i++) {
-        colors.push(`hsl(${Math.random() * 360}, 70%, 50%)`);
-    }
+    const currentValue = parseFloat(element.textContent) || 0;
+    const step = (newValue - currentValue) / 20;
+    let current = currentValue;
     
-    return colors;
+    const animate = () => {
+        current += step;
+        if ((step > 0 && current >= newValue) || (step < 0 && current <= newValue)) {
+            current = newValue;
+            element.textContent = elementId.includes('rate') ? 
+                current.toFixed(1) : current.toFixed(2);
+            return;
+        }
+        
+        element.textContent = elementId.includes('rate') ? 
+            current.toFixed(1) : current.toFixed(2);
+        requestAnimationFrame(animate);
+    };
+    
+    requestAnimationFrame(animate);
 }
 
 function showError(message) {
-    // Implement error notification system
     console.error(message);
-    // You could add a toast notification system here
+    // You can implement a toast notification system here
 }
+
+/**
+ * Button Handlers (exported to global scope)
+ */
+function refreshDashboard() {
+    console.log('Refreshing dashboard...');
+    updateDashboard();
+}
+
+function showAddIncomeModal() {
+    console.log('Show add income modal');
+    window.location.href = '/income';
+}
+
+function showAddExpenseModal() {
+    console.log('Show add expense modal');
+    window.location.href = '/transactions';
+}
+
+function viewBudget() {
+    console.log('View budget');
+    window.location.href = '/budget';
+}
+
+function generateReport() {
+    console.log('Generate report');
+    alert('Report generation feature coming soon!');
+}
+
+function addGoal() {
+    console.log('Add financial goal');
+    alert('Financial goals feature coming soon!');
+}
+
+// Export functions to global scope
+window.refreshDashboard = refreshDashboard;
+window.showAddIncomeModal = showAddIncomeModal;
+window.showAddExpenseModal = showAddExpenseModal;
+window.viewBudget = viewBudget;
+window.generateReport = generateReport;
+window.addGoal = addGoal;

@@ -1,81 +1,180 @@
 /* Dashboard Layout */
 .dashboard-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 1rem;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(12, 1fr);
     gap: 1.5rem;
 }
 
+/* Dashboard Sections */
 .dashboard-section {
     background: #ffffff;
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.dashboard-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+/* Grid Layout */
 .overview-section {
     grid-column: 1 / -1;
 }
 
-.income-section,
+.income-section {
+    grid-column: 1 / 7;
+}
+
 .budget-section {
-    min-height: 400px;
+    grid-column: 7 / -1;
+}
+
+.activity-section {
+    grid-column: 1 / 8;
+}
+
+.quick-actions-section {
+    grid-column: 8 / -1;
+}
+
+.goals-section {
+    grid-column: 1 / -1;
 }
 
 /* Financial Overview Cards */
 .overview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
 }
 
 .overview-card {
-    background: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 8px;
-    text-align: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 4px solid;
 }
 
-.overview-card h3 {
+.overview-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.overview-card.total-income {
+    border-left-color: #28a745;
+}
+
+.overview-card.total-expenses {
+    border-left-color: #dc3545;
+}
+
+.overview-card.total-savings {
+    border-left-color: #17a2b8;
+}
+
+.card-icon {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+    font-size: 1.5rem;
+    color: #495057;
+}
+
+.card-content h3 {
     color: #495057;
     margin: 0 0 0.5rem;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.overview-card .amount {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #212529;
+.card-content .amount {
+    font-size: 2.2rem;
+    font-weight: 700;
     margin: 0.5rem 0;
+    line-height: 1;
 }
 
-.overview-card .period {
+.card-content .period {
     color: #6c757d;
     font-size: 0.9rem;
     margin: 0;
 }
 
+.card-content .savings-rate {
+    color: #17a2b8;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+}
+
 /* Income Chart */
 .income-chart-container {
-    height: 300px;
+    height: 350px;
     margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.income-chart-container canvas {
+    max-height: 100%;
 }
 
 /* Income List */
 .income-list {
     max-height: 400px;
     overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
 }
 
 .income-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem;
-    border-bottom: 1px solid #e9ecef;
+    padding: 1rem;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background-color 0.3s ease;
+}
+
+.income-item:hover {
+    background-color: #f8f9fa;
+}
+
+.income-item:last-child {
+    border-bottom: none;
 }
 
 .income-category {
@@ -84,8 +183,9 @@
 }
 
 .category-name {
-    font-weight: 500;
-    color: #212529;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
 }
 
 .entry-count {
@@ -98,8 +198,10 @@
 }
 
 .total-amount {
-    font-weight: 600;
+    font-weight: 700;
     color: #28a745;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
 }
 
 .average-amount {
@@ -114,27 +216,51 @@
 }
 
 .budget-item {
-    padding: 1rem;
+    padding: 1.5rem;
     background: #f8f9fa;
-    border-radius: 4px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+    transition: transform 0.3s ease;
+}
+
+.budget-item:hover {
+    transform: translateX(5px);
+}
+
+.budget-category {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.category-icon {
+    margin-right: 0.75rem;
+    font-size: 1.2rem;
+    color: #007bff;
+}
+
+.budget-category .category-name {
+    font-weight: 600;
+    color: #2c3e50;
 }
 
 .budget-progress {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
 }
 
 .progress-bar {
-    height: 8px;
+    height: 10px;
     background: #e9ecef;
-    border-radius: 4px;
+    border-radius: 5px;
     overflow: hidden;
     margin: 0.5rem 0;
 }
 
 .progress-fill {
     height: 100%;
-    background: #28a745;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.8s ease;
+    border-radius: 5px;
 }
 
 .budget-amounts {
@@ -142,30 +268,51 @@
     justify-content: space-between;
     font-size: 0.9rem;
     color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.budget-status {
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Recent Activity */
 .activity-list {
-    max-height: 400px;
+    max-height: 500px;
     overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
 }
 
 .activity-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem;
-    border-bottom: 1px solid #e9ecef;
+    padding: 1rem;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background-color 0.3s ease;
+}
+
+.activity-item:hover {
+    background-color: #f8f9fa;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
 }
 
 .activity-icon {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     margin-right: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #e9ecef;
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 
 .activity-details {
@@ -173,102 +320,296 @@
 }
 
 .activity-title {
-    font-weight: 500;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
 }
 
 .activity-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: #6c757d;
-    margin-top: 0.25rem;
 }
 
-/* Projections Section */
-.projections-grid {
+.activity-amount {
+    font-weight: 600;
+}
+
+/* Quick Actions */
+.quick-actions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
 }
 
-.projection-card {
+.quick-action-btn {
     background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 4px;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #495057;
 }
 
-.projection-details {
-    margin-top: 1rem;
+.quick-action-btn:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+    color: #007bff;
+    transform: translateY(-2px);
+}
+
+.quick-action-btn i {
+    font-size: 1.8rem;
+}
+
+.quick-action-btn span {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Financial Goals */
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.goal-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+}
+
+.goal-card h4 {
+    margin: 0 0 1rem;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.goal-progress .progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.goal-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #495057;
+    margin-top: 0.5rem;
+}
+
+.goal-details .current {
+    font-weight: 600;
+    color: #28a745;
+}
+
+.goal-details .target {
+    color: #6c757d;
 }
 
 /* Loading State */
 .loading {
     text-align: center;
     color: #6c757d;
-    padding: 2rem;
+    padding: 3rem 2rem;
+    font-size: 1.1rem;
 }
 
-/* Responsive Adjustments */
+.loading i {
+    color: #007bff;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .dashboard-container {
+        grid-template-columns: repeat(8, 1fr);
+    }
+    
+    .income-section {
+        grid-column: 1 / 5;
+    }
+    
+    .budget-section {
+        grid-column: 5 / -1;
+    }
+    
+    .activity-section {
+        grid-column: 1 / 6;
+    }
+    
+    .quick-actions-section {
+        grid-column: 6 / -1;
+    }
+}
+
 @media (max-width: 768px) {
     .dashboard-container {
         grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0.5rem;
     }
-
+    
+    .overview-section,
+    .income-section,
+    .budget-section,
+    .activity-section,
+    .quick-actions-section,
+    .goals-section {
+        grid-column: 1;
+    }
+    
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .overview-card {
+        padding: 1.5rem;
+    }
+    
     .overview-card .amount {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
     }
-
+    
     .income-chart-container {
-        height: 250px;
+        height: 280px;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.2rem;
     }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
+@media (max-width: 576px) {
     .dashboard-section {
-        background: #2d3436;
-        color: #f8f9fa;
+        padding: 1rem;
     }
-
-    .overview-card,
-    .budget-item,
-    .projection-card {
-        background: #2d3436;
-        color: #f8f9fa;
+    
+    .overview-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem 1rem;
     }
-
-    .overview-card h3,
-    .category-name {
-        color: #f8f9fa;
+    
+    .card-icon {
+        margin-right: 0;
+        margin-bottom: 1rem;
     }
-
-    .income-item,
+    
+    .card-content .amount {
+        font-size: 1.6rem;
+    }
+    
     .activity-item {
-        border-bottom-color: #4a4a4a;
+        padding: 0.75rem;
     }
-
-    .progress-bar {
-        background: #4a4a4a;
+    
+    .activity-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
     }
-
-    .budget-amounts,
-    .activity-meta {
-        color: #adb5bd;
+    
+    .budget-item {
+        padding: 1rem;
     }
 }
 
 /* Animation Effects */
-.overview-card,
-.income-item,
-.budget-item,
-.activity-item {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.overview-card:hover,
-.income-item:hover,
-.budget-item:hover,
-.activity-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.dashboard-section {
+    animation: slideIn 0.5s ease-out;
+}
+
+.dashboard-section:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-section:nth-child(2) { animation-delay: 0.2s; }
+.dashboard-section:nth-child(3) { animation-delay: 0.3s; }
+.dashboard-section:nth-child(4) { animation-delay: 0.4s; }
+.dashboard-section:nth-child(5) { animation-delay: 0.5s; }
+.dashboard-section:nth-child(6) { animation-delay: 0.6s; }
+
+/* Progress bar animation */
+@keyframes progressAnimation {
+    from {
+        width: 0%;
+    }
+}
+
+.progress-fill {
+    animation: progressAnimation 1.5s ease-out;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .dashboard-section {
+        background: #343a40;
+        color: #f8f9fa;
+        border-color: #495057;
+    }
+    
+    .overview-card,
+    .budget-item,
+    .goal-card,
+    .quick-action-btn {
+        background: #495057;
+        color: #f8f9fa;
+    }
+    
+    .section-header {
+        border-bottom-color: #495057;
+    }
+    
+    .section-header h2,
+    .category-name,
+    .activity-title {
+        color: #f8f9fa;
+    }
+    
+    .income-item,
+    .activity-item {
+        border-bottom-color: #495057;
+    }
+    
+    .income-item:hover,
+    .activity-item:hover {
+        background-color: #495057;
+    }
+    
+    .progress-bar {
+        background: #495057;
+    }
+    
+    .loading {
+        color: #adb5bd;
+    }
 }
