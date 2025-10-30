@@ -4,218 +4,407 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the page
     initializePage();
-    
-    // Add smooth scrolling
-    initializeSmoothScrolling();
-    
-    // Add interactive effects
-    initializeInteractiveEffects();
-    
-    // Add loading animations
-    initializeAnimations();
 });
 
 /**
  * Initialize page functionality
  */
 function initializePage() {
-    console.log('Niner Finance - Index page loaded');
-    
-    // Add fade-in class to main elements
-    const mainElements = document.querySelectorAll('.hero-section, .features-section, .dashboard-section');
-    mainElements.forEach((element, index) => {
-        setTimeout(() => {
-            element.classList.add('fade-in');
-        }, index * 200);
-    });
+    initializeAnimations();
+    initializeTooltips();
+    initializeSmoothScrolling();
+    initializeCardInteractions();
+    initializePerformanceOptimizations();
+    initializeAccessibility();
 }
 
 /**
- * Initialize smooth scrolling for anchor links
- */
-function initializeSmoothScrolling() {
-    const links = document.querySelectorAll('a[href^="#"]');
-    
-    links.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const targetId = this.getAttribute('href');
-            const targetSection = document.querySelector(targetId);
-            
-            if (targetSection) {
-                targetSection.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-}
-
-/**
- * Initialize interactive effects
- */
-function initializeInteractiveEffects() {
-    // Feature card hover effects
-    const featureCards = document.querySelectorAll('.feature-card');
-    featureCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-10px) scale(1.02)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
-    });
-    
-    // Dashboard card effects
-    const dashboardCards = document.querySelectorAll('.dashboard-card');
-    dashboardCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            const icon = this.querySelector('i');
-            if (icon) {
-                icon.style.transform = 'scale(1.1) rotate(5deg)';
-            }
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            const icon = this.querySelector('i');
-            if (icon) {
-                icon.style.transform = 'scale(1) rotate(0deg)';
-            }
-        });
-    });
-    
-    // Button ripple effect
-    const buttons = document.querySelectorAll('.auth-btn');
-    buttons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            const ripple = document.createElement('span');
-            const rect = this.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            const x = e.clientX - rect.left - size / 2;
-            const y = e.clientY - rect.top - size / 2;
-            
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = x + 'px';
-            ripple.style.top = y + 'px';
-            ripple.classList.add('ripple');
-            
-            this.appendChild(ripple);
-            
-            setTimeout(() => {
-                ripple.remove();
-            }, 600);
-        });
-    });
-}
-
-/**
- * Initialize scroll animations
+ * Initialize animations and loading states
  */
 function initializeAnimations() {
-    // Intersection Observer for scroll animations
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-            }
-        });
-    }, observerOptions);
-    
-    // Observe elements for animation
-    const animateElements = document.querySelectorAll('.feature-card, .dashboard-card');
-    animateElements.forEach(el => observer.observe(el));
-}
-
-/**
- * Utility function to show notifications
- */
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} notification`;
-    notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-        opacity: 0;
-        transform: translateX(100%);
-        transition: all 0.3s ease;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Animate in
-    setTimeout(() => {
-        notification.style.opacity = '1';
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Remove after delay
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
-}
-
-/**
- * Handle responsive navigation
- */
-function handleResponsiveNav() {
-    const navbar = document.querySelector('.navbar');
-    let lastScrollTop = 0;
-    
-    window.addEventListener('scroll', function() {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        
-        if (scrollTop > lastScrollTop && scrollTop > 100) {
-            // Scrolling down
-            navbar.style.transform = 'translateY(-100%)';
-        } else {
-            // Scrolling up
-            navbar.style.transform = 'translateY(0)';
-        }
-        
-        lastScrollTop = scrollTop;
+    // Add staggered animation delays to dashboard cards
+    const dashboardCards = document.querySelectorAll('.dashboard-card');
+    dashboardCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
     });
+
+    // Add staggered animation delays to feature cards
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.2}s`;
+    });
+
+    // Intersection Observer for scroll animations
+    if ('IntersectionObserver' in window) {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements that should animate on scroll
+        const animatedElements = document.querySelectorAll('.feature-card, .dashboard-card');
+        animatedElements.forEach(el => observer.observe(el));
+    }
 }
 
 /**
  * Initialize tooltips for dashboard cards
  */
 function initializeTooltips() {
-    const tooltips = {
-        'transactions': 'View and manage your financial transactions',
-        'income': 'Track your income sources and amounts',
-        'budget': 'Create and monitor your budget goals',
-        'financial-split': 'Calculate shared expenses and splits'
-    };
+    const dashboardCards = document.querySelectorAll('.dashboard-card[data-tooltip]');
     
-    Object.keys(tooltips).forEach(key => {
-        const element = document.querySelector(`[data-tooltip="${key}"]`);
-        if (element) {
-            element.setAttribute('title', tooltips[key]);
+    dashboardCards.forEach(card => {
+        const tooltipType = card.getAttribute('data-tooltip');
+        const tooltipText = getTooltipText(tooltipType);
+        
+        if (tooltipText) {
+            createTooltip(card, tooltipText);
         }
     });
 }
 
-// Export functions for external use
-window.NinerFinance = {
-    showNotification,
-    initializePage,
-    initializeAnimations
-};
+/**
+ * Get tooltip text based on type
+ */
+function getTooltipText(type) {
+    const tooltips = {
+        'dashboard': 'View your complete financial overview and recent activity',
+        'transactions': 'Add, edit, and categorize your financial transactions',
+        'income': 'Track all your income sources and recurring payments',
+        'budget': 'Create and manage budgets to control your spending',
+        'financial-split': 'Access calculators and financial planning tools'
+    };
+    
+    return tooltips[type] || '';
+}
+
+/**
+ * Create tooltip element
+ */
+function createTooltip(element, text) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip-text';
+    tooltip.textContent = text;
+    
+    element.classList.add('tooltip-container');
+    element.appendChild(tooltip);
+    
+    // Position tooltip on hover
+    element.addEventListener('mouseenter', () => {
+        positionTooltip(tooltip, element);
+    });
+}
+
+/**
+ * Position tooltip to prevent overflow
+ */
+function positionTooltip(tooltip, element) {
+    const rect = element.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    
+    // Check if tooltip would overflow viewport
+    if (rect.left + tooltipRect.width > window.innerWidth) {
+        tooltip.style.left = 'auto';
+        tooltip.style.right = '0';
+        tooltip.style.marginLeft = '0';
+        tooltip.style.marginRight = '10px';
+    }
+    
+    if (rect.top - tooltipRect.height < 0) {
+        tooltip.style.bottom = 'auto';
+        tooltip.style.top = '125%';
+    }
+}
+
+/**
+ * Initialize smooth scrolling for anchor links
+ */
+function initializeSmoothScrolling() {
+    const anchorLinks = document.querySelectorAll('a[href^="#"]');
+    
+    anchorLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            
+            if (href === '#') return;
+            
+            const target = document.querySelector(href);
+            if (target) {
+                e.preventDefault();
+                
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                // Update URL without jumping
+                history.pushState(null, null, href);
+            }
+        });
+    });
+}
+
+/**
+ * Initialize card interactions and click analytics
+ */
+function initializeCardInteractions() {
+    const dashboardCards = document.querySelectorAll('.dashboard-card');
+    const authButtons = document.querySelectorAll('.auth-btn');
+    
+    // Add click tracking for dashboard cards
+    dashboardCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            const cardType = this.getAttribute('data-tooltip') || 'unknown';
+            trackCardClick(cardType);
+            
+            // Add visual feedback
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+        
+        // Add keyboard navigation
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+    
+    // Add click tracking for auth buttons
+    authButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const buttonType = this.classList.contains('btn-login') ? 'login' : 'register';
+            trackButtonClick(buttonType);
+            
+            // Add loading state
+            this.classList.add('loading');
+            
+            // Prevent double-clicking
+            this.style.pointerEvents = 'none';
+            setTimeout(() => {
+                this.style.pointerEvents = '';
+                this.classList.remove('loading');
+            }, 2000);
+        });
+    });
+}
+
+/**
+ * Track card clicks for analytics
+ */
+function trackCardClick(cardType) {
+    console.log(`Dashboard card clicked: ${cardType}`);
+    
+    // Send analytics if available
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'click', {
+            'event_category': 'Dashboard Card',
+            'event_label': cardType
+        });
+    }
+}
+
+/**
+ * Track button clicks for analytics
+ */
+function trackButtonClick(buttonType) {
+    console.log(`Auth button clicked: ${buttonType}`);
+    
+    // Send analytics if available
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'click', {
+            'event_category': 'Auth Button',
+            'event_label': buttonType
+        });
+    }
+}
+
+/**
+ * Initialize performance optimizations
+ */
+function initializePerformanceOptimizations() {
+    // Lazy load images if any
+    if ('IntersectionObserver' in window) {
+        const images = document.querySelectorAll('img[data-src]');
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+        
+        images.forEach(img => imageObserver.observe(img));
+    }
+    
+    // Throttle scroll events
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+        
+        scrollTimeout = setTimeout(() => {
+            handleScroll();
+        }, 16); // ~60fps
+    });
+}
+
+/**
+ * Handle scroll events
+ */
+function handleScroll() {
+    const scrollY = window.scrollY;
+    const heroSection = document.querySelector('.hero-section');
+    
+    if (heroSection) {
+        // Parallax effect for hero section
+        const parallaxSpeed = 0.5;
+        heroSection.style.transform = `translateY(${scrollY * parallaxSpeed}px)`;
+    }
+    
+    // Show/hide back to top button
+    const backToTopButton = document.querySelector('.back-to-top');
+    if (backToTopButton) {
+        if (scrollY > 500) {
+            backToTopButton.classList.add('visible');
+        } else {
+            backToTopButton.classList.remove('visible');
+        }
+    }
+}
+
+/**
+ * Initialize accessibility features
+ */
+function initializeAccessibility() {
+    // Add ARIA labels to interactive elements
+    const dashboardCards = document.querySelectorAll('.dashboard-card');
+    dashboardCards.forEach(card => {
+        if (!card.getAttribute('aria-label')) {
+            const title = card.querySelector('.dashboard-title');
+            if (title) {
+                card.setAttribute('aria-label', `Navigate to ${title.textContent}`);
+            }
+        }
+    });
+    
+    // Add role attributes
+    const cardContainers = document.querySelectorAll('.dashboard-grid, .row');
+    cardContainers.forEach(container => {
+        if (!container.getAttribute('role')) {
+            container.setAttribute('role', 'region');
+        }
+    });
+    
+    // Handle reduced motion preferences
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.style.scrollBehavior = 'auto';
+        
+        // Disable animations
+        const animatedElements = document.querySelectorAll('.dashboard-card, .feature-card, .auth-btn');
+        animatedElements.forEach(element => {
+            element.style.animation = 'none';
+            element.style.transition = 'none';
+        });
+    }
+    
+    // Focus management for modal-like interactions
+    document.addEventListener('keydown', function(e) {
+        // Escape key handling
+        if (e.key === 'Escape') {
+            const activeTooltips = document.querySelectorAll('.tooltip-text:hover');
+            activeTooltips.forEach(tooltip => {
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.opacity = '0';
+            });
+        }
+    });
+}
+
+/**
+ * Utility function to debounce function calls
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Utility function to throttle function calls
+ */
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+/**
+ * Handle page visibility changes
+ */
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Pause animations when page is not visible
+        document.body.classList.add('page-hidden');
+    } else {
+        // Resume animations when page becomes visible
+        document.body.classList.remove('page-hidden');
+    }
+});
+
+/**
+ * Initialize error handling
+ */
+window.addEventListener('error', function(e) {
+    console.error('JavaScript error on index page:', e.error);
+    
+    // Graceful degradation - ensure basic functionality works
+    const authButtons = document.querySelectorAll('.auth-btn');
+    authButtons.forEach(button => {
+        button.style.pointerEvents = 'auto';
+        button.classList.remove('loading');
+    });
+});
+
+/**
+ * Export functions for testing
+ */
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        initializePage,
+        getTooltipText,
+        trackCardClick,
+        trackButtonClick,
+        debounce,
+        throttle
+    };
+}

@@ -1,13 +1,13 @@
 import os
 import sys
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, redirect, url_for, g
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_required, current_user
+from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
-from datetime import datetime
 
-print("🔄 Starting Niner Finance App initialization...")
+# Add current directory to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -15,20 +15,22 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 bcrypt = Bcrypt()
 
-print("✅ Flask extensions initialized")
-
 def create_app():
     """Application factory pattern"""
     print("🏗️  Creating Flask app...")
     app = Flask(__name__)
     
     # Configuration
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key-change-in-production'
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///niner_finance.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
+    app.config['WTF_CSRF_ENABLED'] = False # Disable CSRF for simplicity; enable in production!
 
-    print(f"📊 Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    # Database configuration
+    instance_path = os.path.join(os.path.dirname(__file__), 'instance')
+    os.makedirs(instance_path, exist_ok=True)
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "niner_finance.db")}'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['DATABASE'] = os.path.join(instance_path, 'niner_finance.db')
     
     # Initialize extensions with app
     db.init_app(app)
@@ -36,188 +38,194 @@ def create_app():
     csrf.init_app(app)
     bcrypt.init_app(app)
     
-    print("🔗 Extensions connected to app")
-    
     # Login manager configuration
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
-    login_manager.login_message_category = 'info'
+    login_manager.login_message_category = 'warning'
     
+    # User loader for Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
+        """Load user by ID for Flask-Login"""
+        import sqlite3
+        from flask_login import UserMixin
+        
         try:
-            import models
-            if hasattr(models, 'User') and models.User:
-                return models.User.query.get(int(user_id))
+            db_path = app.config['DATABASE']
+            with sqlite3.connect(db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                user_data = conn.execute(
+                    'SELECT * FROM user WHERE id = ?', (user_id,)
+                ).fetchone()
+                
+                if user_data:
+                    # Create a simple user object that implements UserMixin
+                    class User(UserMixin):
+                        def __init__(self, user_data):
+                            self.id = str(user_data['id'])
+                            self.username = user_data['username']
+                            self.email = user_data['email']
+                            self.password = user_data['password']
+                        
+                        def get_id(self):
+                            return self.id
+                    
+                    return User(user_data)
+                return None
         except Exception as e:
-            print(f"Error in load_user: {e}")
-        return None
+            print(f"Error loading user: {e}")
+            return None
     
-    print("🔐 Login manager configured")
+    print("🔗 Extensions connected to app")
     
-    # Register blueprints with better error handling
-    print("📋 Registering blueprints...")
+    # Initialize database
+    import db as database_module
+    database_module.init_app(app)
+    
+    with app.app_context():
+        try:
+            # Create basic tables directly
+            import sqlite3
+            db_path = app.config['DATABASE']
+            
+            with sqlite3.connect(db_path) as conn:
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS user (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        email TEXT UNIQUE NOT NULL,
+                        password TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS transactions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        transaction_type TEXT NOT NULL,
+                        amount DECIMAL(10,2) NOT NULL,
+                        description TEXT NOT NULL,
+                        date DATE NOT NULL DEFAULT CURRENT_DATE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES user (id)
+                    )
+                ''')
+                
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS income (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        category_id INTEGER,
+                        amount DECIMAL(10,2) NOT NULL,
+                        source TEXT NOT NULL,
+                        description TEXT,
+                        date DATE NOT NULL DEFAULT CURRENT_DATE,
+                        is_recurring BOOLEAN DEFAULT 0,
+                        recurrence_period TEXT,
+                        next_recurrence_date DATE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        created_by INTEGER,
+                        FOREIGN KEY (user_id) REFERENCES user (id)
+                    )
+                ''')
+                
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS expenses (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        category TEXT NOT NULL,
+                        amount DECIMAL(10,2) NOT NULL,
+                        description TEXT NOT NULL,
+                        date DATE NOT NULL DEFAULT CURRENT_DATE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        created_by INTEGER,
+                        FOREIGN KEY (user_id) REFERENCES user (id)
+                    )
+                ''')
+                
+                conn.commit()
+            
+            print("✅ Database initialized successfully")
+            
+            # Create demo user
+            database_module.create_demo_user()
+            
+        except Exception as e:
+            print(f"⚠️  Database setup error: {e}")
+    
+    # Import and register blueprints
+    try:
+        import auth
+        app.register_blueprint(auth.bp)
+        print("✅ Auth blueprint registered")
+    except Exception as e:
+        print(f"⚠️  Error registering auth blueprint: {e}")
     
     try:
-        from auth import bp as auth_bp
-        app.register_blueprint(auth_bp, url_prefix='/auth')
-        print("✅ Auth blueprint registered successfully.")
-    except ImportError as e:
-        print(f"⚠️  Auth blueprint not available: {e}")
+        import transactions
+        app.register_blueprint(transactions.bp)
+        print("✅ Transactions blueprint registered")
+    except Exception as e:
+        print(f"⚠️  Error registering transactions blueprint: {e}")
     
     try:
-        from transactions import bp as transactions_bp
-        app.register_blueprint(transactions_bp)
-        print("✅ Transactions blueprint registered successfully.")
-    except ImportError as e:
-        print(f"⚠️  Transactions blueprint not available: {e}")
+        import income
+        app.register_blueprint(income.bp)
+        print("✅ Income blueprint registered")
+    except Exception as e:
+        print(f"⚠️  Error registering income blueprint: {e}")
     
     try:
-        from budget import bp as budget_bp
-        app.register_blueprint(budget_bp)
-        print("✅ Budget blueprint registered successfully.")
-    except ImportError as e:
-        print(f"⚠️  Budget blueprint not available: {e}")
+        import budget
+        app.register_blueprint(budget.bp)
+        print("✅ Budget blueprint registered")
+    except Exception as e:
+        print(f"⚠️  Error registering budget blueprint: {e}")
     
     try:
-        from finance import bp as finance_bp
-        app.register_blueprint(finance_bp)
-        print("✅ Finance blueprint registered successfully.")
-    except ImportError as e:
-        print(f"⚠️  Finance blueprint not available: {e}")
+        import finance
+        app.register_blueprint(finance.bp)
+        print("✅ Finance blueprint registered")
+    except Exception as e:
+        print(f"⚠️  Error registering finance blueprint: {e}")
     
-    try:
-        from income import bp as income_bp
-        app.register_blueprint(income_bp)
-        print("✅ Income blueprint registered successfully.")
-    except ImportError as e:
-        print(f"⚠️  Income blueprint not available: {e}")
-    
-    # Main navigation routes with templates
+    # Routes
     @app.route('/')
     def index():
-        return '<h1>🏦 Niner Finance</h1><p>Welcome to Niner Finance!</p><ul><li><a href="/test">Test Page</a></li><li><a href="/transactions">Transactions</a></li><li><a href="/income">Income</a></li><li><a href="/budget">Budget</a></li><li><a href="/finance">Finance</a></li></ul>'
+        """Main landing page"""
+        return render_template('home/index.html')
     
     @app.route('/dashboard')
     def dashboard():
-        stats = {
-            'total_income': 0.00,
-            'total_expenses': 0.00,
-            'net_balance': 0.00,
-            'monthly_budget': 0.00
-        }
-        return f'<h1>📊 Dashboard</h1><p>Stats: {stats}</p>'
-    
-    @app.route('/test')
-    def test():
-        system_info = {
-            'current_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'flask_status': 'Running',
-            'database_status': 'SQLAlchemy configured',
-            'routes_status': 'All functional'
-        }
-        return f'<h1>🧪 Test Page</h1><pre>{system_info}</pre><p><a href="/">Back to Home</a></p>'
-    
-    print("🛣️  Main routes configured")
-    
-    # Create database tables WITHIN app context
-    print("🗄️  Setting up database...")
-    with app.app_context():
-        try:
-            # Initialize models with db instance
-            print("🔧 Initializing models...")
-            
-            # Import models and initialize
-            import models
-            
-            # Check if init_models function exists
-            if hasattr(models, 'init_models'):
-                model_classes = models.init_models(db)
-                print(f"✅ Models initialized successfully!")
-                
-                # Test models
-                if models.test_models():
-                    print("✅ All models are ready!")
-                else:
-                    print("⚠️  Some models may have issues")
-                
-            else:
-                print("❌ init_models function not found in models.py")
-                model_classes = {}
-            
-            # Create all tables
-            print("🏗️  Creating database tables...")
-            db.create_all()
-            print("✅ Database tables created successfully!")
-            
-            # Create default categories
-            if hasattr(models, 'create_default_categories'):
-                print("📁 Creating default categories...")
-                models.create_default_categories()
-            
-            # Create admin user if User model exists
-            if model_classes and 'User' in model_classes:
-                print("👤 Checking for admin user...")
-                try:
-                    User = model_classes['User']
-                    admin_user = User.query.filter_by(email='admin@ninerfinance.com').first()
-                    if not admin_user:
-                        admin_user = User(
-                            username='admin',
-                            email='admin@ninerfinance.com',
-                            password='admin123'
-                        )
-                        db.session.add(admin_user)
-                        db.session.commit()
-                        print("✅ Default admin user created!")
-                        print("   📧 Email: admin@ninerfinance.com")
-                        print("   🔑 Password: admin123")
-                    else:
-                        print("ℹ️  Admin user already exists.")
-                except Exception as e:
-                    print(f"❌ Error with admin user: {e}")
-            else:
-                print("⚠️  User model not available, skipping admin user creation")
-                
-        except Exception as e:
-            print(f"❌ Database setup error: {e}")
-            import traceback
-            traceback.print_exc()
+        """Dashboard page - requires login"""
+        from auth import login_required
+        
+        @login_required
+        def dashboard_view():
+            return render_template('home/dashboard.html')
+        
+        return dashboard_view()
     
     print("🎯 App creation completed!")
     return app
 
-# Create the app instance
-print("🚀 Creating app instance...")
-app = create_app()
-
 if __name__ == '__main__':
-    print("\n" + "="*60)
-    print("🔥 STARTING NINER FINANCE APPLICATION")
-    print("="*60)
+    app = create_app()
     
-    # Run the application
-    debug_mode = True
-    port = 5001
+    # Try to run on different ports if 5001 is busy
+    ports_to_try = [5001, 5002, 8000, 3000]
     
-    print(f"\n🌟 Configuration:")
-    print(f"   🐛 Debug mode: {debug_mode}")
-    print(f"   🔌 Port: {port}")
-    print(f"   🏠 Host: 0.0.0.0")
-    
-    print(f"\n🚀 Starting server...")
-    print(f"📱 Open your browser to: http://localhost:{port}")
-    print(f"🔍 Test page: http://localhost:{port}/test")
-    print("\n" + "="*60)
-    
-    # Force flush output
-    sys.stdout.flush()
-    
-    try:
-        app.run(debug=debug_mode, host='0.0.0.0', port=port)
-    except KeyboardInterrupt:
-        print("\n🛑 Server stopped by user")
-    except Exception as e:
-        print(f"❌ Error starting server: {e}")
-        import traceback
-        traceback.print_exc()
+    for port in ports_to_try:
+        try:
+            print(f"🚀 Starting server on port {port}")
+            app.run(debug=True, port=port)
+            break
+        except OSError as e:
+            if "Address already in use" in str(e):
+                print(f"❌ Port {port} is busy, trying next port...")
+                continue
+            else:
+                raise e
+    else:
+        print("❌ Could not find an available port to run the server")

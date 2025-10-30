@@ -20,6 +20,7 @@ def create():
 
 @bp.route('/weekly', methods=['GET'])
 @login_required
+
 @cross_origin()
 def get_weekly_budget():
     """Get weekly budget data for the current user."""

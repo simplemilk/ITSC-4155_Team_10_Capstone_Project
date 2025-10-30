@@ -58,7 +58,7 @@ def index():
     except Exception as e:
         flash(f'Error loading transactions: {str(e)}', 'error')
     
-    return render_template('home/index.html', transactions=transactions)
+    return render_template('home/transaction.html', transactions=transactions)
 
 @bp.route('/transactions/update')
 @login_required
