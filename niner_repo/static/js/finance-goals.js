@@ -71,6 +71,9 @@ function showAddGoalModal() {
     document.getElementById('addGoalForm').reset();
     document.getElementById('contributionHelp').textContent = '';
     
+    // Remove editing state
+    document.getElementById('addGoalModal').removeAttribute('data-editing-goal-id');
+    
     // Set default date to 1 year from now
     const defaultDate = new Date();
     defaultDate.setFullYear(defaultDate.getFullYear() + 1);
@@ -88,46 +91,77 @@ async function saveGoal() {
     }
     
     const goalData = {
-        name: document.getElementById('goalName').value,
+        goal_name: document.getElementById('goalName').value,
         description: document.getElementById('goalDescription').value,
         target_amount: parseFloat(document.getElementById('targetAmount').value),
         current_amount: parseFloat(document.getElementById('currentAmount').value) || 0,
         target_date: document.getElementById('targetDate').value,
-        category: document.getElementById('goalCategory').value,
-        monthly_contribution: parseFloat(document.getElementById('monthlyContribution').value) || 0,
-        created_date: new Date().toISOString().split('T')[0]
+        category: document.getElementById('goalCategory').value
     };
     
     try {
-        // For now, save to localStorage until backend is ready
-        const goals = JSON.parse(localStorage.getItem('financialGoals') || '[]');
-        goalData.id = Date.now().toString();
-        goals.push(goalData);
-        localStorage.setItem('financialGoals', JSON.stringify(goals));
+        const editingId = document.getElementById('addGoalModal').getAttribute('data-editing-goal-id');
         
-        // Close modal
-        bootstrap.Modal.getInstance(document.getElementById('addGoalModal')).hide();
+        let response;
+        if (editingId) {
+            // Update existing goal
+            response = await fetch(`/api/goals/${editingId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(goalData)
+            });
+        } else {
+            // Create new goal
+            response = await fetch('/api/goals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(goalData)
+            });
+        }
         
-        // Reload goals
-        await loadGoals();
+        const result = await response.json();
         
-        showNotification('Goal saved successfully!', 'success');
+        if (result.success) {
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('addGoalModal')).hide();
+            
+            // Reload goals
+            await loadGoals();
+            
+            showNotification(result.message, 'success');
+        } else {
+            showNotification(result.error || 'Error saving goal', 'error');
+        }
     } catch (error) {
         console.error('Error saving goal:', error);
         showNotification('Error saving goal. Please try again.', 'error');
     }
 }
 
-// Load goals
+// Load goals from API
 async function loadGoals() {
     try {
-        // For now, load from localStorage until backend is ready
-        const goals = JSON.parse(localStorage.getItem('financialGoals') || '[]');
-        financialState.goals = goals;
-        displayGoals();
+        const response = await fetch('/api/goals');
+        const data = await response.json();
+        
+        if (data.goals) {
+            financialState.goals = data.goals;
+            displayGoals();
+        } else {
+            throw new Error(data.error || 'Failed to load goals');
+        }
     } catch (error) {
         console.error('Error loading goals:', error);
         showNotification('Error loading goals.', 'error');
+        
+        // Fallback to localStorage for demo purposes
+        const localGoals = JSON.parse(localStorage.getItem('financialGoals') || '[]');
+        financialState.goals = localGoals;
+        displayGoals();
     }
 }
 
@@ -171,11 +205,13 @@ function populateGoalCard(cardElement, goal) {
     const amountNeeded = goal.target_amount - goal.current_amount;
     const monthlyNeeded = monthsLeft > 0 ? amountNeeded / monthsLeft : 0;
     
-    // Set goal data
+    // Set goal data - use goal_name for API data, name for localStorage data
+    const goalName = goal.goal_name || goal.name;
+    
     cardElement.querySelector('.goal-card').setAttribute('data-goal-id', goal.id);
     cardElement.querySelector('.goal-icon').className = `goal-icon ${goal.category}`;
     cardElement.querySelector('.goal-icon-class').className = getCategoryIcon(goal.category);
-    cardElement.querySelector('.goal-name').textContent = goal.name;
+    cardElement.querySelector('.goal-name').textContent = goalName;
     cardElement.querySelector('.goal-description').textContent = goal.description || 'No description';
     
     // Progress information
@@ -229,17 +265,16 @@ function getGoalStatus(goal, daysLeft, progress) {
 function editGoal(button) {
     const goalCard = button.closest('.goal-card');
     const goalId = goalCard.getAttribute('data-goal-id');
-    const goal = financialState.goals.find(g => g.id === goalId);
+    const goal = financialState.goals.find(g => g.id == goalId);
     
     if (goal) {
         // Populate modal with existing data
-        document.getElementById('goalName').value = goal.name;
+        document.getElementById('goalName').value = goal.goal_name || goal.name;
         document.getElementById('goalDescription').value = goal.description || '';
         document.getElementById('targetAmount').value = goal.target_amount;
         document.getElementById('currentAmount').value = goal.current_amount;
         document.getElementById('targetDate').value = goal.target_date;
         document.getElementById('goalCategory').value = goal.category;
-        document.getElementById('monthlyContribution').value = goal.monthly_contribution || 0;
         
         // Store goal ID for updating
         document.getElementById('addGoalModal').setAttribute('data-editing-goal-id', goalId);
@@ -251,41 +286,72 @@ function editGoal(button) {
 }
 
 // Add contribution
-function addContribution(button) {
+async function addContribution(button) {
     const goalCard = button.closest('.goal-card');
     const goalId = goalCard.getAttribute('data-goal-id');
-    const goal = financialState.goals.find(g => g.id === goalId);
+    const goal = financialState.goals.find(g => g.id == goalId);
     
     if (goal) {
-        const contribution = prompt(`Add contribution to "${goal.name}":`, '0.00');
+        const goalName = goal.goal_name || goal.name;
+        const contribution = prompt(`Add contribution to "${goalName}":`, '0.00');
         if (contribution && !isNaN(contribution) && parseFloat(contribution) > 0) {
-            goal.current_amount += parseFloat(contribution);
+            const newAmount = goal.current_amount + parseFloat(contribution);
             
-            // Save updated goal
-            const goals = JSON.parse(localStorage.getItem('financialGoals') || '[]');
-            const goalIndex = goals.findIndex(g => g.id === goalId);
-            if (goalIndex !== -1) {
-                goals[goalIndex] = goal;
-                localStorage.setItem('financialGoals', JSON.stringify(goals));
-                displayGoals();
-                showNotification(`$${contribution} added to ${goal.name}!`, 'success');
+            try {
+                const response = await fetch(`/api/goals/${goalId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...goal,
+                        current_amount: newAmount
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    await loadGoals();
+                    showNotification(`$${contribution} added to ${goalName}!`, 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Error adding contribution:', error);
+                showNotification('Error adding contribution. Please try again.', 'error');
             }
         }
     }
 }
 
 // Delete goal
-function deleteGoal(button) {
+async function deleteGoal(button) {
     const goalCard = button.closest('.goal-card');
     const goalId = goalCard.getAttribute('data-goal-id');
-    const goal = financialState.goals.find(g => g.id === goalId);
+    const goal = financialState.goals.find(g => g.id == goalId);
     
-    if (goal && confirm(`Are you sure you want to delete "${goal.name}"?`)) {
-        const goals = JSON.parse(localStorage.getItem('financialGoals') || '[]');
-        const filteredGoals = goals.filter(g => g.id !== goalId);
-        localStorage.setItem('financialGoals', JSON.stringify(filteredGoals));
-        loadGoals();
-        showNotification(`${goal.name} deleted successfully.`, 'success');
+    if (goal) {
+        const goalName = goal.goal_name || goal.name;
+        if (confirm(`Are you sure you want to delete "${goalName}"?`)) {
+            try {
+                const response = await fetch(`/api/goals/${goalId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    await loadGoals();
+                    showNotification(`${goalName} deleted successfully.`, 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Error deleting goal:', error);
+                showNotification('Error deleting goal. Please try again.', 'error');
+            }
+        }
     }
 }
 
@@ -294,7 +360,7 @@ async function updateFinancialData() {
     try {
         showLoading(true);
         
-        // Mock data for now
+        // Mock data for now - you can replace this with real API calls
         const mockData = {
             summary: {
                 total_expenses: 1450.75,
@@ -437,12 +503,39 @@ function showError(message) {
 }
 
 function showNotification(message, type = 'info') {
-    // Simple alert for now - you could implement a toast system
-    if (type === 'error') {
-        alert('Error: ' + message);
-    } else {
-        alert(message);
-    }
+    // Create a toast notification
+    const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'primary'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check' : 'info-circle'} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Remove toast element after it's hidden
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '11';
+    document.body.appendChild(container);
+    return container;
 }
 
 // Export functions to global scope

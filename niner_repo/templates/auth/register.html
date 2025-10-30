@@ -9,149 +9,308 @@
 {% block content %}
 <div class="auth-container register-container">
     <div class="auth-card register-card">
-        <div class="auth-header register-header">
-            <i class="fas fa-user-plus fa-3x text-info mb-3"></i>
-            <h2>Create Account</h2>
-            <p>Join Niner Finance and take control of your finances</p>
-        </div>
-
+        <!-- Flash Messages -->
         {% if error %}
-            <div class="alert alert-danger" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
-            </div>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
         {% endif %}
 
-        <form method="post" id="registerForm">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div class="form-floating">
-                <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
-                <label for="username"><i class="fas fa-user me-2"></i>Username</label>
-                <div class="invalid-feedback" id="usernameError"></div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' or category == 'danger' else 'info-circle' }} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
 
-            <div class="form-floating">
-                <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
-                <label for="email"><i class="fas fa-envelope me-2"></i>Email Address</label>
-                <div class="invalid-feedback" id="emailError"></div>
-            </div>
+        <!-- Auth Header -->
+        <div class="auth-header register-header">
+            <h2><i class="fas fa-user-plus me-2"></i>Create Account</h2>
+            <p>Join Niner Finance to manage your finances</p>
+        </div>
 
-            <div class="form-floating position-relative">
-                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
-                <label for="password"><i class="fas fa-lock me-2"></i>Password</label>
-                <button type="button" class="password-toggle" onclick="togglePassword('password')">
-                    <i class="fas fa-eye" id="passwordToggleIcon"></i>
-                </button>
-                <div class="password-strength">
-                    <div class="password-strength-bar" id="strengthBar"></div>
+        <!-- Registration Form -->
+        <form id="registerForm" method="POST" action="{{ url_for('auth.register') }}" novalidate>
+            <!-- Basic Info Section -->
+            <div class="form-section">
+                <h5><i class="fas fa-user me-2"></i>Account Information</h5>
+                
+                <!-- Username Field -->
+                <div class="form-floating mb-3">
+                    <input type="text" 
+                           class="form-control" 
+                           id="username" 
+                           name="username" 
+                           placeholder="Username" 
+                           required
+                           minlength="3"
+                           pattern="[a-zA-Z0-9_]+"
+                           value="{{ request.form['username'] if request.form else '' }}">
+                    <label for="username"><i class="fas fa-user me-2"></i>Username</label>
+                    <div class="invalid-feedback">
+                        Please choose a username (at least 3 characters, letters, numbers, and underscores only).
+                    </div>
+                    <div class="valid-feedback">
+                        Username looks good!
+                    </div>
+                </div>
+
+                <!-- Email Field -->
+                <div class="form-floating mb-3">
+                    <input type="email" 
+                           class="form-control" 
+                           id="email" 
+                           name="email" 
+                           placeholder="Email" 
+                           required
+                           value="{{ request.form['email'] if request.form else '' }}">
+                    <label for="email"><i class="fas fa-envelope me-2"></i>Email</label>
+                    <div class="invalid-feedback">
+                        Please enter a valid email address.
+                    </div>
+                    <div class="valid-feedback">
+                        Email looks good!
+                    </div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-floating mb-3 position-relative">
+                    <input type="password" 
+                           class="form-control" 
+                           id="password" 
+                           name="password" 
+                           placeholder="Password" 
+                           required
+                           minlength="8">
+                    <label for="password"><i class="fas fa-lock me-2"></i>Password</label>
+                    <button type="button" 
+                            class="password-toggle" 
+                            onclick="togglePassword('password')" 
+                            tabindex="-1"
+                            aria-label="Toggle password visibility">
+                        <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                    </button>
+                    <div class="invalid-feedback">
+                        Password must be at least 8 characters long.
+                    </div>
+                    <div class="valid-feedback">
+                        Password strength looks good!
+                    </div>
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div class="form-floating mb-3 position-relative">
+                    <input type="password" 
+                           class="form-control" 
+                           id="confirmPassword" 
+                           name="confirmPassword" 
+                           placeholder="Confirm Password" 
+                           required
+                           minlength="8">
+                    <label for="confirmPassword"><i class="fas fa-lock me-2"></i>Confirm Password</label>
+                    <button type="button" 
+                            class="password-toggle" 
+                            onclick="togglePassword('confirmPassword')" 
+                            tabindex="-1"
+                            aria-label="Toggle password visibility">
+                        <i class="fas fa-eye" id="confirmPasswordToggleIcon"></i>
+                    </button>
+                    <div class="invalid-feedback">
+                        Passwords must match.
+                    </div>
+                    <div class="valid-feedback">
+                        Passwords match!
+                    </div>
+                </div>
+
+                <!-- Password Requirements Indicator -->
+                <div class="password-requirements">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Password must be at least 8 characters long
+                    </small>
                 </div>
             </div>
 
-            <div class="password-requirements">
-                <h6><i class="fas fa-shield-alt me-2"></i>Password Requirements</h6>
-                <div class="requirement" id="lengthReq">
-                    <i class="fas fa-times me-2"></i>At least 8 characters
-                </div>
-                <div class="requirement" id="upperReq">
-                    <i class="fas fa-times me-2"></i>One uppercase letter
-                </div>
-                <div class="requirement" id="lowerReq">
-                    <i class="fas fa-times me-2"></i>One lowercase letter
-                </div>
-                <div class="requirement" id="numberReq">
-                    <i class="fas fa-times me-2"></i>One number
-                </div>
-            </div>
-
-            <div class="form-floating position-relative">
-                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
-                <label for="confirmPassword"><i class="fas fa-lock me-2"></i>Confirm Password</label>
-                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
-                    <i class="fas fa-eye" id="confirmPasswordToggleIcon"></i>
-                </button>
-                <div class="invalid-feedback" id="confirmPasswordError"></div>
-            </div>
-
-            <div class="terms-checkbox">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="agreeTerms" name="agreeTerms" required>
-                    <label class="form-check-label" for="agreeTerms">
-                        I agree to the <a href="#" onclick="showTerms()">Terms of Service</a> and 
-                        <a href="#" onclick="showPrivacy()">Privacy Policy</a>
+            <!-- Security Questions Section -->
+            <div class="form-section">
+                <h5><i class="fas fa-shield-alt me-2"></i>Security Questions</h5>
+                <p class="text-muted small mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Security questions help you recover your password if you forget it. Choose questions only you would know the answer to.
+                </p>
+                
+                <!-- Security Question 1 -->
+                <div class="mb-3">
+                    <label for="securityQuestion1" class="form-label">
+                        <i class="fas fa-question-circle me-2"></i>Security Question 1
                     </label>
+                    <select class="form-select" 
+                            id="securityQuestion1" 
+                            name="securityQuestion1" 
+                            required>
+                        <option value="">Choose your first security question...</option>
+                        <option value="What was the name of your first pet?" 
+                                {{ 'selected' if request.form.get('securityQuestion1') == 'What was the name of your first pet?' else '' }}>
+                            What was the name of your first pet?
+                        </option>
+                        <option value="What city were you born in?" 
+                                {{ 'selected' if request.form.get('securityQuestion1') == 'What city were you born in?' else '' }}>
+                            What city were you born in?
+                        </option>
+                        <option value="What was your mother's maiden name?" 
+                                {{ 'selected' if request.form.get('securityQuestion1') == "What was your mother's maiden name?" else '' }}>
+                            What was your mother's maiden name?
+                        </option>
+                        <option value="What was the name of your first school?" 
+                                {{ 'selected' if request.form.get('securityQuestion1') == 'What was the name of your first school?' else '' }}>
+                            What was the name of your first school?
+                        </option>
+                        <option value="What was your favorite food as a child?" 
+                                {{ 'selected' if request.form.get('securityQuestion1') == 'What was your favorite food as a child?' else '' }}>
+                            What was your favorite food as a child?
+                        </option>
+                    </select>
+                    <div class="invalid-feedback">
+                        Please select a security question.
+                    </div>
+                </div>
+
+                <div class="form-floating mb-4">
+                    <input type="text" 
+                           class="form-control" 
+                           id="securityAnswer1" 
+                           name="securityAnswer1" 
+                           placeholder="Answer 1" 
+                           required
+                           minlength="2"
+                           autocomplete="off"
+                           value="{{ request.form['securityAnswer1'] if request.form else '' }}">
+                    <label for="securityAnswer1">
+                        <i class="fas fa-key me-2"></i>Answer 1
+                    </label>
+                    <div class="invalid-feedback">
+                        Please provide an answer (at least 2 characters).
+                    </div>
+                    <div class="valid-feedback">
+                        Answer looks good!
+                    </div>
+                </div>
+
+                <!-- Security Question 2 -->
+                <div class="mb-3">
+                    <label for="securityQuestion2" class="form-label">
+                        <i class="fas fa-question-circle me-2"></i>Security Question 2
+                    </label>
+                    <select class="form-select" 
+                            id="securityQuestion2" 
+                            name="securityQuestion2" 
+                            required>
+                        <option value="">Choose your second security question...</option>
+                        <option value="What was the name of your childhood best friend?" 
+                                {{ 'selected' if request.form.get('securityQuestion2') == 'What was the name of your childhood best friend?' else '' }}>
+                            What was the name of your childhood best friend?
+                        </option>
+                        <option value="What was the make of your first car?" 
+                                {{ 'selected' if request.form.get('securityQuestion2') == 'What was the make of your first car?' else '' }}>
+                            What was the make of your first car?
+                        </option>
+                        <option value="What was your favorite teacher's name?" 
+                                {{ 'selected' if request.form.get('securityQuestion2') == "What was your favorite teacher's name?" else '' }}>
+                            What was your favorite teacher's name?
+                        </option>
+                        <option value="What street did you grow up on?" 
+                                {{ 'selected' if request.form.get('securityQuestion2') == 'What street did you grow up on?' else '' }}>
+                            What street did you grow up on?
+                        </option>
+                        <option value="What was your first job?" 
+                                {{ 'selected' if request.form.get('securityQuestion2') == 'What was your first job?' else '' }}>
+                            What was your first job?
+                        </option>
+                    </select>
+                    <div class="invalid-feedback">
+                        Please select a second security question.
+                    </div>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="text" 
+                           class="form-control" 
+                           id="securityAnswer2" 
+                           name="securityAnswer2" 
+                           placeholder="Answer 2" 
+                           required
+                           minlength="2"
+                           autocomplete="off"
+                           value="{{ request.form['securityAnswer2'] if request.form else '' }}">
+                    <label for="securityAnswer2">
+                        <i class="fas fa-key me-2"></i>Answer 2
+                    </label>
+                    <div class="invalid-feedback">
+                        Please provide an answer (at least 2 characters).
+                    </div>
+                    <div class="valid-feedback">
+                        Answer looks good!
+                    </div>
+                </div>
+
+                <!-- Security Questions Help -->
+                <div class="alert alert-info">
+                    <small>
+                        <i class="fas fa-lightbulb me-1"></i>
+                        <strong>Tips:</strong> 
+                        Choose answers you'll remember but others won't easily guess. 
+                        Answers are not case-sensitive.
+                    </small>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-info btn-auth btn-register w-100 mb-3" id="submitBtn" disabled>
+            <!-- Terms and Conditions -->
+            <div class="form-section">
+                <div class="form-check mb-3">
+                    <input class="form-check-input" 
+                           type="checkbox" 
+                           id="agreeTerms" 
+                           name="agreeTerms" 
+                           required
+                           {{ 'checked' if request.form.get('agreeTerms') else '' }}>
+                    <label class="form-check-label" for="agreeTerms">
+                        I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and 
+                        <a href="#" class="text-decoration-none">Privacy Policy</a>
+                    </label>
+                    <div class="invalid-feedback">
+                        You must agree to the terms and conditions.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100 btn-auth btn-register mb-3">
                 <i class="fas fa-user-plus me-2"></i>Create Account
             </button>
         </form>
 
-        <div class="auth-link login-link">
-            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign in here</a></p>
+        <!-- Login Link -->
+        <div class="auth-link register-link">
+            <p>Already have an account?</p>
+            <a href="{{ url_for('auth.login') }}">Sign In</a>
         </div>
-    </div>
-</div>
 
-<!-- Terms Modal -->
-<div class="modal fade" id="termsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Terms of Service</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <h6>1. Acceptance of Terms</h6>
-                <p>By using Niner Finance, you agree to these terms of service.</p>
-                
-                <h6>2. Use of Service</h6>
-                <p>You may use our service for personal financial management only.</p>
-                
-                <h6>3. Privacy</h6>
-                <p>We protect your financial data with industry-standard security measures.</p>
-                
-                <h6>4. Limitation of Liability</h6>
-                <p>Niner Finance is provided "as is" without warranties of any kind.</p>
-                
-                <h6>5. Account Security</h6>
-                <p>You are responsible for maintaining the security of your account credentials.</p>
-                
-                <h6>6. Data Usage</h6>
-                <p>Your financial data is used solely for providing our services and will not be shared with third parties without your consent.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Privacy Policy Modal -->
-<div class="modal fade" id="privacyModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Privacy Policy</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <h6>Information We Collect</h6>
-                <p>We collect information you provide when creating an account and using our services, including your username, email, and financial transaction data.</p>
-                
-                <h6>How We Use Information</h6>
-                <p>Your information is used to provide and improve our financial management services, generate reports, and ensure account security.</p>
-                
-                <h6>Data Security</h6>
-                <p>We use industry-standard encryption and secure servers to protect your financial data. All sensitive information is encrypted both in transit and at rest.</p>
-                
-                <h6>Data Sharing</h6>
-                <p>We do not sell, trade, or share your personal financial information with third parties without your explicit consent.</p>
-                
-                <h6>Contact Us</h6>
-                <p>For privacy questions or concerns, contact us at privacy@ninerfinance.com or through our support system.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <!-- Demo Info -->
+        <div class="demo-help mt-3">
+            <div class="alert alert-light border">
+                <h6><i class="fas fa-info-circle me-2"></i>Demo Account Available</h6>
+                <p class="mb-1">For testing, you can use the existing demo account:</p>
+                <small>
+                    <strong>Username:</strong> demo | 
+                    <strong>Password:</strong> demo123
+                </small>
             </div>
         </div>
     </div>
@@ -159,187 +318,87 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<!-- Auth.js is already loaded globally -->
 <script>
-    // Register-specific JavaScript
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto-focus on username field
-        document.getElementById('username').focus();
-        
-        // Initialize register form
-        initRegisterForm();
-    });
-
-    function initRegisterForm() {
-        // Add event listeners for validation
-        document.getElementById('password').addEventListener('input', validatePasswordInput);
-        document.getElementById('confirmPassword').addEventListener('input', validateConfirmPasswordInput);
-        document.getElementById('username').addEventListener('blur', validateUsernameInput);
-        document.getElementById('email').addEventListener('blur', validateEmailInput);
-        document.getElementById('agreeTerms').addEventListener('change', checkFormValidity);
-        
-        // Form submission
-        document.getElementById('registerForm').addEventListener('submit', handleFormSubmit);
-    }
-
-    function validatePasswordInput() {
-        const password = document.getElementById('password').value;
-        const requirements = validatePassword(password);
-        
-        // Update requirement indicators
-        updateRequirement('lengthReq', requirements.length);
-        updateRequirement('upperReq', requirements.upper);
-        updateRequirement('lowerReq', requirements.lower);
-        updateRequirement('numberReq', requirements.number);
-        
-        // Calculate password strength
-        const strength = calculatePasswordStrength(password);
-        updatePasswordStrengthBar(strength);
-        
-        // Check form validity
-        checkFormValidity();
-        
-        return Object.values(requirements).every(Boolean);
-    }
+// Page-specific initialization
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Register page with security questions loaded');
     
-    function updateRequirement(id, met) {
-        const element = document.getElementById(id);
-        const icon = element.querySelector('i');
-        
-        if (met) {
-            element.classList.add('met');
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-check');
-        } else {
-            element.classList.remove('met');
-            icon.classList.remove('fa-check');
-            icon.classList.add('fa-times');
-        }
-    }
+    // Prevent selecting the same question twice
+    const question1 = document.getElementById('securityQuestion1');
+    const question2 = document.getElementById('securityQuestion2');
     
-    function updatePasswordStrengthBar(strength) {
-        const bar = document.getElementById('strengthBar');
-        const percentage = (strength / 4) * 100;
+    function updateQuestionOptions() {
+        const selectedQuestion1 = question1.value;
+        const selectedQuestion2 = question2.value;
         
-        bar.style.width = percentage + '%';
-        bar.className = 'password-strength-bar';
-        
-        if (strength === 1) bar.classList.add('strength-weak');
-        else if (strength === 2) bar.classList.add('strength-fair');
-        else if (strength === 3) bar.classList.add('strength-good');
-        else if (strength === 4) bar.classList.add('strength-strong');
-    }
-    
-    function validateConfirmPasswordInput() {
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-        const errorDiv = document.getElementById('confirmPasswordError');
-        
-        if (confirmPassword && password !== confirmPassword) {
-            confirmPasswordInput.classList.add('is-invalid');
-            confirmPasswordInput.classList.remove('is-valid');
-            errorDiv.textContent = 'Passwords do not match';
-            return false;
-        } else if (confirmPassword && password === confirmPassword) {
-            confirmPasswordInput.classList.remove('is-invalid');
-            confirmPasswordInput.classList.add('is-valid');
-            errorDiv.textContent = '';
-            checkFormValidity();
-            return true;
-        } else {
-            confirmPasswordInput.classList.remove('is-invalid', 'is-valid');
-            errorDiv.textContent = '';
-            return false;
-        }
-    }
-    
-    function validateUsernameInput() {
-        const username = document.getElementById('username').value.trim();
-        const usernameInput = document.getElementById('username');
-        const errorDiv = document.getElementById('usernameError');
-        
-        if (!validateUsername(username)) {
-            usernameInput.classList.add('is-invalid');
-            usernameInput.classList.remove('is-valid');
-            if (username.length < 3) {
-                errorDiv.textContent = 'Username must be at least 3 characters';
-            } else {
-                errorDiv.textContent = 'Username can only contain letters, numbers, and underscores';
+        // Enable all options first
+        Array.from(question1.options).forEach(option => {
+            if (option.value !== '') {
+                option.disabled = false;
             }
-            return false;
+        });
+        Array.from(question2.options).forEach(option => {
+            if (option.value !== '') {
+                option.disabled = false;
+            }
+        });
+        
+        // Disable selected options in the other dropdown
+        if (selectedQuestion1) {
+            Array.from(question2.options).forEach(option => {
+                if (option.value === selectedQuestion1) {
+                    option.disabled = true;
+                }
+            });
         }
         
-        usernameInput.classList.remove('is-invalid');
-        usernameInput.classList.add('is-valid');
-        errorDiv.textContent = '';
-        return true;
-    }
-    
-    function validateEmailInput() {
-        const email = document.getElementById('email').value.trim();
-        const emailInput = document.getElementById('email');
-        const errorDiv = document.getElementById('emailError');
-        
-        if (!validateEmail(email)) {
-            emailInput.classList.add('is-invalid');
-            emailInput.classList.remove('is-valid');
-            errorDiv.textContent = 'Please enter a valid email address';
-            return false;
+        if (selectedQuestion2) {
+            Array.from(question1.options).forEach(option => {
+                if (option.value === selectedQuestion2) {
+                    option.disabled = true;
+                }
+            });
         }
-        
-        emailInput.classList.remove('is-invalid');
-        emailInput.classList.add('is-valid');
-        errorDiv.textContent = '';
-        return true;
     }
     
-    function checkFormValidity() {
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const termsAgreed = document.getElementById('agreeTerms').checked;
+    if (question1 && question2) {
+        question1.addEventListener('change', updateQuestionOptions);
+        question2.addEventListener('change', updateQuestionOptions);
         
-        const passwordValid = Object.values(validatePassword(password)).every(Boolean);
-        const passwordsMatch = password === confirmPassword && confirmPassword !== '';
-        const submitBtn = document.getElementById('submitBtn');
-        
-        submitBtn.disabled = !(passwordValid && passwordsMatch && termsAgreed);
+        // Run on page load to handle form repopulation
+        updateQuestionOptions();
     }
     
-    function handleFormSubmit(e) {
-        e.preventDefault();
-        
-        // Validate all fields
-        const usernameValid = validateUsernameInput();
-        const emailValid = validateEmailInput();
-        const passwordValid = validatePasswordInput();
-        const confirmPasswordValid = validateConfirmPasswordInput();
-        const termsAgreed = document.getElementById('agreeTerms').checked;
-        
-        if (!usernameValid || !emailValid || !passwordValid || !confirmPasswordValid) {
-            showAlert('Please fix all errors before submitting', 'danger');
-            return;
-        }
-        
-        if (!termsAgreed) {
-            showAlert('Please agree to the Terms of Service and Privacy Policy', 'warning');
-            return;
-        }
-        
-        // Show loading state
-        const submitBtn = document.getElementById('submitBtn');
-        showLoadingState(submitBtn, 'Creating Account...');
-        
-        // Submit form
-        this.submit();
-    }
+    // Add visual feedback for security questions
+    const securityAnswers = document.querySelectorAll('[name*="securityAnswer"]');
+    securityAnswers.forEach(field => {
+        field.addEventListener('input', function() {
+            if (this.value.length >= 2) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+            } else if (this.value.length > 0) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            } else {
+                this.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+    });
     
-    function showTerms() {
-        new bootstrap.Modal(document.getElementById('termsModal')).show();
-    }
-    
-    function showPrivacy() {
-        new bootstrap.Modal(document.getElementById('privacyModal')).show();
-    }
+    // Security question select validation
+    const securityQuestions = document.querySelectorAll('[name*="securityQuestion"]');
+    securityQuestions.forEach(field => {
+        field.addEventListener('change', function() {
+            if (this.value) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+            } else {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            }
+        });
+    });
+});
 </script>
 {% endblock %}

@@ -1,238 +1,675 @@
 import os
-import sys
-from flask import Flask, render_template, redirect, url_for, g
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_wtf.csrf import CSRFProtect
-from flask_bcrypt import Bcrypt
-from transactions import login_required
+from flask import Flask, render_template, redirect, url_for, g, flash, request
 
-# Add current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Create Flask app
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
+app.config['DATABASE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'niner_finance.sqlite')
 
-# Initialize extensions
-db = SQLAlchemy()
-login_manager = LoginManager()
-csrf = CSRFProtect()
-bcrypt = Bcrypt()
+app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for simplicity in this example
 
-def create_app():
-    """Application factory pattern"""
-    print("🏗️  Creating Flask app...")
-    app = Flask(__name__)
-    
-    # Configuration
-    app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
-    app.config['WTF_CSRF_ENABLED'] = False # Disable CSRF for simplicity; enable in production!
+# Initialize databasefrom datetime import datetime, timedelta
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for, jsonify
+from werkzeug.exceptions import abort
+from auth import login_required
+from db import get_db
+import json
 
-    # Database configuration
-    instance_path = os.path.join(os.path.dirname(__file__), 'instance')
-    os.makedirs(instance_path, exist_ok=True)
+bp = Blueprint('budget', __name__, url_prefix='/budget')
+
+def get_financial_summary(user_id):
+    """Get comprehensive financial summary for consistent data across pages"""
+    db = get_db()
     
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "niner_finance.db")}'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['DATABASE'] = os.path.join(instance_path, 'niner_finance.db')
+    # Get current week dates
+    today = datetime.now().date()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
     
-    # Initialize extensions with app
-    db.init_app(app)
-    login_manager.init_app(app)
-    csrf.init_app(app)
-    bcrypt.init_app(app)
+    # Get current month dates  
+    month_start = today.replace(day=1)
+    if today.month == 12:
+        month_end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+    else:
+        month_end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
     
-    # Login manager configuration
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Please log in to access this page.'
-    login_manager.login_message_category = 'warning'
+    # Current week budget
+    current_budget_row = db.execute('''
+        SELECT * FROM budgets 
+        WHERE user_id = ? 
+        AND week_start_date = ?
+        ORDER BY created_at DESC LIMIT 1
+    ''', (user_id, week_start.isoformat())).fetchone()
     
-    # User loader for Flask-Login
-    @login_manager.user_loader
-    def load_user(user_id):
-        """Load user by ID for Flask-Login"""
-        import sqlite3
-        from flask_login import UserMixin
+    # Convert Row to dict
+    current_budget = dict(current_budget_row) if current_budget_row else None
+    
+    # Weekly spending by category
+    week_spending_rows = db.execute('''
+        SELECT 
+            category,
+            COALESCE(SUM(amount), 0) as spent
+        FROM transactions 
+        WHERE user_id = ? 
+        AND type = 'expense'
+        AND date >= ? AND date <= ?
+        GROUP BY category
+    ''', (user_id, week_start.isoformat(), week_end.isoformat())).fetchall()
+    
+    # Convert to list of dicts
+    week_spending = [dict(row) for row in week_spending_rows]
+    
+    # Total weekly spending
+    total_weekly_spent_row = db.execute('''
+        SELECT COALESCE(SUM(amount), 0) as total
+        FROM transactions 
+        WHERE user_id = ? 
+        AND type = 'expense'
+        AND date >= ? AND date <= ?
+    ''', (user_id, week_start.isoformat(), week_end.isoformat())).fetchone()
+    
+    total_weekly_spent = dict(total_weekly_spent_row) if total_weekly_spent_row else {'total': 0}
+    
+    # Monthly income
+    monthly_income_row = db.execute('''
+        SELECT COALESCE(SUM(amount), 0) as total
+        FROM transactions 
+        WHERE user_id = ? 
+        AND type = 'income'
+        AND date >= ? AND date <= ?
+    ''', (user_id, month_start.isoformat(), month_end.isoformat())).fetchone()
+    
+    monthly_income = dict(monthly_income_row) if monthly_income_row else {'total': 0}
+    
+    # Monthly expenses
+    monthly_expenses_row = db.execute('''
+        SELECT COALESCE(SUM(amount), 0) as total
+        FROM transactions 
+        WHERE user_id = ? 
+        AND type = 'expense'
+        AND date >= ? AND date <= ?
+    ''', (user_id, month_start.isoformat(), month_end.isoformat())).fetchone()
+    
+    monthly_expenses = dict(monthly_expenses_row) if monthly_expenses_row else {'total': 0}
+    
+    # Recent transactions
+    recent_transactions_rows = db.execute('''
+        SELECT * FROM transactions 
+        WHERE user_id = ? 
+        ORDER BY date DESC, created_at DESC 
+        LIMIT 5
+    ''', (user_id,)).fetchall()
+    
+    # Convert to list of dicts
+    recent_transactions = [dict(row) for row in recent_transactions_rows]
+    
+    # Process budget data
+    total_budget = float(current_budget['total_amount']) if current_budget else 0.0
+    total_spent = float(total_weekly_spent['total']) if total_weekly_spent else 0.0
+    
+    # Category data with defaults
+    categories = {
+        'Food': {'budget': 0.0, 'spent': 0.0},
+        'Transportation': {'budget': 0.0, 'spent': 0.0},
+        'Entertainment': {'budget': 0.0, 'spent': 0.0},
+        'Other': {'budget': 0.0, 'spent': 0.0}
+    }
+    
+    # Set budget amounts if budget exists
+    if current_budget:
+        categories['Food']['budget'] = float(current_budget['food_budget'] or 0)
+        categories['Transportation']['budget'] = float(current_budget['transportation_budget'] or 0)
+        categories['Entertainment']['budget'] = float(current_budget['entertainment_budget'] or 0)
+        categories['Other']['budget'] = float(current_budget['other_budget'] or 0)
+    
+    # Set actual spending amounts
+    for spending in week_spending:
+        category = spending['category']
+        if category in categories:
+            categories[category]['spent'] = float(spending['spent'])
+    
+    return {
+        'budget': {
+            'total_budget': total_budget,
+            'total_spent': total_spent,
+            'remaining': total_budget - total_spent,
+            'categories': categories,
+            'current_budget': current_budget,
+            'week_progress': (total_spent / total_budget * 100) if total_budget > 0 else 0
+        },
+        'monthly': {
+            'income': float(monthly_income['total']) if monthly_income else 0.0,
+            'expenses': float(monthly_expenses['total']) if monthly_expenses else 0.0,
+            'net': (float(monthly_income['total']) if monthly_income else 0.0) - 
+                   (float(monthly_expenses['total']) if monthly_expenses else 0.0)
+        },
+        'recent_transactions': recent_transactions,
+        'week_dates': {
+            'start': week_start.isoformat(),
+            'end': week_end.isoformat()
+        },
+        'month_dates': {
+            'start': month_start.isoformat(),
+            'end': month_end.isoformat()
+        }
+    }
+
+@bp.route('/')
+@login_required
+def index():
+    """Budget management page with real financial data"""
+    financial_summary = get_financial_summary(g.user['id'])
+    
+    # Get additional budget-specific data
+    db = get_db()
+    user_id = g.user['id']
+    
+    # Get budget history
+    budget_history_rows = db.execute('''
+        SELECT * FROM budgets 
+        WHERE user_id = ? 
+        ORDER BY week_start_date DESC
+        LIMIT 10
+    ''', (user_id,)).fetchall()
+    
+    budget_history = [dict(row) for row in budget_history_rows]
+    
+    # Get spending trends
+    spending_trends_rows = db.execute('''
+        SELECT 
+            DATE(date) as day,
+            COALESCE(SUM(amount), 0) as daily_total
+        FROM transactions 
+        WHERE user_id = ? 
+        AND type = 'expense'
+        AND date >= ?
+        GROUP BY DATE(date)
+        ORDER BY date DESC
+        LIMIT 7
+    ''', (user_id, financial_summary['week_dates']['start'])).fetchall()
+    
+    spending_trends = [dict(row) for row in spending_trends_rows]
+    
+    # Add budget-specific data to the summary
+    financial_summary['budget_history'] = budget_history
+    financial_summary['spending_trends'] = spending_trends
+    
+    return render_template('home/budget.html', **financial_summary)
+
+@bp.route('/create', methods=('GET', 'POST'))
+@login_required
+def create():
+    """Create a new weekly budget"""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            total_amount = float(request.form['total_amount'])
+            food_budget = float(request.form.get('food_budget', 0))
+            transportation_budget = float(request.form.get('transportation_budget', 0))
+            entertainment_budget = float(request.form.get('entertainment_budget', 0))
+            other_budget = float(request.form.get('other_budget', 0))
+            
+            # Validate total matches categories
+            category_total = food_budget + transportation_budget + entertainment_budget + other_budget
+            if abs(category_total - total_amount) > 0.01:  # Allow for small rounding differences
+                flash(f'Category budgets (${category_total:.2f}) must equal total budget (${total_amount:.2f})', 'error')
+                return redirect(url_for('budget.create'))
+            
+            # Get current week start date
+            today = datetime.now().date()
+            week_start = today - timedelta(days=today.weekday())
+            
+            db = get_db()
+            
+            # Check if budget already exists for this week
+            existing_budget = db.execute('''
+                SELECT id FROM budgets 
+                WHERE user_id = ? AND week_start_date = ?
+            ''', (g.user['id'], week_start.isoformat())).fetchone()
+            
+            if existing_budget:
+                # Update existing budget
+                db.execute('''
+                    UPDATE budgets SET 
+                        total_amount = ?, food_budget = ?, transportation_budget = ?,
+                        entertainment_budget = ?, other_budget = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                ''', (total_amount, food_budget, transportation_budget, 
+                     entertainment_budget, other_budget, existing_budget['id']))
+                flash('Weekly budget updated successfully!', 'success')
+            else:
+                # Create new budget
+                db.execute('''
+                    INSERT INTO budgets (user_id, total_amount, food_budget, transportation_budget,
+                                       entertainment_budget, other_budget, week_start_date)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (g.user['id'], total_amount, food_budget, transportation_budget,
+                     entertainment_budget, other_budget, week_start.isoformat()))
+                flash('Weekly budget created successfully!', 'success')
+            
+            db.commit()
+            return redirect(url_for('budget.index'))
+            
+        except ValueError as e:
+            flash('Please enter valid amounts for all budget fields', 'error')
+        except Exception as e:
+            flash(f'Error creating budget: {str(e)}', 'error')
+    
+    return render_template('home/budget-create.html')
+
+@bp.route('/api/suggestions')
+@login_required
+def get_budget_suggestions():
+    """Get smart budget suggestions based on spending history"""
+    db = get_db()
+    user_id = g.user['id']
+    
+    # Get average spending by category over last 4 weeks
+    suggestions_rows = db.execute('''
+        SELECT 
+            category,
+            AVG(weekly_total) as avg_amount
+        FROM (
+            SELECT 
+                category,
+                strftime('%Y-%W', date) as week,
+                SUM(amount) as weekly_total
+            FROM transactions 
+            WHERE user_id = ? 
+            AND type = 'expense'
+            AND date >= date('now', '-28 days')
+            GROUP BY category, week
+        )
+        GROUP BY category
+    ''', (user_id,)).fetchall()
+    
+    suggestions = [dict(row) for row in suggestions_rows]
+    
+    # Calculate suggestions with 10% buffer
+    result = {}
+    total_suggested = 0
+    
+    for suggestion in suggestions:
+        category = suggestion['category']
+        suggested_amount = float(suggestion['avg_amount']) * 1.1  # 10% buffer
+        result[category] = round(suggested_amount, 2)
+        total_suggested += suggested_amount
+    
+    result['total'] = round(total_suggested, 2)
+    
+    return jsonify(result)
+
+@bp.route('/<int:budget_id>/delete', methods=('POST',))
+@login_required
+def delete(budget_id):
+    """Delete a budget"""
+    db = get_db()
+    
+    # Verify budget belongs to current user
+    budget = db.execute('''
+        SELECT * FROM budgets WHERE id = ? AND user_id = ?
+    ''', (budget_id, g.user['id'])).fetchone()
+    
+    if not budget:
+        abort(404)
+    
+    db.execute('DELETE FROM budgets WHERE id = ?', (budget_id,))
+    db.commit()
+    
+    flash('Budget deleted successfully!', 'success')
+    return redirect(url_for('budget.index'))
+import db
+db.init_app(app)
+
+# Import and register auth blueprint
+import auth
+app.register_blueprint(auth.bp)
+
+# Import and register your existing blueprints
+import income
+app.register_blueprint(income.bp)
+
+import budget
+app.register_blueprint(budget.bp)
+
+import transactions
+app.register_blueprint(transactions.bp)
+
+# Try to import finance if it exists
+try:
+    import finance
+    app.register_blueprint(finance.bp)
+except ImportError:
+    print("Finance module not found, skipping...")
+
+# Main Routes
+@app.route('/')
+def index():
+    """Home page"""
+    if g.user:
+        return redirect(url_for('dashboard'))
+    return render_template('home/index.html')
+
+@app.route('/dashboard')
+@auth.login_required
+def dashboard():
+    """Main dashboard page with real financial data"""
+    # Use the get_financial_summary function from budget.py
+    financial_summary = budget.get_financial_summary(g.user['id'])
+    return render_template('home/dashboard.html', **financial_summary)
+
+@app.route('/profile')
+@auth.login_required
+def profile():
+    """User profile page"""
+    return redirect(url_for('auth.profile'))
+
+# Financial Goals routes with traditional forms
+@app.route('/goals')
+@auth.login_required
+def financial_goals():
+    """Financial goals page with user data"""
+    from db import get_db
+    
+    # Get user's financial goals if they exist in database
+    db_conn = get_db()
+    try:
+        # Check if financial_goals table exists
+        table_check = db_conn.execute('''
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='financial_goals'
+        ''').fetchone()
+        
+        user_goals = []
+        if table_check:
+            # Get user's goals from database
+            user_goals = db_conn.execute('''
+                SELECT * FROM financial_goals 
+                WHERE user_id = ? 
+                ORDER BY created_at DESC
+            ''', (g.user['id'],)).fetchall()
+    except Exception as e:
+        print(f"Database error in goals: {e}")
+        user_goals = []
+    
+    # Get financial summary for the split view
+    financial_summary = budget.get_financial_summary(g.user['id'])
+    
+    # Convert goals to list of dicts for easier template access
+    goals_data = []
+    for goal in user_goals:
+        goals_data.append({
+            'id': goal['id'],
+            'goal_name': goal['goal_name'],
+            'target_amount': float(goal['target_amount']),
+            'current_amount': float(goal['current_amount']),
+            'target_date': goal['target_date'],
+            'category': goal['category'],
+            'description': goal['description'],
+            'is_completed': goal['is_completed'],
+            'created_at': goal['created_at']
+        })
+    
+    return render_template('home/finance-goals.html', 
+                         goals=goals_data,
+                         **financial_summary)
+
+@app.route('/goals/create', methods=['GET', 'POST'])
+@auth.login_required
+def create_goal():
+    """Create a new financial goal"""
+    if request.method == 'POST':
+        from db import get_db
         
         try:
-            db_path = app.config['DATABASE']
-            with sqlite3.connect(db_path) as conn:
-                conn.row_factory = sqlite3.Row
-                user_data = conn.execute(
-                    'SELECT * FROM user WHERE id = ?', (user_id,)
-                ).fetchone()
-                
-                if user_data:
-                    # Create a simple user object that implements UserMixin
-                    class User(UserMixin):
-                        def __init__(self, user_data):
-                            self.id = str(user_data['id'])
-                            self.username = user_data['username']
-                            self.email = user_data['email']
-                            self.password = user_data['password']
-                        
-                        def get_id(self):
-                            return self.id
-                    
-                    return User(user_data)
-                return None
+            # Get form data
+            goal_name = request.form['goal_name']
+            target_amount = float(request.form['target_amount'])
+            current_amount = float(request.form.get('current_amount', 0))
+            target_date = request.form['target_date']
+            category = request.form['category']
+            description = request.form.get('description', '')
+            
+            # Validation
+            if not goal_name or target_amount <= 0:
+                flash('Please provide a valid goal name and target amount.', 'error')
+                return redirect(url_for('create_goal'))
+            
+            # Insert into database
+            db_conn = get_db()
+            db_conn.execute('''
+                INSERT INTO financial_goals 
+                (user_id, goal_name, target_amount, current_amount, target_date, 
+                 category, description, is_completed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                g.user['id'],
+                goal_name,
+                target_amount,
+                current_amount,
+                target_date,
+                category,
+                description,
+                False
+            ))
+            db_conn.commit()
+            
+            flash(f'Goal "{goal_name}" created successfully!', 'success')
+            return redirect(url_for('financial_goals'))
+            
+        except ValueError:
+            flash('Please enter valid amounts for target and current values.', 'error')
         except Exception as e:
-            print(f"Error loading user: {e}")
-            return None
+            flash(f'Error creating goal: {str(e)}', 'error')
     
-    print("🔗 Extensions connected to app")
-    
-    # Initialize database
-    import db as database_module
-    database_module.init_app(app)
-    
-    with app.app_context():
-        try:
-            # Create basic tables directly
-            import sqlite3
-            db_path = app.config['DATABASE']
-            
-            with sqlite3.connect(db_path) as conn:
-                conn.execute('''
-                    CREATE TABLE IF NOT EXISTS user (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE NOT NULL,
-                        email TEXT UNIQUE NOT NULL,
-                        password TEXT NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                ''')
-                
-                conn.execute('''
-                    CREATE TABLE IF NOT EXISTS transactions (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,
-                        transaction_type TEXT NOT NULL,
-                        amount DECIMAL(10,2) NOT NULL,
-                        description TEXT NOT NULL,
-                        date DATE NOT NULL DEFAULT CURRENT_DATE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (user_id) REFERENCES user (id)
-                    )
-                ''')
-                
-                conn.execute('''
-                    CREATE TABLE IF NOT EXISTS income (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,
-                        category_id INTEGER,
-                        amount DECIMAL(10,2) NOT NULL,
-                        source TEXT NOT NULL,
-                        description TEXT,
-                        date DATE NOT NULL DEFAULT CURRENT_DATE,
-                        is_recurring BOOLEAN DEFAULT 0,
-                        recurrence_period TEXT,
-                        next_recurrence_date DATE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        created_by INTEGER,
-                        FOREIGN KEY (user_id) REFERENCES user (id)
-                    )
-                ''')
-                
-                conn.execute('''
-                    CREATE TABLE IF NOT EXISTS expenses (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,
-                        category TEXT NOT NULL,
-                        amount DECIMAL(10,2) NOT NULL,
-                        description TEXT NOT NULL,
-                        date DATE NOT NULL DEFAULT CURRENT_DATE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        created_by INTEGER,
-                        FOREIGN KEY (user_id) REFERENCES user (id)
-                    )
-                ''')
-                
-                conn.commit()
-            
-            print("✅ Database initialized successfully")
-            
-            # Create demo user
-            database_module.create_demo_user()
-            
-        except Exception as e:
-            print(f"⚠️  Database setup error: {e}")
-    
-    # Import and register blueprints
-    try:
-        import auth
-        app.register_blueprint(auth.bp)
-        print("✅ Auth blueprint registered")
-    except Exception as e:
-        print(f"⚠️  Error registering auth blueprint: {e}")
-    
-    try:
-        import transactions
-        app.register_blueprint(transactions.bp)
-        print("✅ Transactions blueprint registered")
-    except Exception as e:
-        print(f"⚠️  Error registering transactions blueprint: {e}")
-    
-    try:
-        import income
-        app.register_blueprint(income.bp)
-        print("✅ Income blueprint registered")
-    except Exception as e:
-        print(f"⚠️  Error registering income blueprint: {e}")
-    
-    try:
-        import budget
-        app.register_blueprint(budget.bp)
-        print("✅ Budget blueprint registered")
-    except Exception as e:
-        print(f"⚠️  Error registering budget blueprint: {e}")
-    
-    try:
-        import finance
-        app.register_blueprint(finance.bp)
-        print("✅ Finance blueprint registered")
-    except Exception as e:
-        print(f"⚠️  Error registering finance blueprint: {e}")
-    
-    # Routes
-    @app.route('/')
-    def index():
-        """Main landing page"""
-        return render_template('home/index.html')
-    
-    @app.route('/dashboard')
-    def dashboard():
-        """Dashboard page - requires login"""
-        from auth import login_required
-        
-        @login_required
-        def dashboard_view():
-            return render_template('home/dashboard.html')
-        
-        return dashboard_view()
-    
-    @app.route('/finance-goals')
-    @login_required
-    def finance_goals():
-        """Render the financial goals page"""
-        return render_template('home/finance-goals.html')
+    return render_template('home/create-goal.html')
 
-    print("🎯 App creation completed!")
-    return app
+@app.route('/goals/<int:goal_id>/edit', methods=['GET', 'POST'])
+@auth.login_required
+def edit_goal(goal_id):
+    """Edit an existing financial goal"""
+    from db import get_db
+    
+    db_conn = get_db()
+    
+    # Get the goal and verify ownership
+    goal = db_conn.execute('''
+        SELECT * FROM financial_goals 
+        WHERE id = ? AND user_id = ?
+    ''', (goal_id, g.user['id'])).fetchone()
+    
+    if not goal:
+        flash('Goal not found.', 'error')
+        return redirect(url_for('financial_goals'))
+    
+    if request.method == 'POST':
+        try:
+            # Get form data
+            goal_name = request.form['goal_name']
+            target_amount = float(request.form['target_amount'])
+            current_amount = float(request.form.get('current_amount', 0))
+            target_date = request.form['target_date']
+            category = request.form['category']
+            description = request.form.get('description', '')
+            is_completed = bool(request.form.get('is_completed', False))
+            
+            # Validation
+            if not goal_name or target_amount <= 0:
+                flash('Please provide a valid goal name and target amount.', 'error')
+                return redirect(url_for('edit_goal', goal_id=goal_id))
+            
+            # Update in database
+            db_conn.execute('''
+                UPDATE financial_goals SET
+                    goal_name = ?, target_amount = ?, current_amount = ?,
+                    target_date = ?, category = ?, description = ?,
+                    is_completed = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND user_id = ?
+            ''', (
+                goal_name, target_amount, current_amount,
+                target_date, category, description, is_completed,
+                goal_id, g.user['id']
+            ))
+            db_conn.commit()
+            
+            flash(f'Goal "{goal_name}" updated successfully!', 'success')
+            return redirect(url_for('financial_goals'))
+            
+        except ValueError:
+            flash('Please enter valid amounts for target and current values.', 'error')
+        except Exception as e:
+            flash(f'Error updating goal: {str(e)}', 'error')
+    
+    return render_template('home/edit-goal.html', goal=goal)
+
+@app.route('/goals/<int:goal_id>/contribute', methods=['POST'])
+@auth.login_required
+def add_contribution(goal_id):
+    """Add contribution to a goal"""
+    from db import get_db
+    
+    try:
+        contribution = float(request.form['contribution'])
+        
+        if contribution <= 0:
+            flash('Contribution amount must be positive.', 'error')
+            return redirect(url_for('financial_goals'))
+        
+        db_conn = get_db()
+        
+        # Get current goal
+        goal = db_conn.execute('''
+            SELECT * FROM financial_goals 
+            WHERE id = ? AND user_id = ?
+        ''', (goal_id, g.user['id'])).fetchone()
+        
+        if not goal:
+            flash('Goal not found.', 'error')
+            return redirect(url_for('financial_goals'))
+        
+        # Update current amount
+        new_amount = float(goal['current_amount']) + contribution
+        
+        db_conn.execute('''
+            UPDATE financial_goals SET
+                current_amount = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+        ''', (new_amount, goal_id, g.user['id']))
+        db_conn.commit()
+        
+        flash(f'Added ${contribution:.2f} to "{goal["goal_name"]}"!', 'success')
+        
+    except ValueError:
+        flash('Please enter a valid contribution amount.', 'error')
+    except Exception as e:
+        flash(f'Error adding contribution: {str(e)}', 'error')
+    
+    return redirect(url_for('financial_goals'))
+
+@app.route('/goals/<int:goal_id>/delete', methods=['POST'])
+@auth.login_required
+def delete_goal(goal_id):
+    """Delete a financial goal"""
+    from db import get_db
+    
+    try:
+        db_conn = get_db()
+        
+        # Get goal name for flash message
+        goal = db_conn.execute('''
+            SELECT goal_name FROM financial_goals 
+            WHERE id = ? AND user_id = ?
+        ''', (goal_id, g.user['id'])).fetchone()
+        
+        if not goal:
+            flash('Goal not found.', 'error')
+            return redirect(url_for('financial_goals'))
+        
+        # Delete the goal
+        db_conn.execute('''
+            DELETE FROM financial_goals 
+            WHERE id = ? AND user_id = ?
+        ''', (goal_id, g.user['id']))
+        db_conn.commit()
+        
+        flash(f'Goal "{goal["goal_name"]}" deleted successfully.', 'success')
+        
+    except Exception as e:
+        flash(f'Error deleting goal: {str(e)}', 'error')
+    
+    return redirect(url_for('financial_goals'))
+
+@app.route('/goals/<int:goal_id>/toggle', methods=['POST'])
+@auth.login_required
+def toggle_goal_completion(goal_id):
+    """Toggle goal completion status"""
+    from db import get_db
+    
+    try:
+        db_conn = get_db()
+        
+        # Get current status
+        goal = db_conn.execute('''
+            SELECT goal_name, is_completed FROM financial_goals 
+            WHERE id = ? AND user_id = ?
+        ''', (goal_id, g.user['id'])).fetchone()
+        
+        if not goal:
+            flash('Goal not found.', 'error')
+            return redirect(url_for('financial_goals'))
+        
+        # Toggle completion status
+        new_status = not bool(goal['is_completed'])
+        
+        db_conn.execute('''
+            UPDATE financial_goals SET
+                is_completed = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+        ''', (new_status, goal_id, g.user['id']))
+        db_conn.commit()
+        
+        status_text = 'completed' if new_status else 'reopened'
+        flash(f'Goal "{goal["goal_name"]}" marked as {status_text}!', 'success')
+        
+    except Exception as e:
+        flash(f'Error updating goal status: {str(e)}', 'error')
+    
+    return redirect(url_for('financial_goals'))
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    flash('Page not found', 'error')
+    return redirect(url_for('index'))
+
+@app.errorhandler(500)
+def internal_error(error):
+    flash('Internal server error', 'error')
+    return redirect(url_for('index'))
+
+# Context processor
+@app.context_processor
+def inject_user():
+    return dict(user=g.user)
 
 if __name__ == '__main__':
-    app = create_app()
-    
-    # Try to run on different ports if 5001 is busy
-    ports_to_try = [5001, 5002, 8000, 3000]
-    
-    for port in ports_to_try:
+    with app.app_context():
         try:
-            print(f"🚀 Starting server on port {port}")
-            app.run(debug=True, port=port)
-            break
-        except OSError as e:
-            if "Address already in use" in str(e):
-                print(f"❌ Port {port} is busy, trying next port...")
-                continue
-            else:
-                raise e
-    else:
-        print("❌ Could not find an available port to run the server")
+            db.init_db()
+            auth.create_demo_user()
+            print("✓ App initialization complete")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    
+    print("\n🚀 Niner Finance - Full Featured!")
+    print("📍 Available at: http://localhost:5001")
+    print("\n📋 Available Features:")
+    print("  • Dashboard: http://localhost:5001/dashboard")
+    print("  • Income Management: http://localhost:5001/income")
+    print("  • Budget Planning: http://localhost:5001/budget")
+    print("  • Transactions: http://localhost:5001/transactions")
+    print("  • Financial Goals: http://localhost:5001/goals")
+    print("  • Login/Register: http://localhost:5001/auth/login")
+    print(f"\n👤 Demo Account: demo/demo123")
+    
+    app.run(debug=True, host='0.0.0.0', port=5001)

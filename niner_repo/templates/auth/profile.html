@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Niner Finance{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+    
+    <div class="profile-card">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <h2>My Profile</h2>
+            <div class="username">@{{ g.user.username }}</div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Profile Form -->
+        <form id="profileForm" method="POST" action="{{ url_for('auth.profile') }}">
+            <!-- Email Field -->
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" 
+                       class="form-control" 
+                       id="email" 
+                       name="email" 
+                       value="{{ g.user.email }}" 
+                       required>
+            </div>
+
+            <!-- Password Change Section -->
+            <div class="password-section">
+                <h4>Change Password</h4>
+                <p style="color: #666; margin-bottom: 1rem;">Leave blank to keep current password</p>
+
+                <!-- Current Password -->
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="currentPassword" 
+                           name="currentPassword"
+                           placeholder="Enter current password to change">
+                </div>
+
+                <!-- New Password -->
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="newPassword" 
+                           name="newPassword"
+                           placeholder="Enter new password (min 8 characters)">
+                </div>
+
+                <!-- Confirm New Password -->
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="confirmPassword" 
+                           name="confirmPassword"
+                           placeholder="Confirm new password">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+{% endblock %}

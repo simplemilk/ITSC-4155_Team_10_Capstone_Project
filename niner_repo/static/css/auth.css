@@ -227,23 +227,23 @@
     height: 100%;
     width: 0%;
     transition: all 0.3s ease;
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
-.strength-weak { 
-    background: #dc3545; 
+.strength-weak {
+    background: #dc3545;
 }
 
-.strength-fair { 
-    background: #ffc107; 
+.strength-fair {
+    background: #ffc107;
 }
 
-.strength-good { 
-    background: #20c997; 
+.strength-good {
+    background: #17a2b8;
 }
 
-.strength-strong { 
-    background: #28a745; 
+.strength-strong {
+    background: #28a745;
 }
 
 /* Terms Checkbox */
@@ -266,7 +266,129 @@
     margin-bottom: 1rem;
 }
 
+/* Step Indicator Styles */
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.step {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+}
+
+.step.active {
+    background: #355E3B;
+    color: white;
+    border-color: #355E3B;
+}
+
+.step.completed {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.step-line {
+    width: 60px;
+    height: 2px;
+    background: #e9ecef;
+}
+
+.step-line.completed {
+    background: #28a745;
+}
+
+/* Question Group Styles */
+.question-group {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 1rem;
+}
+
+.question-group label {
+    color: #355E3B;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+/* Password Section */
+.password-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 1rem;
+}
+
+.password-section h6 {
+    color: #355E3B;
+    margin-bottom: 1rem;
+}
+
+/* Demo Help */
+.demo-help {
+    font-size: 0.875rem;
+}
+
+.demo-help code {
+    background: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-weight: bold;
+    color: #355E3B;
+}
+
+/* Step Content */
+.step-content {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Form Section Styles */
+.form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.form-section h5 {
+    color: #355E3B;
+    margin-bottom: 1rem;
+}
+
 /* Responsive Design */
+@media (max-width: 768px) {
+    .step-indicator {
+        transform: scale(0.8);
+    }
+    
+    .step-line {
+        width: 40px;
+    }
+    
+    .question-group, 
+    .password-section {
+        padding: 1rem;
+    }
+}
+
 @media (max-width: 576px) {
     .auth-container {
         padding: 1rem;

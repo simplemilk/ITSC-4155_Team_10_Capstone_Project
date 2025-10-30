@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Financial Goal - Niner Finance{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/finance-goals.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-plus-circle me-2"></i>Create Financial Goal</h2>
+                    <p class="text-muted">Set a new savings target and track your progress</p>
+                </div>
+                <a href="{{ url_for('financial_goals') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Goals
+                </a>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <!-- Create Goal Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('create_goal') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="goal_name" class="form-label">Goal Name *</label>
+                                <input type="text" class="form-control" id="goal_name" name="goal_name" 
+                                       placeholder="e.g., Emergency Fund" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="emergency">Emergency Fund</option>
+                                    <option value="education">Education</option>
+                                    <option value="travel">Travel</option>
+                                    <option value="technology">Technology</option>
+                                    <option value="housing">Housing</option>
+                                    <option value="transportation">Transportation</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="target_amount" class="form-label">Target Amount *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="target_amount" name="target_amount" 
+                                           step="0.01" min="0.01" placeholder="1000.00" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="current_amount" class="form-label">Current Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="current_amount" name="current_amount" 
+                                           step="0.01" min="0" placeholder="0.00" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="target_date" class="form-label">Target Date</label>
+                            <input type="date" class="form-control" id="target_date" name="target_date">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Describe your goal and why it's important to you..."></textarea>
+                        </div>
+
+                        <!-- Progress Indicator -->
+                        <div class="goal-preview mb-4 p-3 bg-light rounded">
+                            <h6>Goal Preview</h6>
+                            <div id="preview-content">
+                                <p class="text-muted">Fill in the form to see your goal preview</p>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('financial_goals') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Goal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update preview as user types
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const previewContent = document.getElementById('preview-content');
+    
+    function updatePreview() {
+        const goalName = document.getElementById('goal_name').value || 'Your Goal';
+        const targetAmount = parseFloat(document.getElementById('target_amount').value) || 0;
+        const currentAmount = parseFloat(document.getElementById('current_amount').value) || 0;
+        const targetDate = document.getElementById('target_date').value;
+        const category = document.getElementById('category').value;
+        
+        const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
+        const remaining = targetAmount - currentAmount;
+        
+        let dateInfo = '';
+        if (targetDate) {
+            const target = new Date(targetDate);
+            const today = new Date();
+            const daysLeft = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+            const monthsLeft = Math.ceil(daysLeft / 30);
+            
+            if (daysLeft > 0) {
+                const monthlyNeeded = monthsLeft > 0 ? remaining / monthsLeft : 0;
+                dateInfo = `
+                    <p><strong>Timeline:</strong> ${daysLeft} days (${monthsLeft} months)</p>
+                    <p><strong>Monthly needed:</strong> $${monthlyNeeded.toFixed(2)}</p>
+                `;
+            } else {
+                dateInfo = '<p class="text-warning"><strong>Target date has passed</strong></p>';
+            }
+        }
+        
+        previewContent.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">${goalName}</h6>
+                <span class="badge bg-primary">${category}</span>
+            </div>
+            <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar" style="width: ${Math.min(progress, 100)}%"></div>
+            </div>
+            <p><strong>Progress:</strong> $${currentAmount.toFixed(2)} / $${targetAmount.toFixed(2)} (${progress.toFixed(1)}%)</p>
+            <p><strong>Remaining:</strong> $${remaining.toFixed(2)}</p>
+            ${dateInfo}
+        `;
+    }
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('target_date').min = today;
+    
+    // Set default date to 1 year from now
+    const defaultDate = new Date();
+    defaultDate.setFullYear(defaultDate.getFullYear() + 1);
+    document.getElementById('target_date').value = defaultDate.toISOString().split('T')[0];
+    
+    // Add event listeners
+    form.addEventListener('input', updatePreview);
+    form.addEventListener('change', updatePreview);
+    
+    // Initial preview update
+    updatePreview();
+});
+</script>
+{% endblock %}
