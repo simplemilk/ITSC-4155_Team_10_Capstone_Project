@@ -2,11 +2,9 @@
 
 {% block title %}Transactions - Niner Finance{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/transaction.css') }}">
-{% endblock %}
-
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/transaction.css') }}">
+
 <!-- Flash Messages (will be converted to toasts by JS) -->
 {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -91,7 +89,8 @@
                         <small class="text-muted">This month</small>
                     </div>
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('main.expenses', category='food') }}" class="btn btn-outline-danger">
+                        <!-- Fixed: Changed from main.expenses to transactions.index -->
+                        <a href="{{ url_for('transactions.index', category='food') }}" class="btn btn-outline-danger">
                             View Food Expenses
                         </a>
                         <button class="btn btn-sm btn-danger" data-category="food" data-bs-toggle="modal" data-bs-target="#addExpenseModal" onclick="setExpenseCategory('food')">
@@ -114,7 +113,7 @@
                         <small class="text-muted">This month</small>
                     </div>
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('main.expenses', category='transportation') }}" class="btn btn-outline-info">
+                        <a href="{{ url_for('transactions.index', category='transportation') }}" class="btn btn-outline-info">
                             View Transport Expenses
                         </a>
                         <button class="btn btn-sm btn-info" data-category="transportation" data-bs-toggle="modal" data-bs-target="#addExpenseModal" onclick="setExpenseCategory('transportation')">
@@ -137,7 +136,7 @@
                         <small class="text-muted">This month</small>
                     </div>
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('main.expenses', category='entertainment') }}" class="btn btn-outline-primary">
+                        <a href="{{ url_for('transactions.index', category='entertainment') }}" class="btn btn-outline-primary">
                             View Entertainment Expenses
                         </a>
                         <button class="btn btn-sm btn-primary" data-category="entertainment" data-bs-toggle="modal" data-bs-target="#addExpenseModal" onclick="setExpenseCategory('entertainment')">
@@ -160,7 +159,7 @@
                         <small class="text-muted">This month</small>
                     </div>
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('main.expenses', category='other') }}" class="btn btn-outline-success">
+                        <a href="{{ url_for('transactions.index', category='other') }}" class="btn btn-outline-success">
                             View Other Expenses
                         </a>
                         <button class="btn btn-sm btn-success" data-category="other" data-bs-toggle="modal" data-bs-target="#addExpenseModal" onclick="setExpenseCategory('other')">
@@ -201,15 +200,16 @@
                         <button class="btn btn-sm btn-outline-secondary" data-action="export" onclick="exportTransactions()">
                             <i class="fas fa-download me-1"></i>Export
                         </button>
-                        <a href="{{ url_for('main.expenses') }}" class="btn btn-sm btn-outline-primary">
+                        <!-- Fixed: Changed from main.expenses to transactions.index -->
+                        <a href="{{ url_for('transactions.index') }}" class="btn btn-sm btn-outline-primary">
                             View All
                         </a>
                     </div>
                 </div>
 
                 <div id="transactions-list">
-                    {% if recent_transactions %}
-                        {% for transaction in recent_transactions %}
+                    {% if transactions %}
+                        {% for transaction in transactions %}
                         <div class="transaction-item" 
                              data-type="{{ transaction.type }}" 
                              data-category="{{ transaction.category if transaction.type == 'expense' else 'income' }}">
@@ -234,15 +234,12 @@
                             </div>
                             <div class="transaction-details">
                                 <div class="transaction-description">
-                                    {{ transaction.description if transaction.type == 'expense' else transaction.source }}
+                                    {{ transaction.description }}
                                 </div>
                                 <div class="transaction-meta">
                                     <i class="fas fa-calendar-alt"></i>
-                                    {{ transaction.date.strftime('%B %d, %Y') }} • 
-                                    {{ transaction.category.title() if transaction.type == 'expense' else 'Income' }}
-                                    {% if transaction.type == 'income' and transaction.recurrence_period != 'none' %}
-                                        • <i class="fas fa-sync-alt"></i> {{ transaction.recurrence_period.title() }}
-                                    {% endif %}
+                                    {{ transaction.date }} • 
+                                    {{ transaction.category.title() if transaction.category else 'Uncategorized' }}
                                 </div>
                             </div>
                             <div class="transaction-amount {{ 'amount-expense' if transaction.type == 'expense' else 'amount-income' }}">
@@ -278,12 +275,14 @@
                     </h5>
                     <div class="row">
                         <div class="col-md-3 col-sm-6 mb-2">
-                            <a href="{{ url_for('main.budget') }}" class="btn btn-outline-primary w-100">
+                            <!-- Fixed: Changed from main.budget to budget.index -->
+                            <a href="{{ url_for('budget.index') }}" class="btn btn-outline-primary w-100">
                                 <i class="fas fa-chart-pie me-2"></i>View Budget
                             </a>
                         </div>
                         <div class="col-md-3 col-sm-6 mb-2">
-                            <a href="{{ url_for('main.income') }}" class="btn btn-outline-success w-100">
+                            <!-- Fixed: Changed from main.income to income.index -->
+                            <a href="{{ url_for('income.index') }}" class="btn btn-outline-success w-100">
                                 <i class="fas fa-coins me-2"></i>Manage Income
                             </a>
                         </div>
@@ -293,7 +292,8 @@
                             </button>
                         </div>
                         <div class="col-md-3 col-sm-6 mb-2">
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary w-100">
+                            <!-- Fixed: Changed from main.dashboard to dashboard -->
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary w-100">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </div>
@@ -315,8 +315,8 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addExpenseForm" method="POST" action="{{ url_for('main.add_expense') }}">
-                {{ csrf_token() }}
+            <!-- Fixed: Changed from main.add_expense to transactions.create -->
+            <form id="addExpenseForm" method="POST" action="{{ url_for('transactions.create') }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="expense-description" class="form-label">Description</label>
@@ -342,8 +342,10 @@
                     </div>
                     <div class="mb-3">
                         <label for="expense-date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="expense-date" name="date" value="{{ today or '' }}" required>
+                        <input type="date" class="form-control" id="expense-date" name="date" required>
                     </div>
+                    <!-- Add hidden field for type -->
+                    <input type="hidden" name="type" value="expense">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -367,8 +369,8 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addIncomeForm" method="POST" action="{{ url_for('main.add_income') }}">
-                {{ csrf_token() }}
+            <!-- Fixed: Changed from main.add_income to income.add -->
+            <form id="addIncomeForm" method="POST" action="{{ url_for('income.add') }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="income-source" class="form-label">Source</label>
@@ -393,7 +395,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="income-date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="income-date" name="date" value="{{ today or '' }}" required>
+                        <input type="date" class="form-control" id="income-date" name="date" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -406,8 +408,31 @@
         </div>
     </div>
 </div>
+
+<script>
+// Set today's date as default
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('expense-date').value = today;
+    document.getElementById('income-date').value = today;
+});
+
+// Function to set expense category when clicking category-specific buttons
+function setExpenseCategory(category) {
+    document.getElementById('expense-category').value = category;
+}
+
+// Placeholder functions for JavaScript functionality
+function exportTransactions() {
+    alert('Export functionality coming soon!');
+}
+
+function generateReport() {
+    alert('Report generation coming soon!');
+}
+</script>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script src="{{ url_for('static', filename='js/transaction.js') }}"></script>
 {% endblock %}
