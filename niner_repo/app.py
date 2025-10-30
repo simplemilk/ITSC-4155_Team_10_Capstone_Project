@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
+from transactions import login_required
 
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -207,6 +208,12 @@ def create_app():
         
         return dashboard_view()
     
+    @app.route('/finance-goals')
+    @login_required
+    def finance_goals():
+        """Render the financial goals page"""
+        return render_template('home/finance-goals.html')
+
     print("🎯 App creation completed!")
     return app
 

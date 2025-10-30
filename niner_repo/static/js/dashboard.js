@@ -492,6 +492,11 @@ function addGoal() {
     alert('Financial goals feature coming soon!');
 }
 
+function viewFinancialGoals() {
+    console.log('View financial goals');
+    window.location.href = '/finance-goals';
+}
+
 // Export functions to global scope
 window.refreshDashboard = refreshDashboard;
 window.showAddIncomeModal = showAddIncomeModal;

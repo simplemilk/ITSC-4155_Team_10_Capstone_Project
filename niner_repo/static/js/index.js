@@ -20,6 +20,29 @@ function initializePage() {
 }
 
 /**
+ * Navigate to Financial Goals page
+ */
+function navigateToFinanceGoals() {
+    // Try different possible routes
+    const possibleRoutes = [
+        '/finance-goals',
+        '/goals',
+        '/financial-goals'
+    ];
+    
+    // For now, show a message and try the first route
+    console.log('Navigating to Financial Goals...');
+    
+    // Try to navigate to the finance goals page
+    try {
+        window.location.href = possibleRoutes[0];
+    } catch (error) {
+        console.error('Error navigating to finance goals:', error);
+        alert('Financial Goals feature is being set up. Please check back soon!');
+    }
+}
+
+/**
  * Initialize animations and loading states
  */
 function initializeAnimations() {
@@ -81,7 +104,7 @@ function getTooltipText(type) {
         'transactions': 'Add, edit, and categorize your financial transactions',
         'income': 'Track all your income sources and recurring payments',
         'budget': 'Create and manage budgets to control your spending',
-        'financial-split': 'Access calculators and financial planning tools'
+        'financial-goals': 'Set and track your financial goals with target dates'
     };
     
     return tooltips[type] || '';
@@ -396,8 +419,10 @@ window.addEventListener('error', function(e) {
 });
 
 /**
- * Export functions for testing
+ * Export functions for testing and global access
  */
+window.navigateToFinanceGoals = navigateToFinanceGoals;
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         initializePage,
@@ -405,6 +430,7 @@ if (typeof module !== 'undefined' && module.exports) {
         trackCardClick,
         trackButtonClick,
         debounce,
-        throttle
+        throttle,
+        navigateToFinanceGoals
     };
 }
