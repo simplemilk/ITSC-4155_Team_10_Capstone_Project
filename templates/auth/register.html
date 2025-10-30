@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Niner Finance{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container register-container">
+    <div class="auth-card register-card">
+        <div class="auth-header register-header">
+            <i class="fas fa-user-plus fa-3x text-info mb-3"></i>
+            <h2>Create Account</h2>
+            <p>Join Niner Finance and take control of your finances</p>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+            </div>
+        {% endif %}
+
+        <form method="post" id="registerForm">
+            <div class="form-floating">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+                <label for="username"><i class="fas fa-user me-2"></i>Username</label>
+                <div class="invalid-feedback" id="usernameError"></div>
+            </div>
+
+            <div class="form-floating">
+                <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+                <label for="email"><i class="fas fa-envelope me-2"></i>Email Address</label>
+                <div class="invalid-feedback" id="emailError"></div>
+            </div>
+
+            <div class="form-floating position-relative">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                <label for="password"><i class="fas fa-lock me-2"></i>Password</label>
+                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                    <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                </button>
+                <div class="password-strength">
+                    <div class="password-strength-bar" id="strengthBar"></div>
+                </div>
+            </div>
+
+            <div class="password-requirements">
+                <h6><i class="fas fa-shield-alt me-2"></i>Password Requirements</h6>
+                <div class="requirement" id="lengthReq">
+                    <i class="fas fa-times me-2"></i>At least 8 characters
+                </div>
+                <div class="requirement" id="upperReq">
+                    <i class="fas fa-times me-2"></i>One uppercase letter
+                </div>
+                <div class="requirement" id="lowerReq">
+                    <i class="fas fa-times me-2"></i>One lowercase letter
+                </div>
+                <div class="requirement" id="numberReq">
+                    <i class="fas fa-times me-2"></i>One number
+                </div>
+            </div>
+
+            <div class="form-floating position-relative">
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
+                <label for="confirmPassword"><i class="fas fa-lock me-2"></i>Confirm Password</label>
+                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                    <i class="fas fa-eye" id="confirmPasswordToggleIcon"></i>
+                </button>
+                <div class="invalid-feedback" id="confirmPasswordError"></div>
+            </div>
+
+            <div class="terms-checkbox">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                    <label class="form-check-label" for="agreeTerms">
+                        I agree to the <a href="#" onclick="showTerms()">Terms of Service</a> and 
+                        <a href="#" onclick="showPrivacy()">Privacy Policy</a>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-info btn-auth btn-register w-100 mb-3" id="submitBtn" disabled>
+                <i class="fas fa-user-plus me-2"></i>Create Account
+            </button>
+        </form>
+
+        <div class="auth-link login-link">
+            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign in here</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Terms of Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Acceptance of Terms</h6>
+                <p>By using Niner Finance, you agree to these terms of service.</p>
+                
+                <h6>2. Use of Service</h6>
+                <p>You may use our service for personal financial management only.</p>
+                
+                <h6>3. Privacy</h6>
+                <p>We protect your financial data with industry-standard security measures.</p>
+                
+                <h6>4. Limitation of Liability</h6>
+                <p>Niner Finance is provided "as is" without warranties of any kind.</p>
+                
+                <h6>5. Account Security</h6>
+                <p>You are responsible for maintaining the security of your account credentials.</p>
+                
+                <h6>6. Data Usage</h6>
+                <p>Your financial data is used solely for providing our services and will not be shared with third parties without your consent.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Policy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Privacy Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Information We Collect</h6>
+                <p>We collect information you provide when creating an account and using our services, including your username, email, and financial transaction data.</p>
+                
+                <h6>How We Use Information</h6>
+                <p>Your information is used to provide and improve our financial management services, generate reports, and ensure account security.</p>
+                
+                <h6>Data Security</h6>
+                <p>We use industry-standard encryption and secure servers to protect your financial data. All sensitive information is encrypted both in transit and at rest.</p>
+                
+                <h6>Data Sharing</h6>
+                <p>We do not sell, trade, or share your personal financial information with third parties without your explicit consent.</p>
+                
+                <h6>Contact Us</h6>
+                <p>For privacy questions or concerns, contact us at privacy@ninerfinance.com or through our support system.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<script>
+    // Register-specific JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-focus on username field
+        document.getElementById('username').focus();
+        
+        // Initialize register form
+        initRegisterForm();
+    });
+
+    function initRegisterForm() {
+        // Add event listeners for validation
+        document.getElementById('password').addEventListener('input', validatePasswordInput);
+        document.getElementById('confirmPassword').addEventListener('input', validateConfirmPasswordInput);
+        document.getElementById('username').addEventListener('blur', validateUsernameInput);
+        document.getElementById('email').addEventListener('blur', validateEmailInput);
+        document.getElementById('agreeTerms').addEventListener('change', checkFormValidity);
+        
+        // Form submission
+        document.getElementById('registerForm').addEventListener('submit', handleFormSubmit);
+    }
+
+    function validatePasswordInput() {
+        const password = document.getElementById('password').value;
+        const requirements = validatePassword(password);
+        
+        // Update requirement indicators
+        updateRequirement('lengthReq', requirements.length);
+        updateRequirement('upperReq', requirements.upper);
+        updateRequirement('lowerReq', requirements.lower);
+        updateRequirement('numberReq', requirements.number);
+        
+        // Calculate password strength
+        const strength = calculatePasswordStrength(password);
+        updatePasswordStrengthBar(strength);
+        
+        // Check form validity
+        checkFormValidity();
+        
+        return Object.values(requirements).every(Boolean);
+    }
+    
+    function updateRequirement(id, met) {
+        const element = document.getElementById(id);
+        const icon = element.querySelector('i');
+        
+        if (met) {
+            element.classList.add('met');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-check');
+        } else {
+            element.classList.remove('met');
+            icon.classList.remove('fa-check');
+            icon.classList.add('fa-times');
+        }
+    }
+    
+    function updatePasswordStrengthBar(strength) {
+        const bar = document.getElementById('strengthBar');
+        const percentage = (strength / 4) * 100;
+        
+        bar.style.width = percentage + '%';
+        bar.className = 'password-strength-bar';
+        
+        if (strength === 1) bar.classList.add('strength-weak');
+        else if (strength === 2) bar.classList.add('strength-fair');
+        else if (strength === 3) bar.classList.add('strength-good');
+        else if (strength === 4) bar.classList.add('strength-strong');
+    }
+    
+    function validateConfirmPasswordInput() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const errorDiv = document.getElementById('confirmPasswordError');
+        
+        if (confirmPassword && password !== confirmPassword) {
+            confirmPasswordInput.classList.add('is-invalid');
+            confirmPasswordInput.classList.remove('is-valid');
+            errorDiv.textContent = 'Passwords do not match';
+            return false;
+        } else if (confirmPassword && password === confirmPassword) {
+            confirmPasswordInput.classList.remove('is-invalid');
+            confirmPasswordInput.classList.add('is-valid');
+            errorDiv.textContent = '';
+            checkFormValidity();
+            return true;
+        } else {
+            confirmPasswordInput.classList.remove('is-invalid', 'is-valid');
+            errorDiv.textContent = '';
+            return false;
+        }
+    }
+    
+    function validateUsernameInput() {
+        const username = document.getElementById('username').value.trim();
+        const usernameInput = document.getElementById('username');
+        const errorDiv = document.getElementById('usernameError');
+        
+        if (!validateUsername(username)) {
+            usernameInput.classList.add('is-invalid');
+            usernameInput.classList.remove('is-valid');
+            if (username.length < 3) {
+                errorDiv.textContent = 'Username must be at least 3 characters';
+            } else {
+                errorDiv.textContent = 'Username can only contain letters, numbers, and underscores';
+            }
+            return false;
+        }
+        
+        usernameInput.classList.remove('is-invalid');
+        usernameInput.classList.add('is-valid');
+        errorDiv.textContent = '';
+        return true;
+    }
+    
+    function validateEmailInput() {
+        const email = document.getElementById('email').value.trim();
+        const emailInput = document.getElementById('email');
+        const errorDiv = document.getElementById('emailError');
+        
+        if (!validateEmail(email)) {
+            emailInput.classList.add('is-invalid');
+            emailInput.classList.remove('is-valid');
+            errorDiv.textContent = 'Please enter a valid email address';
+            return false;
+        }
+        
+        emailInput.classList.remove('is-invalid');
+        emailInput.classList.add('is-valid');
+        errorDiv.textContent = '';
+        return true;
+    }
+    
+    function checkFormValidity() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const termsAgreed = document.getElementById('agreeTerms').checked;
+        
+        const passwordValid = Object.values(validatePassword(password)).every(Boolean);
+        const passwordsMatch = password === confirmPassword && confirmPassword !== '';
+        const submitBtn = document.getElementById('submitBtn');
+        
+        submitBtn.disabled = !(passwordValid && passwordsMatch && termsAgreed);
+    }
+    
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        // Validate all fields
+        const usernameValid = validateUsernameInput();
+        const emailValid = validateEmailInput();
+        const passwordValid = validatePasswordInput();
+        const confirmPasswordValid = validateConfirmPasswordInput();
+        const termsAgreed = document.getElementById('agreeTerms').checked;
+        
+        if (!usernameValid || !emailValid || !passwordValid || !confirmPasswordValid) {
+            showAlert('Please fix all errors before submitting', 'danger');
+            return;
+        }
+        
+        if (!termsAgreed) {
+            showAlert('Please agree to the Terms of Service and Privacy Policy', 'warning');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        showLoadingState(submitBtn, 'Creating Account...');
+        
+        // Submit form
+        this.submit();
+    }
+    
+    function showTerms() {
+        new bootstrap.Modal(document.getElementById('termsModal')).show();
+    }
+    
+    function showPrivacy() {
+        new bootstrap.Modal(document.getElementById('privacyModal')).show();
+    }
+</script>
+{% endblock %}

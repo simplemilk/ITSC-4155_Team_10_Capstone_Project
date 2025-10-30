@@ -1,0 +1,12 @@
+Flask==3.0.0
+FLask-Login==0.6.3
+FLask-WTF==1.1.1
+Flask-Bcrypt==1.0.1
+Flask-SQLAlchemy==3.0.5
+python-dotenv==1.0.0
+WTForms==3.0.1
+Werkzeug==2.3.7
+SQLAlchemy==2.0.21
+email-validator==2.0.0
+
+# Additional dependencies can be added below as needed

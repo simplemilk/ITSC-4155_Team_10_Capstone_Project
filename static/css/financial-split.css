@@ -1,0 +1,193 @@
+/* Color Variables */
+:root {
+    --hunter-green: #355E3B;
+    --hunter-green-light: #4A7751;
+    --hunter-green-dark: #2A4A2E;
+    --green-accent: #87CF8F;
+    --red-accent: #FF6B6B;
+    --background-light: #F5F7F5;
+    --text-dark: #2C3E2E;
+    --text-light: #FFFFFF;
+    --border-color: #E0E5E1;
+}
+
+/* Split View Container */
+.financial-split-view {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 2rem auto;
+    max-width: 1200px;
+    padding: 1rem;
+}
+
+/* Common styles for both sides */
+.split-side {
+    background: var(--background-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Costs Side */
+.costs-side {
+    border-left: 4px solid var(--red-accent);
+}
+
+.costs-side .amount {
+    color: var(--red-accent);
+}
+
+/* Savings Side */
+.savings-side {
+    border-left: 4px solid var(--green-accent);
+}
+
+.savings-side .amount {
+    color: var(--hunter-green);
+}
+
+/* Header Styles */
+.side-header {
+    color: var(--hunter-green);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* Amount Display */
+.amount-display {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+/* Progress Bar */
+.progress-container {
+    margin: 1.5rem 0;
+}
+
+.progress-bar {
+    height: 12px;
+    background: var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.5s ease-in-out;
+}
+
+.costs-side .progress-fill {
+    background: var(--red-accent);
+}
+
+.savings-side .progress-fill {
+    background: var(--hunter-green);
+}
+
+/* Details List */
+.details-list {
+    margin-top: 1.5rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.detail-label {
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.detail-value {
+    font-weight: 600;
+}
+
+.costs-side .detail-value {
+    color: var(--red-accent);
+}
+
+.savings-side .detail-value {
+    color: var(--hunter-green);
+}
+
+/* Percentage Indicators */
+.percentage {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+/* Animation for updates */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.amount-updated {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .financial-split-view {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .amount-display {
+        font-size: 2rem;
+    }
+
+    .side-header {
+        font-size: 1.25rem;
+    }
+}
+
+/* Loading State */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.loading .loading-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--hunter-green-light);
+    border-top-color: var(--hunter-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

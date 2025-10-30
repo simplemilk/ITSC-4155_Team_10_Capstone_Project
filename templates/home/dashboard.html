@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Financial Dashboard{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  <!-- Financial Overview Section -->
+  <section class="dashboard-section overview-section">
+    <h2>Financial Overview</h2>
+    <div class="overview-grid" id="financial-overview">
+      <div class="overview-card total-income">
+        <h3>Total Income</h3>
+        <p class="amount">$<span id="total-income">0.00</span></p>
+        <p class="period">This Month</p>
+      </div>
+      <div class="overview-card total-expenses">
+        <h3>Total Expenses</h3>
+        <p class="amount">$<span id="total-expenses">0.00</span></p>
+        <p class="period">This Month</p>
+      </div>
+      <div class="overview-card total-savings">
+        <h3>Total Savings</h3>
+        <p class="amount">$<span id="total-savings">0.00</span></p>
+        <p class="savings-rate">Rate: <span id="savings-rate">0</span>%</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Income Breakdown Section -->
+  <section class="dashboard-section income-section">
+    <h2>Income Sources</h2>
+    <div class="income-chart-container">
+      <canvas id="income-chart"></canvas>
+    </div>
+    <div class="income-list" id="income-breakdown">
+      <div class="loading">Loading income data...</div>
+    </div>
+  </section>
+
+  <!-- Budget Status Section -->
+  <section class="dashboard-section budget-section">
+    <h2>Budget Status</h2>
+    <div class="budget-grid" id="budget-status">
+      <div class="loading">Loading budget data...</div>
+    </div>
+  </section>
+
+  <!-- Recent Activity Section -->
+  <section class="dashboard-section activity-section">
+    <h2>Recent Activity</h2>
+    <div class="activity-list" id="recent-activity">
+      <div class="loading">Loading recent activity...</div>
+    </div>
+  </section>
+
+  <!-- Projected Savings Section -->
+  <section class="dashboard-section projections-section">
+    <h2>Projected Savings</h2>
+    <div class="projections-grid">
+      <div class="projection-card monthly">
+        <h3>Monthly Projection</h3>
+        <div class="projection-details" id="monthly-projection">
+          <div class="loading">Loading projections...</div>
+        </div>
+      </div>
+      <div class="projection-card annual">
+        <h3>Annual Projection</h3>
+        <div class="projection-details" id="annual-projection">
+          <div class="loading">Loading projections...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Template for income breakdown item -->
+<template id="income-item-template">
+  <div class="income-item">
+    <div class="income-category">
+      <span class="category-name"></span>
+      <span class="entry-count"></span>
+    </div>
+    <div class="income-amounts">
+      <div class="total-amount">$<span class="amount"></span></div>
+      <div class="average-amount">avg: $<span class="average"></span></div>
+    </div>
+  </div>
+</template>
+
+<!-- Template for budget item -->
+<template id="budget-item-template">
+  <div class="budget-item">
+    <div class="budget-category">
+      <span class="category-name"></span>
+    </div>
+    <div class="budget-progress">
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+      <div class="budget-amounts">
+        <span class="spent-amount"></span> / <span class="allocated-amount"></span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Template for activity item -->
+<template id="activity-item-template">
+  <div class="activity-item">
+    <div class="activity-icon"></div>
+    <div class="activity-details">
+      <div class="activity-title"></div>
+      <div class="activity-meta">
+        <span class="activity-amount"></span>
+        <span class="activity-date"></span>
+      </div>
+    </div>
+  </div>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

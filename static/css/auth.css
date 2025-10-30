@@ -1,0 +1,364 @@
+/* Common Auth Styles */
+.auth-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: -20px -15px 0 -15px;
+    padding: 2rem 0;
+}
+
+.login-container {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.register-container {
+    background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+}
+
+.auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 100%;
+    max-width: 450px;
+}
+
+.register-card {
+    max-width: 500px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-header h2 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.login-header h2 {
+    color: #28a745;
+}
+
+.register-header h2 {
+    color: #20c997;
+}
+
+.auth-header p {
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+/* Form Styles */
+.form-floating {
+    margin-bottom: 1rem;
+}
+
+.form-floating input {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-floating input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.login-container .form-floating input:focus {
+    border-color: #28a745;
+}
+
+.register-container .form-floating input:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+}
+
+.form-floating input.is-valid {
+    border-color: #28a745;
+}
+
+.form-floating input.is-invalid {
+    border-color: #dc3545;
+}
+
+/* Button Styles */
+.btn-auth {
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-login {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.btn-register {
+    background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+}
+
+.btn-auth:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+}
+
+/* Divider */
+.auth-divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.auth-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #dee2e6;
+}
+
+.auth-divider span {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0 1rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Links */
+.auth-link {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.auth-link a {
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.login-link a {
+    color: #28a745;
+}
+
+.login-link a:hover {
+    color: #20c997;
+    text-decoration: underline;
+}
+
+.register-link a {
+    color: #20c997;
+}
+
+.register-link a:hover {
+    color: #28a745;
+    text-decoration: underline;
+}
+
+/* Demo Credentials */
+.demo-credentials {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.demo-credentials h6 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.demo-credentials p {
+    margin-bottom: 0.25rem;
+    color: #6c757d;
+}
+
+/* Password Toggle */
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* Password Requirements */
+.password-requirements {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+}
+
+.requirement {
+    color: #dc3545;
+    transition: color 0.3s ease;
+    margin-bottom: 0.25rem;
+}
+
+.requirement.met {
+    color: #28a745;
+}
+
+/* Password Strength */
+.password-strength {
+    height: 5px;
+    border-radius: 3px;
+    background: #e9ecef;
+    margin-top: 0.5rem;
+    overflow: hidden;
+}
+
+.password-strength-bar {
+    height: 100%;
+    width: 0%;
+    transition: all 0.3s ease;
+    border-radius: 3px;
+}
+
+.strength-weak { 
+    background: #dc3545; 
+}
+
+.strength-fair { 
+    background: #ffc107; 
+}
+
+.strength-good { 
+    background: #20c997; 
+}
+
+.strength-strong { 
+    background: #28a745; 
+}
+
+/* Terms Checkbox */
+.terms-checkbox {
+    margin: 1rem 0;
+}
+
+.terms-checkbox a {
+    color: #20c997;
+    text-decoration: none;
+}
+
+.terms-checkbox a:hover {
+    text-decoration: underline;
+}
+
+/* Alert Overrides */
+.alert {
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+    .auth-container {
+        padding: 1rem;
+        margin: -20px -15px 0 -15px;
+    }
+    
+    .auth-card,
+    .register-card {
+        padding: 1.5rem;
+        border-radius: 15px;
+    }
+    
+    .auth-header h2 {
+        font-size: 1.75rem;
+    }
+    
+    .demo-credentials {
+        font-size: 0.8rem;
+        padding: 0.75rem;
+    }
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+    .auth-card {
+        background: rgba(33, 37, 41, 0.95);
+        color: #fff;
+    }
+    
+    .auth-header p {
+        color: #adb5bd;
+    }
+    
+    .demo-credentials {
+        background: rgba(52, 58, 64, 0.8);
+        color: #adb5bd;
+    }
+    
+    .demo-credentials h6 {
+        color: #fff;
+    }
+    
+    .password-requirements {
+        background: rgba(52, 58, 64, 0.8);
+        color: #adb5bd;
+    }
+    
+    .form-floating input {
+        background: rgba(52, 58, 64, 0.8);
+        border-color: #495057;
+        color: #fff;
+    }
+    
+    .form-floating label {
+        color: #adb5bd;
+    }
+}
+
+/* Loading States */
+.btn-auth:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-auth .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Focus Styles for Accessibility */
+.form-floating input:focus,
+.btn-auth:focus,
+.password-toggle:focus {
+    outline: 2px solid #28a745;
+    outline-offset: 2px;
+}
+
+/* Form Validation Feedback */
+.invalid-feedback {
+    display: block;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.valid-feedback {
+    display: block;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    color: #28a745;
+}

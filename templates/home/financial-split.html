@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Financial Overview{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="financial-split-view">
+    <!-- Costs Side -->
+    <div class="split-side costs-side">
+        <h2 class="side-header">Expenses & Costs</h2>
+        <div class="amount-display">
+            $<span id="total-costs">0.00</span>
+        </div>
+        <div class="percentage">
+            <span id="costs-percentage">0</span>% of Total
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="costs-progress"></div>
+            </div>
+        </div>
+        <div class="details-list" id="costs-list">
+            <!-- Costs details will be populated dynamically -->
+        </div>
+        <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Savings Side -->
+    <div class="split-side savings-side">
+        <h2 class="side-header">Savings & Income</h2>
+        <div class="amount-display">
+            $<span id="total-savings">0.00</span>
+        </div>
+        <div class="percentage">
+            <span id="savings-percentage">0</span>% of Total
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="savings-progress"></div>
+            </div>
+        </div>
+        <div class="details-list" id="savings-list">
+            <!-- Savings details will be populated dynamically -->
+        </div>
+        <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/financial-split.js') }}"></script>
+{% endblock %}
