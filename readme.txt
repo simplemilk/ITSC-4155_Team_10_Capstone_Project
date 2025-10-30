@@ -59,3 +59,9 @@ Turning on the App from where you left off:
     venv\Scripts\activate
 
   The webpages should load as well as the database and backend afterwards!!! 
+
+Common problems:
+
+If there is an issue with some library not being installed type the following command:
+
+pip3 install <module>
