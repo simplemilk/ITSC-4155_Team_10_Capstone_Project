@@ -214,6 +214,12 @@ def create_app():
         """Render the financial goals page"""
         return render_template('home/finance-goals.html')
 
+    @app.route('/profile')
+    @login_required
+    def profile():
+        """Render the profile & settings page"""
+        return render_template('home/profile.html')
+
     print("🎯 App creation completed!")
     return app
 

@@ -22,6 +22,18 @@ function initializePage() {
 /**
  * Navigate to Financial Goals page
  */
+
+function navigateToProfile() {
+    console.log('Navigating to Profile...');
+    
+    try {
+        window.location.href = '/profile';
+    } catch (error) {
+        console.error('Error navigating to profile:', error);
+        alert('Profile feature is being set up. Please check back soon!');
+    }
+}
+
 function navigateToFinanceGoals() {
     // Try different possible routes
     const possibleRoutes = [
@@ -39,6 +51,17 @@ function navigateToFinanceGoals() {
     } catch (error) {
         console.error('Error navigating to finance goals:', error);
         alert('Financial Goals feature is being set up. Please check back soon!');
+    }
+}
+
+function navigateToProfile() {
+    console.log('Navigating to Profile...');
+    
+    try {
+        window.location.href = '/profile';
+    } catch (error) {
+        console.error('Error navigating to profile:', error);
+        alert('Profile feature is being set up. Please check back soon!');
     }
 }
 
@@ -104,7 +127,8 @@ function getTooltipText(type) {
         'transactions': 'Add, edit, and categorize your financial transactions',
         'income': 'Track all your income sources and recurring payments',
         'budget': 'Create and manage budgets to control your spending',
-        'financial-goals': 'Set and track your financial goals with target dates'
+        'financial-goals': 'Set and track your financial goals with target dates',
+        'profile': 'Customize your account settings, password, currency, and notifications'
     };
     
     return tooltips[type] || '';
@@ -422,6 +446,7 @@ window.addEventListener('error', function(e) {
  * Export functions for testing and global access
  */
 window.navigateToFinanceGoals = navigateToFinanceGoals;
+window.navigateToProfile = navigateToProfile;
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
