@@ -9,12 +9,12 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2><i class="fas fa-plus-circle me-2"></i>Create Financial Goal</h2>
-                    <p class="text-muted">Set a new savings target and track your progress</p>
+                    <p class="text-muted">Set a new savings target and track your progress toward financial success</p>
                 </div>
                 <a href="{{ url_for('financial_goals') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Back to Goals
@@ -33,128 +33,311 @@
             {% endif %}
             {% endwith %}
 
-            <!-- Create Goal Form -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <form method="POST" action="{{ url_for('create_goal') }}">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="goal_name" class="form-label">Goal Name *</label>
-                                <input type="text" class="form-control" id="goal_name" name="goal_name" 
-                                       placeholder="e.g., Emergency Fund" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="category" class="form-label">Category</label>
-                                <select class="form-select" id="category" name="category">
-                                    <option value="emergency">Emergency Fund</option>
-                                    <option value="education">Education</option>
-                                    <option value="travel">Travel</option>
-                                    <option value="technology">Technology</option>
-                                    <option value="housing">Housing</option>
-                                    <option value="transportation">Transportation</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
+            <div class="row">
+                <!-- Form Section -->
+                <div class="col-md-7">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-target me-2"></i>Goal Details</h5>
                         </div>
+                        <div class="card-body p-4">
+                            <form method="POST" action="{{ url_for('create_goal') }}" id="goalForm">
+                                <!-- Goal Information Section -->
+                                <div class="form-section mb-4">
+                                    <h6 class="section-title mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                                    </h6>
+                                    
+                                    <div class="mb-3">
+                                        <label for="goal_name" class="form-label">Goal Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="goal_name" name="goal_name" 
+                                               placeholder="e.g., Emergency Fund, New Laptop, Vacation" required maxlength="100">
+                                        <div class="form-text">Choose a clear, motivating name for your goal</div>
+                                    </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="target_amount" class="form-label">Target Amount *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="target_amount" name="target_amount" 
-                                           step="0.01" min="0.01" placeholder="1000.00" required>
+                                    <div class="mb-3">
+                                        <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="category" name="category" required>
+                                            <option value="">Select a category...</option>
+                                            <option value="emergency">🛡️ Emergency Fund</option>
+                                            <option value="education">🎓 Education</option>
+                                            <option value="travel">✈️ Travel</option>
+                                            <option value="technology">💻 Technology</option>
+                                            <option value="housing">🏠 Housing</option>
+                                            <option value="transportation">🚗 Transportation</option>
+                                            <option value="other">⭐ Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Description</label>
+                                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                                  placeholder="Why is this goal important to you? Add details to stay motivated..." maxlength="500"></textarea>
+                                        <div class="form-text">Adding a description helps you stay motivated</div>
+                                    </div>
+                                </div>
+
+                                <!-- Financial Details Section -->
+                                <div class="form-section mb-4">
+                                    <h6 class="section-title mb-3">
+                                        <i class="fas fa-dollar-sign me-2"></i>Financial Details
+                                    </h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="target_amount" class="form-label">Target Amount <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="target_amount" name="target_amount" 
+                                                       step="0.01" min="1" placeholder="1000.00" required>
+                                            </div>
+                                            <div class="form-text">How much do you want to save?</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="current_amount" class="form-label">Current Amount</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="current_amount" name="current_amount" 
+                                                       step="0.01" min="0" value="0.00">
+                                            </div>
+                                            <div class="form-text">How much have you already saved?</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Timeline Section -->
+                                <div class="form-section mb-4">
+                                    <h6 class="section-title mb-3">
+                                        <i class="fas fa-calendar me-2"></i>Timeline
+                                    </h6>
+                                    
+                                    <div class="mb-3">
+                                        <label for="target_date" class="form-label">Target Date</label>
+                                        <input type="date" class="form-control" id="target_date" name="target_date">
+                                        <div class="form-text">When would you like to reach this goal?</div>
+                                    </div>
+
+                                    <div class="savings-plan-preview" id="savings-plan" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <h6 class="alert-heading">
+                                                <i class="fas fa-lightbulb me-2"></i>Suggested Savings Plan
+                                            </h6>
+                                            <div id="savings-suggestion"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Priority Section -->
+                                <div class="form-section mb-4">
+                                    <h6 class="section-title mb-3">
+                                        <i class="fas fa-flag me-2"></i>Priority Level
+                                    </h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check priority-option">
+                                                <input class="form-check-input" type="radio" name="priority" id="priority_low" value="low">
+                                                <label class="form-check-label w-100" for="priority_low">
+                                                    <div class="priority-card low">
+                                                        <i class="fas fa-flag text-success"></i>
+                                                        <span>Low Priority</span>
+                                                        <small>Save when you can</small>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check priority-option">
+                                                <input class="form-check-input" type="radio" name="priority" id="priority_medium" value="medium" checked>
+                                                <label class="form-check-label w-100" for="priority_medium">
+                                                    <div class="priority-card medium">
+                                                        <i class="fas fa-flag text-warning"></i>
+                                                        <span>Medium Priority</span>
+                                                        <small>Regular contributions</small>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check priority-option">
+                                                <input class="form-check-input" type="radio" name="priority" id="priority_high" value="high">
+                                                <label class="form-check-label w-100" for="priority_high">
+                                                    <div class="priority-card high">
+                                                        <i class="fas fa-flag text-danger"></i>
+                                                        <span>High Priority</span>
+                                                        <small>Focus on this goal</small>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Form Actions -->
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a href="{{ url_for('financial_goals') }}" class="btn btn-outline-secondary me-md-2">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-success" id="submitBtn">
+                                        <i class="fas fa-save me-2"></i>Create Goal
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="col-md-5">
+                    <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Goal Preview</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="goal-preview">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-target fa-3x mb-3 opacity-50"></i>
+                                    <p>Fill in the form to see your goal preview</p>
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="current_amount" class="form-label">Current Amount</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="current_amount" name="current_amount" 
-                                           step="0.01" min="0" placeholder="0.00" value="0">
-                                </div>
-                            </div>
                         </div>
-
-                        <div class="mb-3">
-                            <label for="target_date" class="form-label">Target Date</label>
-                            <input type="date" class="form-control" id="target_date" name="target_date">
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" 
-                                      placeholder="Describe your goal and why it's important to you..."></textarea>
-                        </div>
-
-                        <!-- Progress Indicator -->
-                        <div class="goal-preview mb-4 p-3 bg-light rounded">
-                            <h6>Goal Preview</h6>
-                            <div id="preview-content">
-                                <p class="text-muted">Fill in the form to see your goal preview</p>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ url_for('financial_goals') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Create Goal
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-// Update preview as user types
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    const previewContent = document.getElementById('preview-content');
-    
-    function updatePreview() {
-        const goalName = document.getElementById('goal_name').value || 'Your Goal';
-        const targetAmount = parseFloat(document.getElementById('target_amount').value) || 0;
-        const currentAmount = parseFloat(document.getElementById('current_amount').value) || 0;
-        const targetDate = document.getElementById('target_date').value;
-        const category = document.getElementById('category').value;
-        
-        const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
-        const remaining = targetAmount - currentAmount;
-        
-        let dateInfo = '';
-        if (targetDate) {
-            const target = new Date(targetDate);
-            const today = new Date();
-            const daysLeft = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-            const monthsLeft = Math.ceil(daysLeft / 30);
-            
-            if (daysLeft > 0) {
-                const monthlyNeeded = monthsLeft > 0 ? remaining / monthsLeft : 0;
-                dateInfo = `
-                    <p><strong>Timeline:</strong> ${daysLeft} days (${monthsLeft} months)</p>
-                    <p><strong>Monthly needed:</strong> $${monthlyNeeded.toFixed(2)}</p>
-                `;
-            } else {
-                dateInfo = '<p class="text-warning"><strong>Target date has passed</strong></p>';
-            }
-        }
-        
-        previewContent.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="mb-0">${goalName}</h6>
-                <span class="badge bg-primary">${category}</span>
-            </div>
-            <div class="progress mb-2" style="height: 8px;">
-                <div class="progress-bar" style="width: ${Math.min(progress, 100)}%"></div>
-            </div>
-            <p><strong>Progress:</strong> $${currentAmount.toFixed(2)} / $${targetAmount.toFixed(2)} (${progress.toFixed(1)}%)</p>
-            <p><strong>Remaining:</strong> $${remaining.toFixed(2)}</p>
-            ${dateInfo}
-        `;
+<style>
+/* Form-specific styles */
+.form-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.priority-option {
+    margin-bottom: 1rem;
+}
+
+.priority-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.priority-card:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+
+.priority-card.low:hover { border-color: #28a745; }
+.priority-card.medium:hover { border-color: #ffc107; }
+.priority-card.high:hover { border-color: #dc3545; }
+
+.form-check-input:checked + .form-check-label .priority-card {
+    border-width: 3px;
+}
+
+.form-check-input:checked + .form-check-label .priority-card.low {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.form-check-input:checked + .form-check-label .priority-card.medium {
+    border-color: #ffc107;
+    background-color: #fffef7;
+}
+
+.form-check-input:checked + .form-check-label .priority-card.high {
+    border-color: #dc3545;
+    background-color: #fff8f8;
+}
+
+.priority-card i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.priority-card span {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.priority-card small {
+    color: #6c757d;
+    display: block;
+}
+
+/* Hide radio buttons */
+.priority-option .form-check-input {
+    display: none;
+}
+
+/* Goal preview styles */
+#goal-preview .goal-card-preview {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.preview-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.preview-icon.emergency { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+.preview-icon.education { background: linear-gradient(135deg, #3498db, #2980b9); }
+.preview-icon.travel { background: linear-gradient(135deg, #f39c12, #e67e22); }
+.preview-icon.technology { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+.preview-icon.housing { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.preview-icon.transportation { background: linear-gradient(135deg, #34495e, #2c3e50); }
+.preview-icon.other { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .priority-card {
+        margin-bottom: 1rem;
     }
+    
+    .form-section {
+        padding: 1rem;
+    }
+    
+    .sticky-top {
+        position: relative !important;
+        top: auto !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('goalForm');
+    const preview = document.getElementById('goal-preview');
     
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
@@ -165,9 +348,201 @@ document.addEventListener('DOMContentLoaded', function() {
     defaultDate.setFullYear(defaultDate.getFullYear() + 1);
     document.getElementById('target_date').value = defaultDate.toISOString().split('T')[0];
     
-    // Add event listeners
+    // Update preview function
+    function updatePreview() {
+        const goalName = document.getElementById('goal_name').value || 'Your Goal';
+        const category = document.getElementById('category').value || 'other';
+        const description = document.getElementById('description').value || 'No description';
+        const targetAmount = parseFloat(document.getElementById('target_amount').value) || 0;
+        const currentAmount = parseFloat(document.getElementById('current_amount').value) || 0;
+        const targetDate = document.getElementById('target_date').value;
+        const priority = document.querySelector('input[name="priority"]:checked')?.value || 'medium';
+        
+        const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
+        const remaining = Math.max(targetAmount - currentAmount, 0);
+        
+        let timelineInfo = '';
+        let savingsInfo = '';
+        
+        if (targetDate && targetAmount > currentAmount) {
+            const target = new Date(targetDate);
+            const today = new Date();
+            const daysLeft = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+            const monthsLeft = Math.ceil(daysLeft / 30);
+            
+            if (daysLeft > 0) {
+                const dailyNeeded = remaining / daysLeft;
+                const weeklyNeeded = remaining / (daysLeft / 7);
+                const monthlyNeeded = monthsLeft > 0 ? remaining / monthsLeft : 0;
+                
+                timelineInfo = `
+                    <div class="timeline-info mb-3">
+                        <small class="text-muted d-block">
+                            <i class="fas fa-calendar me-1"></i>${daysLeft} days (${monthsLeft} months) remaining
+                        </small>
+                    </div>
+                `;
+                
+                savingsInfo = `
+                    <div class="savings-info">
+                        <h6 class="text-primary mb-2">
+                            <i class="fas fa-lightbulb me-1"></i>Savings Plan
+                        </h6>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <small class="text-muted d-block">Daily</small>
+                                <strong>$${dailyNeeded.toFixed(2)}</strong>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Weekly</small>
+                                <strong>$${weeklyNeeded.toFixed(2)}</strong>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Monthly</small>
+                                <strong>$${monthlyNeeded.toFixed(2)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Update savings plan in form
+                const savingsPlan = document.getElementById('savings-plan');
+                const savingsSuggestion = document.getElementById('savings-suggestion');
+                
+                if (remaining > 0) {
+                    savingsPlan.style.display = 'block';
+                    savingsSuggestion.innerHTML = `
+                        <p class="mb-2">To reach your goal of <strong>$${targetAmount.toFixed(2)}</strong> by <strong>${target.toLocaleDateString()}</strong>, you need to save:</p>
+                        <ul class="mb-0">
+                            <li><strong>$${dailyNeeded.toFixed(2)}</strong> per day</li>
+                            <li><strong>$${weeklyNeeded.toFixed(2)}</strong> per week</li>
+                            <li><strong>$${monthlyNeeded.toFixed(2)}</strong> per month</li>
+                        </ul>
+                        <p class="mt-2 mb-0 text-muted">
+                            <i class="fas fa-clock me-1"></i>${daysLeft} days remaining
+                        </p>
+                    `;
+                } else {
+                    savingsPlan.style.display = 'none';
+                }
+            } else {
+                timelineInfo = '<small class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Target date has passed</small>';
+                document.getElementById('savings-plan').style.display = 'none';
+            }
+        } else {
+            document.getElementById('savings-plan').style.display = 'none';
+        }
+        
+        const categoryIcons = {
+            'emergency': 'shield-alt',
+            'education': 'graduation-cap',
+            'travel': 'plane',
+            'technology': 'laptop',
+            'housing': 'home',
+            'transportation': 'car',
+            'other': 'star'
+        };
+        
+        const priorityBadges = {
+            'low': '<span class="badge bg-success">Low Priority</span>',
+            'medium': '<span class="badge bg-warning">Medium Priority</span>',
+            'high': '<span class="badge bg-danger">High Priority</span>'
+        };
+        
+        preview.innerHTML = `
+            <div class="goal-card-preview">
+                <div class="d-flex align-items-start mb-3">
+                    <div class="preview-icon ${category}">
+                        <i class="fas fa-${categoryIcons[category]}"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <h6 class="mb-1">${goalName}</h6>
+                        <p class="text-muted small mb-0">${description}</p>
+                    </div>
+                </div>
+                
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar ${progress >= 100 ? 'bg-success' : 'bg-primary'}" 
+                         style="width: ${Math.min(progress, 100)}%"></div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span><strong>$${currentAmount.toFixed(2)}</strong> / $${targetAmount.toFixed(2)}</span>
+                    <span class="text-muted">${progress.toFixed(1)}%</span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Remaining:</span>
+                    <span class="fw-bold ${remaining === 0 ? 'text-success' : ''}">$${remaining.toFixed(2)}</span>
+                </div>
+                
+                ${timelineInfo}
+                
+                <div class="mb-3">
+                    ${priorityBadges[priority]}
+                </div>
+                
+                ${savingsInfo}
+            </div>
+        `;
+    }
+    
+    // Event listeners for real-time preview
     form.addEventListener('input', updatePreview);
     form.addEventListener('change', updatePreview);
+    
+    // Auto-suggest goal names based on category
+    document.getElementById('category').addEventListener('change', function() {
+        const category = this.value;
+        const goalNameInput = document.getElementById('goal_name');
+        
+        if (!goalNameInput.value.trim()) {
+            const suggestions = {
+                'emergency': 'Emergency Fund',
+                'education': 'Education Fund',
+                'travel': 'Dream Vacation',
+                'technology': 'New Laptop',
+                'housing': 'House Down Payment',
+                'transportation': 'New Car',
+                'other': 'Savings Goal'
+            };
+            
+            if (suggestions[category]) {
+                goalNameInput.value = suggestions[category];
+                updatePreview();
+            }
+        }
+    });
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const targetAmount = parseFloat(document.getElementById('target_amount').value) || 0;
+        const currentAmount = parseFloat(document.getElementById('current_amount').value) || 0;
+        
+        if (currentAmount > targetAmount) {
+            e.preventDefault();
+            alert('Current amount cannot be greater than target amount.');
+            return false;
+        }
+        
+        if (targetAmount < 1) {
+            e.preventDefault();
+            alert('Target amount must be at least $1.00.');
+            return false;
+        }
+        
+        const goalName = document.getElementById('goal_name').value.trim();
+        if (goalName.length < 3) {
+            e.preventDefault();
+            alert('Goal name must be at least 3 characters long.');
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Goal...';
+    });
     
     // Initial preview update
     updatePreview();
