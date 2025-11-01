@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Income - Niner Finance{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/income.css') }}">
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-dollar-sign me-2"></i>Income Management</h2>
+            <button class="btn btn-primary add-income-btn" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
+                <i class="fas fa-plus me-1"></i>Add Income
+            </button>
+        </div>
+
+        <!-- Income Summary -->
+        <div class="row income-summary mb-4">
+            <div class="col-md-4">
+                <div class="card income-card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="income-label">Total Income</div>
+                                <div class="income-amount">${{ "%.2f"|format(total_income) }}</div>
+                            </div>
+                            <div class="income-stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card income-card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="income-label">Income Records</div>
+                                <div class="income-amount">{{ income_records|length }}</div>
+                            </div>
+                            <div class="income-stat-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card income-card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="income-label">Recurring Income</div>
+                                <div class="income-amount">{{ income_records|selectattr('is_recurring')|list|length }}</div>
+                            </div>
+                            <div class="income-stat-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Income Records Table -->
+        <div class="income-table">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Income Records</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if income_records %}
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Source</th>
+                                    <th>Amount</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Recurring</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in income_records %}
+                                <tr class="income-row fade-in">
+                                    <td class="income-date">{{ record['date'] }}</td>
+                                    <td class="income-source">{{ record['source'] }}</td>
+                                    <td class="income-amount-cell text-success">
+                                        ${{ "%.2f"|format(record['amount']) }}
+                                    </td>
+                                    <td>
+                                        {% if record['category_name'] %}
+                                            {% set category_class = 'category-' + record['category_name'].lower().replace(' ', '-') %}
+                                            <span class="category-badge {{ category_class }}">
+                                                {{ record['category_name'] }}
+                                            </span>
+                                        {% else %}
+                                            <span class="category-badge category-other">Other</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="income-description">{{ record['description'] or '-' }}</td>
+                                    <td>
+                                        {% if record['is_recurring'] %}
+                                            <span class="recurring-badge recurring-yes">
+                                                <i class="fas fa-sync-alt me-1"></i>
+                                                {{ record['recurrence_period'] or 'Yes' }}
+                                            </span>
+                                        {% else %}
+                                            <span class="recurring-badge recurring-no">
+                                                <i class="fas fa-times me-1"></i>No
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-outline-primary btn-sm" 
+                                                    onclick="editIncome({{ record['id'] }})" 
+                                                    title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    onclick="deleteIncome({{ record['id'] }})" 
+                                                    title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="income-empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <h5>No Income Records Yet</h5>
+                        <p class="text-muted">Start by adding your first income record to track your earnings.</p>
+                        <button class="btn btn-primary add-income-btn" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
+                            <i class="fas fa-plus me-1"></i>Add Your First Income
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Income Modal -->
+<div class="modal fade income-modal" id="addIncomeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Add Income Record
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('income.add') }}" method="post" class="income-form" id="incomeForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="source" class="form-label">
+                            <i class="fas fa-briefcase me-1"></i>Income Source
+                        </label>
+                        <input type="text" class="form-control" id="source" name="source" 
+                               placeholder="e.g., Salary, Freelance, Investment" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">
+                            <i class="fas fa-dollar-sign me-1"></i>Amount
+                        </label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" 
+                               placeholder="0.00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">
+                            <i class="fas fa-tags me-1"></i>Category
+                        </label>
+                        <select class="form-control" id="category_id" name="category_id">
+                            {% for category in categories %}
+                            <option value="{{ category['id'] }}">{{ category['name'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>Description
+                        </label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="3" placeholder="Optional details about this income"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">
+                            <i class="fas fa-calendar me-1"></i>Date
+                        </label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_recurring" name="is_recurring">
+                        <label class="form-check-label" for="is_recurring">
+                            <i class="fas fa-sync-alt me-1"></i>This is a recurring income
+                        </label>
+                    </div>
+                    <div class="mb-3" id="recurrence_div" style="display: none;">
+                        <label for="recurrence_period" class="form-label">
+                            <i class="fas fa-clock me-1"></i>Recurrence Period
+                        </label>
+                        <select class="form-control" id="recurrence_period" name="recurrence_period">
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Add Income
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/income-form.js') }}"></script>
+{% endblock %}

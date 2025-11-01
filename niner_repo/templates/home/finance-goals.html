@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}Financial Goals - Niner Finance{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/finance-goals.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="goals-container">
+    <!-- Header -->
+    <div class="goals-header">
+        <div class="header-content">
+            <h1><i class="fas fa-target me-3"></i>Financial Goals</h1>
+            <p class="text-muted">Track your progress toward your financial dreams</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('create_goal') }}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus me-2"></i>New Goal
+            </a>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' or category == 'danger' else 'info-circle' }} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Goals Grid -->
+    <div class="goals-grid" id="goals-grid">
+        {% if goals %}
+            {% for goal in goals %}
+            {% set progress = (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 %}
+            {% set remaining = goal.target_amount - goal.current_amount %}
+            
+            <div class="goal-card {{ 'completed' if goal.is_completed else '' }}" data-goal-id="{{ goal.id }}">
+                <div class="goal-header">
+                    <div class="goal-icon {{ goal.category }}">
+                        <i class="fas fa-{{ 'shield-alt' if goal.category == 'emergency' else 'graduation-cap' if goal.category == 'education' else 'plane' if goal.category == 'travel' else 'laptop' if goal.category == 'technology' else 'home' if goal.category == 'housing' else 'car' if goal.category == 'transportation' else 'star' }}"></i>
+                    </div>
+                    <div class="goal-info">
+                        <h5 class="goal-name">{{ goal.goal_name }}</h5>
+                        <p class="goal-description">{{ goal.description or 'No description' }}</p>
+                    </div>
+                    <div class="goal-actions">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('edit_goal', goal_id=goal.id) }}">
+                                    <i class="fas fa-edit me-2"></i>Edit Goal
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('toggle_goal_completion', goal_id=goal.id) }}" class="d-inline">
+                                        <button class="dropdown-item" type="submit">
+                                            <i class="fas fa-{{ 'undo' if goal.is_completed else 'check' }} me-2"></i>
+                                            {{ 'Mark Incomplete' if goal.is_completed else 'Mark Complete' }}
+                                        </button>
+                                    </form>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('delete_goal', goal_id=goal.id) }}" class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to delete this goal?')">
+                                        <button class="dropdown-item text-danger" type="submit">
+                                            <i class="fas fa-trash me-2"></i>Delete Goal
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="goal-progress">
+                    <div class="progress-info">
+                        <span class="current-amount">${{ "%.2f"|format(goal.current_amount) }}</span>
+                        <span class="target-amount">/ ${{ "%.2f"|format(goal.target_amount) }}</span>
+                    </div>
+                    <div class="progress mb-2">
+                        <div class="progress-bar goal-progress-bar {{ 'bg-success' if progress >= 100 else 'bg-primary' }}" 
+                             style="width: {{ progress|round(1) }}%"></div>
+                    </div>
+                    <div class="progress-percentage">{{ progress|round(1) }}% Complete</div>
+                </div>
+
+                <div class="goal-timeline">
+                    <div class="timeline-item">
+                        <i class="fas fa-calendar"></i>
+                        <span class="timeline-label">Target Date:</span>
+                        <span>{{ goal.target_date.strftime('%B %d, %Y') if goal.target_date else 'Not set' }}</span>
+                    </div>
+                    {% if goal.target_date %}
+                    <div class="timeline-item">
+                        <i class="fas fa-clock"></i>
+                        <span class="timeline-label">Time Left:</span>
+                        <span class="time-left" data-target-date="{{ goal.target_date.isoformat() if goal.target_date else '' }}">
+                            Calculating...
+                        </span>
+                    </div>
+                    {% endif %}
+                    <div class="timeline-item">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span class="timeline-label">Remaining:</span>
+                        <span class="{{ 'text-success' if remaining <= 0 else '' }}">${{ "%.2f"|format(remaining if remaining > 0 else 0) }}</span>
+                    </div>
+                    {% if goal.priority %}
+                    <div class="timeline-item">
+                        <i class="fas fa-flag"></i>
+                        <span class="timeline-label">Priority:</span>
+                        <span class="priority-badge priority-{{ goal.priority }}">{{ goal.priority.title() }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="goal-status">
+                    {% if goal.is_completed %}
+                        <span class="status-badge completed">
+                            <i class="fas fa-trophy me-1"></i>Completed
+                        </span>
+                    {% elif progress >= 100 %}
+                        <span class="status-badge target-reached">
+                            <i class="fas fa-star me-1"></i>Target Reached
+                        </span>
+                    {% else %}
+                        <span class="status-badge on-track goal-status-badge" 
+                              data-progress="{{ progress }}" 
+                              data-target-date="{{ goal.target_date.isoformat() if goal.target_date else '' }}">
+                            <i class="fas fa-chart-line me-1"></i>On Track
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Quick Contribution Form -->
+                {% if not goal.is_completed and progress < 100 %}
+                <div class="goal-contribute mt-3">
+                    <form method="POST" action="{{ url_for('add_contribution', goal_id=goal.id) }}" class="contribute-form">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" name="contribution" 
+                                   step="0.01" min="0.01" placeholder="0.00" required>
+                            <button class="btn btn-success" type="submit" title="Add Contribution">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-content text-center">
+                <i class="fas fa-target fa-4x text-muted mb-3"></i>
+                <h4>No Financial Goals Yet</h4>
+                <p class="text-muted">Start building your financial future by setting your first goal!</p>
+                <a href="{{ url_for('create_goal') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create Your First Goal
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Financial Summary Section -->
+    {% if budget %}
+    <div class="financial-summary mt-5">
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line me-2"></i>Financial Overview</h2>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="summary-card text-center p-3 border rounded">
+                        <h6 class="text-muted">Weekly Budget</h6>
+                        <div class="amount h4 mb-1">${{ "%.2f"|format(budget.total_budget) }}</div>
+                        <small class="text-muted">
+                            ${{ "%.2f"|format(budget.total_spent) }} spent
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="summary-card text-center p-3 border rounded">
+                        <h6 class="text-muted">Monthly Income</h6>
+                        <div class="amount h4 mb-1 text-success">${{ "%.2f"|format(monthly.income) }}</div>
+                        <small class="text-muted">This Month</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="summary-card text-center p-3 border rounded">
+                        <h6 class="text-muted">Monthly Expenses</h6>
+                        <div class="amount h4 mb-1 text-danger">${{ "%.2f"|format(monthly.expenses) }}</div>
+                        <small class="text-muted">This Month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Handle date calculations and status updates
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Financial Goals page loaded');
+    
+    // Calculate time left for each goal
+    const timeLeftElements = document.querySelectorAll('.time-left');
+    timeLeftElements.forEach(element => {
+        const targetDate = element.getAttribute('data-target-date');
+        if (targetDate) {
+            const target = new Date(targetDate);
+            const today = new Date();
+            const timeDiff = target - today;
+            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff < 0) {
+                element.textContent = `${Math.abs(daysDiff)} days overdue`;
+                element.classList.add('text-danger');
+                element.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i>${Math.abs(daysDiff)} days overdue`;
+            } else if (daysDiff === 0) {
+                element.textContent = 'Due today';
+                element.classList.add('text-warning');
+                element.innerHTML = `<i class="fas fa-clock me-1"></i>Due today`;
+            } else {
+                element.textContent = `${daysDiff} days`;
+                if (daysDiff <= 30) {
+                    element.classList.add('text-warning');
+                    element.innerHTML = `<i class="fas fa-hourglass-half me-1"></i>${daysDiff} days`;
+                } else {
+                    element.innerHTML = `<i class="fas fa-calendar-check me-1"></i>${daysDiff} days`;
+                }
+            }
+        }
+    });
+    
+    // Update goal status badges
+    const statusBadges = document.querySelectorAll('.goal-status-badge');
+    statusBadges.forEach(badge => {
+        const progress = parseFloat(badge.getAttribute('data-progress'));
+        const targetDate = badge.getAttribute('data-target-date');
+        
+        let status = 'on-track';
+        let statusText = 'On Track';
+        let icon = 'chart-line';
+        
+        if (targetDate) {
+            const target = new Date(targetDate);
+            const today = new Date();
+            const daysDiff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff < 0) {
+                status = 'urgent';
+                statusText = 'Overdue';
+                icon = 'exclamation-triangle';
+            } else if (daysDiff <= 30) {
+                status = 'urgent';
+                statusText = 'Urgent';
+                icon = 'clock';
+            } else if (progress < 25 && daysDiff <= 90) {
+                status = 'behind';
+                statusText = 'Behind';
+                icon = 'arrow-down';
+            } else if (progress >= 75) {
+                status = 'on-track';
+                statusText = 'Excellent';
+                icon = 'arrow-up';
+            }
+        }
+        
+        badge.className = `status-badge ${status}`;
+        badge.innerHTML = `<i class="fas fa-${icon} me-1"></i>${statusText}`;
+    });
+    
+    // Add animation to progress bars
+    const progressBars = document.querySelectorAll('.goal-progress-bar');
+    progressBars.forEach((bar, index) => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 1.5s ease-in-out';
+            bar.style.width = width;
+        }, index * 200);
+    });
+    
+    // Add hover effects to goal cards
+    const goalCards = document.querySelectorAll('.goal-card');
+    goalCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+            this.style.boxShadow = 'var(--shadow-hover)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'var(--shadow)';
+        });
+    });
+    
+    // Add celebration effect for completed goals
+    const completedGoals = document.querySelectorAll('.goal-card.completed');
+    completedGoals.forEach(card => {
+        card.classList.add('celebration');
+    });
+});
+
+// Add contribution form validation and enhancement
+document.querySelectorAll('.contribute-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const input = this.querySelector('input[name="contribution"]');
+        const value = parseFloat(input.value);
+        
+        if (isNaN(value) || value <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid contribution amount.');
+            return false;
+        }
+        
+        if (value > 10000) {
+            if (!confirm(`Are you sure you want to add $${value.toFixed(2)}? This seems like a large amount.`)) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        // Add loading state
+        const button = this.querySelector('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        // Re-enable after timeout (in case of errors)
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 3000);
+    });
+});
+</script>
+{% endblock %}

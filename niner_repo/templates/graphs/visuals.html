@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Financial Overview{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="split-container">
+    <!-- Costs Side -->
+    <div class="split-side costs-side">
+        <h2>Costs</h2>
+        <div class="amount-container">
+            <span class="currency">$</span>
+            <span id="total-costs" class="amount">0.00</span>
+        </div>
+        <div class="percentage-container">
+            <span id="costs-percentage">0.0</span>%
+        </div>
+        <div class="progress-container">
+            <div id="costs-progress" class="progress-bar"></div>
+        </div>
+        <div id="costs-list" class="details-list">
+            <!-- Costs items will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Savings Side -->
+    <div class="split-side savings-side">
+        <h2>Savings</h2>
+        <div class="amount-container">
+            <span class="currency">$</span>
+            <span id="total-savings" class="amount">0.00</span>
+        </div>
+        <div class="percentage-container">
+            <span id="savings-percentage">0.0</span>%
+        </div>
+        <div class="progress-container">
+            <div id="savings-progress" class="progress-bar"></div>
+        </div>
+        <div id="savings-list" class="details-list">
+            <!-- Savings items will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/financial-split.js') }}"></script>
+{% endblock %}
