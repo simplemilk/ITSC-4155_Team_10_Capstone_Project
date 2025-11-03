@@ -14,11 +14,16 @@ Project Running Requirements:
 Version Updates:
 
 0.0.0 10/16/25 - Project Started
-0.0.1 10.23/25 - First Sprint Completed
+0.0.1 10/23/25 - First Sprint Completed
   - Implemented User registration and login pages.
   - Implemented User password change options.
   - Implemented the Main UI and ability to add in expense categories.
-
+0.0.2 10/30/25 - Second Sprint Completed
+  - Changed framework to Flask in order to complete the project requirements.
+  - Changed database to SQLAlchemy due to previous database having problems logging in.
+  - Implemented Profile Page
+  - Implemented Main UI that would include user being able to see changes in the expense categories
+  - Implemented Financial Goals Section
 Installation Guide:
 
 To start the project, start two terminals one with the frontend folder and one with the backend folder.
