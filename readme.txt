@@ -65,3 +65,18 @@ Common problems:
 If there is an issue with some library not being installed type the following command:
 
 pip3 install <module>
+
+To run the tests do the following commands:
+
+// All tests
+python -m pytest tests/ -v
+
+
+// Run specific test file
+python -m pytests tests/<file name>
+
+// Run coverage
+python -m pytest tests/ --cov=. --cov-report=html
+
+// Run specific test class or method: (ex with test budget)
+python -m pytest tests/test_budget.py::TestBudget::test_budget_create_sucess -v
