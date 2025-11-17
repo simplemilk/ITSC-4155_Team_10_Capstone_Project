@@ -7,12 +7,24 @@ from decimal import Decimal, InvalidOperation
 try:
     from auth import login_required
     from db import get_db
+    from notifications import NotificationEngine
 except ImportError:
     # Fallback if auth/db modules don't exist
     def login_required(f):
         return f
     def get_db():
         return None
+    # Dummy NotificationEngine for fallback
+    class NotificationEngine:
+        @staticmethod
+        def check_overspending(user_id, category=None):
+            return []
+        @staticmethod
+        def check_budget_warning(user_id):
+            return []
+        @staticmethod
+        def check_unusual_spending(user_id, category, amount):
+            return None
 
 bp = Blueprint('transactions', __name__)
 
@@ -101,12 +113,31 @@ def create():
             try:
                 db = get_db()
                 if db:
+                    # Use g.user['id'] if available, otherwise fallback to 1
+                    user_id = g.user['id'] if hasattr(g, 'user') and g.user else 1
+                    
                     db.execute(
                         'INSERT INTO transactions (description, amount, category, type, date, user_id)'
                         ' VALUES (?, ?, ?, ?, ?, ?)',
-                        (description, float(amount), category, transaction_type, date, 1)  # Default user_id = 1
+                        (description, float(amount), category, transaction_type, date, user_id)
                     )
                     db.commit()
+                    
+                    # Trigger notification checks for expenses
+                    if transaction_type == 'expense':
+                        try:
+                            # Check for unusual spending first
+                            NotificationEngine.check_unusual_spending(user_id, category, float(amount))
+                            
+                            # Check for budget warnings
+                            NotificationEngine.check_budget_warning(user_id)
+                            
+                            # Check for overspending
+                            NotificationEngine.check_overspending(user_id)
+                        except Exception as notif_error:
+                            # Don't fail the transaction if notification fails
+                            print(f"Notification error: {notif_error}")
+                    
                     flash('Transaction added successfully!', 'success')
                     return redirect(url_for('transactions.index'))
                 else:

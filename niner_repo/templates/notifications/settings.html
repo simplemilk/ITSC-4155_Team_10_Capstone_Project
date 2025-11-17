@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Settings - Niner Finance{% endblock %}
+
+{% block content %}
+<div class="notification-settings">
+    <div class="settings-header">
+        <h1>⚙️ Notification Settings</h1>
+        <a href="{{ url_for('notifications.index') }}" class="btn btn-secondary">
+            ← Back to Notifications
+        </a>
+    </div>
+
+    <form id="settingsForm" class="settings-form">
+        <!-- Notification Types -->
+        <div class="settings-section">
+            <h2>📣 Notification Types</h2>
+            <p class="section-description">Choose which types of notifications you want to receive</p>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="enable_overspending">🚨 Overspending Alerts</label>
+                    <p>Get notified when you exceed your budget limits</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="enable_overspending" name="enable_overspending" 
+                           {{ 'checked' if settings.enable_overspending else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="enable_budget_warning">⚠️ Budget Warnings</label>
+                    <p>Get notified when you're approaching your budget limit</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="enable_budget_warning" name="enable_budget_warning"
+                           {{ 'checked' if settings.enable_budget_warning else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="enable_unusual_spending">💰 Unusual Spending</label>
+                    <p>Get notified when a transaction is unusually high</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="enable_unusual_spending" name="enable_unusual_spending"
+                           {{ 'checked' if settings.enable_unusual_spending else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="enable_goal_achieved">🎯 Goal Achievements</label>
+                    <p>Get notified when you reach your financial goals</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="enable_goal_achieved" name="enable_goal_achieved"
+                           {{ 'checked' if settings.enable_goal_achieved else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="enable_subscription_reminder">📅 Subscription Reminders</label>
+                    <p>Get reminded about upcoming subscriptions and recurring payments</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="enable_subscription_reminder" name="enable_subscription_reminder"
+                           {{ 'checked' if settings.enable_subscription_reminder else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Thresholds -->
+        <div class="settings-section">
+            <h2>🎚️ Alert Thresholds</h2>
+            <p class="section-description">Customize when you want to be alerted</p>
+
+            <div class="setting-item-full">
+                <label for="budget_warning_threshold">Budget Warning Threshold</label>
+                <p>Get warned when spending reaches this percentage of your budget</p>
+                <div class="slider-container">
+                    <input type="range" id="budget_warning_threshold" name="budget_warning_threshold" 
+                           min="50" max="100" step="5" value="{{ settings.budget_warning_threshold }}">
+                    <span class="slider-value" id="budget_warning_value">{{ settings.budget_warning_threshold }}%</span>
+                </div>
+            </div>
+
+            <div class="setting-item-full">
+                <label for="overspending_threshold">Overspending Alert Threshold</label>
+                <p>Get alerted when spending exceeds this percentage of your budget</p>
+                <div class="slider-container">
+                    <input type="range" id="overspending_threshold" name="overspending_threshold" 
+                           min="100" max="200" step="10" value="{{ settings.overspending_threshold }}">
+                    <span class="slider-value" id="overspending_value">{{ settings.overspending_threshold }}%</span>
+                </div>
+            </div>
+
+            <div class="setting-item-full">
+                <label for="unusual_spending_multiplier">Unusual Spending Multiplier</label>
+                <p>Alert when a transaction is this many times higher than your average</p>
+                <div class="slider-container">
+                    <input type="range" id="unusual_spending_multiplier" name="unusual_spending_multiplier" 
+                           min="1.5" max="5.0" step="0.5" value="{{ settings.unusual_spending_multiplier }}">
+                    <span class="slider-value" id="unusual_spending_value">{{ settings.unusual_spending_multiplier }}x</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Methods -->
+        <div class="settings-section">
+            <h2>📱 Notification Methods</h2>
+            <p class="section-description">Choose how you want to receive notifications</p>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="method_in_app">In-App Notifications</label>
+                    <p>Show notifications within the app</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="method_in_app" name="method_in_app"
+                           {{ 'checked' if settings.method_in_app else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="method_email">Email Notifications</label>
+                    <p>Send notifications to your email (coming soon)</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="method_email" name="method_email" disabled
+                           {{ 'checked' if settings.method_email else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="method_push">Push Notifications</label>
+                    <p>Send push notifications to your device (coming soon)</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="method_push" name="method_push" disabled
+                           {{ 'checked' if settings.method_push else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Frequency Controls -->
+        <div class="settings-section">
+            <h2>🔔 Frequency Controls</h2>
+            <p class="section-description">Manage how often you receive notifications</p>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <label for="daily_digest">Daily Digest</label>
+                    <p>Receive a summary of notifications once per day (coming soon)</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="daily_digest" name="daily_digest" disabled
+                           {{ 'checked' if settings.daily_digest else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item-full">
+                <label for="max_daily_notifications">Maximum Daily Notifications</label>
+                <p>Limit the number of notifications you receive per day</p>
+                <div class="slider-container">
+                    <input type="range" id="max_daily_notifications" name="max_daily_notifications" 
+                           min="1" max="50" step="1" value="{{ settings.max_daily_notifications }}">
+                    <span class="slider-value" id="max_daily_value">{{ settings.max_daily_notifications }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-actions">
+            <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+            <button type="button" id="resetDefaults" class="btn btn-secondary">🔄 Reset to Defaults</button>
+        </div>
+    </form>
+
+    <div id="saveMessage" class="save-message"></div>
+</div>
+
+<style>
+.notification-settings {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.settings-header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin: 0;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.settings-section {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.settings-section h2 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.section-description {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-info {
+    flex: 1;
+}
+
+.setting-info label {
+    font-weight: 600;
+    color: #333;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.setting-info p {
+    color: #666;
+    font-size: 13px;
+    margin: 0;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #00703C;
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+input:disabled + .slider {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+}
+
+.setting-item-full {
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.setting-item-full:last-child {
+    border-bottom: none;
+}
+
+.setting-item-full label {
+    font-weight: 600;
+    color: #333;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.setting-item-full p {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 15px;
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.slider-container input[type="range"] {
+    flex: 1;
+    height: 6px;
+    border-radius: 5px;
+    background: #e0e0e0;
+    outline: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #00703C;
+    cursor: pointer;
+}
+
+.slider-container input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #00703C;
+    cursor: pointer;
+    border: none;
+}
+
+.slider-value {
+    min-width: 50px;
+    text-align: right;
+    font-weight: bold;
+    color: #00703C;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #00703C;
+    color: white;
+    flex: 1;
+}
+
+.btn-primary:hover {
+    background: #005a30;
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.save-message {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #00703C;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.save-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.save-message.error {
+    background: #dc3545;
+}
+
+@media (max-width: 768px) {
+    .settings-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .settings-actions {
+        flex-direction: column;
+    }
+
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+}
+</style>
+
+<script src="{{ url_for('static', filename='js/notification-settings.js') }}"></script>
+{% endblock %}

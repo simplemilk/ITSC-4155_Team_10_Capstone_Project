@@ -335,6 +335,20 @@ app.register_blueprint(budget.bp)
 import transactions
 app.register_blueprint(transactions.bp)
 
+# Import and register expenses API blueprint
+try:
+    import expenses_api
+    app.register_blueprint(expenses_api.bp)
+except ImportError as e:
+    print(f"Expenses API module not found: {e}, skipping...")
+
+# Import and register notification blueprint
+try:
+    import notification_routes
+    app.register_blueprint(notification_routes.bp)
+except ImportError as e:
+    print(f"Notification module not found: {e}, skipping...")
+
 # Try to import finance if it exists
 try:
     import finance
@@ -357,6 +371,12 @@ def dashboard():
     # Use the get_financial_summary function from budget.py
     financial_summary = budget.get_financial_summary(g.user['id'])
     return render_template('home/dashboard.html', **financial_summary)
+
+@app.route('/quick-expense')
+@auth.login_required
+def quick_expense():
+    """Quick expense entry page"""
+    return render_template('home/quick-expense.html')
 
 @app.route('/profile')
 @auth.login_required
