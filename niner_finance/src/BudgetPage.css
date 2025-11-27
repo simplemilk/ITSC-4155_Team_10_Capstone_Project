@@ -1,0 +1,30 @@
+.budget-page {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.budget-summary {
+  background-color: #f4f4f4;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.warning {
+  background-color: #ffcc00;
+  padding: 10px;
+  color: #000;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}

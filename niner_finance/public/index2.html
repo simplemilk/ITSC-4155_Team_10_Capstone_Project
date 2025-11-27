@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Budget</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href='#'>Visuals</a></li>
+            <li><a href='#'>Summary</a></li>
+            <li><a href='#'>Contact</a></li>
+            <li><a href='#'>Login</a></li>
+            <li><a href='#'>Register</a></li>
+        </ul>
+    </nav>
+
+    <section class="budget">
+        <div class="budget-container">
+            <h1>Weekly Budget Tracker</h1>
+            <div class="budget-info">
+                <p>Weekly Income: $<input type="number" id="weekly-income" value="2500"></p>
+                <p>Weekly Expenses: $<input type="number" id="weekly-expenses" value="1000"></p>
+                <p>Weekly Savings: $<input type="number" id="weekly-savings" value="1000"></p>
+                <p>Weekly Budget Left: $<span id="weekly-budget">500</span></p>
+                <button id="update-btn">Update</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="warning-model" class="model">
+        <div class="model-content">
+            <span class="close-btn">&times;</span>
+            <p id="model-message"><strong>Warning!</strong> You are about to run out of your budget!</p>
+            <button id="confirm-btn">Confirm</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
