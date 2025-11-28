@@ -2,7 +2,7 @@
 
 /* Hero Section */
 .hero-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
     padding: 100px 0 80px;
     position: relative;
@@ -105,13 +105,13 @@
 
 .btn-register {
     background: white;
-    color: #667eea;
+    color: #28a745;
     border-color: white;
 }
 
 .btn-register:hover {
     background: #f8f9fa;
-    color: #5a6fd8;
+    color: #218838;
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
@@ -185,7 +185,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #28a745, #20c997);
     transform: scaleX(0);
     transition: transform 0.3s ease;
 }
@@ -202,7 +202,7 @@
 }
 
 .dashboard-card:focus {
-    outline: 3px solid #667eea;
+    outline: 3px solid #28a745;
     outline-offset: 2px;
 }
 
@@ -238,7 +238,7 @@
 }
 
 .icon-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #28a745, #20c997);
 }
 
 .icon-success {
@@ -294,15 +294,15 @@
 .feature-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    border-color: #667eea;
+    border-color: #28a745;
 }
 
 .feature-icon {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: #d4edda;
+    color: #28a745;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -555,7 +555,7 @@
 
 /* Focus Styles for Accessibility */
 .dashboard-card:focus-visible {
-    outline: 3px solid #667eea;
+    outline: 3px solid #28a745;
     outline-offset: 2px;
 }
 
@@ -615,7 +615,7 @@
     .dashboard-card:hover,
     .feature-card:hover {
         background: #4a4a4a;
-        border-color: #667eea;
+        border-color: #28a745;
     }
 
     .icon-target {

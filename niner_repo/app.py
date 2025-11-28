@@ -1,5 +1,6 @@
 import os
 from flask import Flask, render_template, redirect, url_for, g, flash, request
+from datetime import datetime
 
 # Create Flask app
 app = Flask(__name__)
@@ -362,6 +363,10 @@ from priorities import bp as priorities_bp
 # Register the priorities blueprint
 app.register_blueprint(priorities_bp)
 
+# Import subscriptions blueprint
+from subscriptions import bp as subscriptions_bp
+app.register_blueprint(subscriptions_bp)
+
 # Main Routes
 @app.route('/')
 def index():
@@ -678,24 +683,73 @@ def internal_error(error):
 def inject_user():
     return dict(user=g.user)
 
+@app.template_filter('date_diff')
+def date_diff_filter(date_str):
+    """Calculate days until date"""
+    try:
+        target_date = datetime.fromisoformat(date_str)
+        today = datetime.now()
+        delta = (target_date - today).days
+        return delta
+    except:
+        return 0
+
 if __name__ == '__main__':
     with app.app_context():
         try:
+            print("\n🔧 Initializing Niner Finance Database...")
+            print("=" * 50)
+            
+            # Initialize main database
             db.init_db()
+            print("✓ Main database initialized")
+            
+            # Create demo user
             auth.create_demo_user()
+            print("✓ Demo user created/verified")
+            
+            # Initialize subscriptions database - IMPROVED ERROR HANDLING
+            print("\n🔄 Initializing subscriptions module...")
+            try:
+                from init_subscriptions_db import init_subscriptions_db
+                success = init_subscriptions_db()
+                
+                if not success:
+                    print("⚠️  WARNING: Subscriptions tables may not have been created properly")
+                    print("   Try running: python init_subscriptions_db.py")
+                    
+            except Exception as sub_error:
+                print(f"❌ Subscriptions initialization error: {sub_error}")
+                print("   Subscriptions feature will not work!")
+                print("   To fix: python init_subscriptions_db.py")
+                import traceback
+                traceback.print_exc()
+            
+            print("\n" + "=" * 50)
             print("✓ App initialization complete")
+            
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"\n❌ CRITICAL ERROR during initialization: {e}")
+            import traceback
+            traceback.print_exc()
+            print("\n⚠️  App may not function correctly!")
     
-    print("\n🚀 Niner Finance - Full Featured!")
-    print("📍 Available at: http://localhost:5001")
+    print("\n" + "=" * 60)
+    print("🚀 Niner Finance - Full Featured!")
+    print("=" * 60)
+    print("📍 Server running at: http://localhost:5001")
     print("\n📋 Available Features:")
-    print("  • Dashboard: http://localhost:5001/dashboard")
+    print("  • Dashboard:         http://localhost:5001/dashboard")
     print("  • Income Management: http://localhost:5001/income")
-    print("  • Budget Planning: http://localhost:5001/budget")
-    print("  • Transactions: http://localhost:5001/transactions")
-    print("  • Financial Goals: http://localhost:5001/goals")
-    print("  • Login/Register: http://localhost:5001/auth/login")
-    print(f"\n👤 Demo Account: demo/demo123")
+    print("  • Budget Planning:   http://localhost:5001/budget")
+    print("  • Transactions:      http://localhost:5001/transactions")
+    print("  • Financial Goals:   http://localhost:5001/goals")
+    print("  • Subscriptions:     http://localhost:5001/subscriptions")
+    print("  • Priorities:        http://localhost:5001/priorities")
+    print("  • Login/Register:    http://localhost:5001/auth/login")
+    print("\n👤 Demo Account Credentials:")
+    print("  Username: demo")
+    print("  Password: demo123")
+    print("\n" + "=" * 60)
     
     app.run(debug=True, host='0.0.0.0', port=5001)
