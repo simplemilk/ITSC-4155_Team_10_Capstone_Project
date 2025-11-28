@@ -356,6 +356,12 @@ try:
 except ImportError:
     print("Finance module not found, skipping...")
 
+# Import the priorities blueprint
+from priorities import bp as priorities_bp
+
+# Register the priorities blueprint
+app.register_blueprint(priorities_bp)
+
 # Main Routes
 @app.route('/')
 def index():

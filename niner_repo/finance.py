@@ -3,6 +3,7 @@ from datetime import datetime
 from flask import Blueprint, g, render_template, redirect, jsonify, request, flash
 from auth import login_required
 from db import get_db
+from priorities import get_personalized_suggestions, get_user_financial_stats
 
 try:
     from db import get_db
@@ -119,7 +120,26 @@ def index():
 @login_required
 def dashboard():
     """Show finance dashboard page"""
-    return render_template('home/dashboard.html')
+    db = get_db()
+    
+    # Get user's top priority
+    top_priority = db.execute(
+        '''SELECT priority_type FROM user_priorities 
+           WHERE user_id = ? 
+           ORDER BY importance_level DESC LIMIT 1''',
+        (g.user['id'],)
+    ).fetchone()
+    
+    priority_insights = None
+    if top_priority:
+        priority_insights = {
+            'type': top_priority['priority_type'],
+            'suggestions': get_personalized_suggestions(top_priority['priority_type'], g.user['id'])[:3]
+        }
+    
+    return render_template('home/dashboard.html',
+        priority_insights=priority_insights
+    )
 
 
 @bp.route('/finance/summary', methods=['GET'])

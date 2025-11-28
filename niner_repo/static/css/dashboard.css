@@ -38,26 +38,56 @@
 
 /* Action Cards */
 .action-card {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
-    border-radius: 12px;
-    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
+    justify-content: center;
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
     text-decoration: none;
-    color: #495057;
+    color: #1f2937;
     transition: all 0.3s ease;
-    height: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .action-card:hover {
-    background: #e9ecef;
-    border-color: #007bff;
-    color: #007bff;
-    transform: translateY(-2px);
-    text-decoration: none;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.action-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* If the icon is missing, add a default placeholder */
+.action-card:nth-child(4) .action-icon:empty::before {
+    content: "🎯";
+}
+
+/* Specific styling for each action card */
+.action-card:nth-child(1) .action-icon { /* Manage Income */
+    color: #10b981;
+}
+
+.action-card:nth-child(2) .action-icon { /* Create Budget */
+    color: #3b82f6;
+}
+
+.action-card:nth-child(3) .action-icon { /* Add Transaction */
+    color: #f59e0b;
+}
+
+.action-card:nth-child(4) .action-icon { /* Financial Goals */
+    color: #8b5cf6;
+}
+
+.action-card:nth-child(5) .action-icon { /* Set Priorities */
+    color: #ec4899;
 }
 
 .action-card i {
