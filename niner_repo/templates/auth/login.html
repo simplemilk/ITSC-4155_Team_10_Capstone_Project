@@ -37,7 +37,7 @@
 
         <!-- Login Form -->
         <form id="loginForm" method="POST" action="{{ url_for('auth.login') }}" novalidate>
-            <!-- Username Field -->
+            <!-- Username Field - REMOVE STATIC ERROR -->
             <div class="form-floating mb-3">
                 <input type="text" 
                        class="form-control" 
@@ -48,12 +48,13 @@
                        autocomplete="username"
                        value="{{ request.form['username'] if request.form else '' }}">
                 <label for="username"><i class="fas fa-user me-2"></i>Username</label>
+                <!-- Only show error when field is invalid -->
                 <div class="invalid-feedback">
                     Please enter your username.
                 </div>
             </div>
 
-            <!-- Password Field -->
+            <!-- Password Field - REMOVE STATIC ERROR -->
             <div class="form-floating mb-3 position-relative">
                 <input type="password" 
                        class="form-control" 
@@ -70,6 +71,7 @@
                         aria-label="Toggle password visibility">
                     <i class="fas fa-eye" id="passwordToggleIcon"></i>
                 </button>
+                <!-- Only show error when field is invalid -->
                 <div class="invalid-feedback">
                     Please enter your password.
                 </div>

@@ -53,12 +53,6 @@
                            pattern="[a-zA-Z0-9_]+"
                            value="{{ request.form['username'] if request.form else '' }}">
                     <label for="username"><i class="fas fa-user me-2"></i>Username</label>
-                    <div class="invalid-feedback">
-                        Please choose a username (at least 3 characters, letters, numbers, and underscores only).
-                    </div>
-                    <div class="valid-feedback">
-                        Username looks good!
-                    </div>
                 </div>
 
                 <!-- Email Field -->
@@ -71,70 +65,52 @@
                            required
                            value="{{ request.form['email'] if request.form else '' }}">
                     <label for="email"><i class="fas fa-envelope me-2"></i>Email</label>
-                    <div class="invalid-feedback">
-                        Please enter a valid email address.
-                    </div>
-                    <div class="valid-feedback">
-                        Email looks good!
-                    </div>
                 </div>
 
                 <!-- Password Field -->
-                <div class="form-floating mb-3 position-relative">
-                    <input type="password" 
-                           class="form-control" 
-                           id="password" 
-                           name="password" 
-                           placeholder="Password" 
-                           required
-                           minlength="8">
+                <div class="form-floating position-relative">
+                    <input type="password" class="form-control" id="password" name="password" 
+                           placeholder="Password" required>
                     <label for="password"><i class="fas fa-lock me-2"></i>Password</label>
-                    <button type="button" 
-                            class="password-toggle" 
-                            onclick="togglePassword('password')" 
-                            tabindex="-1"
-                            aria-label="Toggle password visibility">
-                        <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                    <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                        <i class="fas fa-eye"></i>
                     </button>
-                    <div class="invalid-feedback">
-                        Password must be at least 8 characters long.
-                    </div>
-                    <div class="valid-feedback">
-                        Password strength looks good!
-                    </div>
                 </div>
 
                 <!-- Confirm Password Field -->
-                <div class="form-floating mb-3 position-relative">
-                    <input type="password" 
-                           class="form-control" 
-                           id="confirmPassword" 
-                           name="confirmPassword" 
-                           placeholder="Confirm Password" 
-                           required
-                           minlength="8">
+                <div class="form-floating position-relative">
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
+                           placeholder="Confirm Password" required>
                     <label for="confirmPassword"><i class="fas fa-lock me-2"></i>Confirm Password</label>
-                    <button type="button" 
-                            class="password-toggle" 
-                            onclick="togglePassword('confirmPassword')" 
-                            tabindex="-1"
-                            aria-label="Toggle password visibility">
-                        <i class="fas fa-eye" id="confirmPasswordToggleIcon"></i>
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                        <i class="fas fa-eye"></i>
                     </button>
-                    <div class="invalid-feedback">
-                        Passwords must match.
-                    </div>
-                    <div class="valid-feedback">
-                        Passwords match!
-                    </div>
                 </div>
 
                 <!-- Password Requirements Indicator -->
-                <div class="password-requirements">
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Password must be at least 8 characters long
-                    </small>
+                <div class="password-requirements mt-2 mb-3">
+                    <h6><i class="fas fa-shield-alt me-2"></i>Password Requirements</h6>
+                    <div class="requirement" id="req-length">
+                        <i class="fas fa-times me-2"></i>
+                        <span>At least 8 characters</span>
+                    </div>
+                    <div class="requirement" id="req-upper">
+                        <i class="fas fa-times me-2"></i>
+                        <span>At least one uppercase letter</span>
+                    </div>
+                    <div class="requirement" id="req-lower">
+                        <i class="fas fa-times me-2"></i>
+                        <span>At least one lowercase letter</span>
+                    </div>
+                    <div class="requirement" id="req-number">
+                        <i class="fas fa-times me-2"></i>
+                        <span>At least one number</span>
+                    </div>
+                    
+                    <!-- Password Strength Bar -->
+                    <div class="password-strength mt-3">
+                        <div class="password-strength-bar"></div>
+                    </div>
                 </div>
             </div>
 
@@ -177,9 +153,6 @@
                             What was your favorite food as a child?
                         </option>
                     </select>
-                    <div class="invalid-feedback">
-                        Please select a security question.
-                    </div>
                 </div>
 
                 <div class="form-floating mb-4">
@@ -195,12 +168,6 @@
                     <label for="securityAnswer1">
                         <i class="fas fa-key me-2"></i>Answer 1
                     </label>
-                    <div class="invalid-feedback">
-                        Please provide an answer (at least 2 characters).
-                    </div>
-                    <div class="valid-feedback">
-                        Answer looks good!
-                    </div>
                 </div>
 
                 <!-- Security Question 2 -->
@@ -234,9 +201,6 @@
                             What was your first job?
                         </option>
                     </select>
-                    <div class="invalid-feedback">
-                        Please select a second security question.
-                    </div>
                 </div>
 
                 <div class="form-floating mb-3">
@@ -252,12 +216,6 @@
                     <label for="securityAnswer2">
                         <i class="fas fa-key me-2"></i>Answer 2
                     </label>
-                    <div class="invalid-feedback">
-                        Please provide an answer (at least 2 characters).
-                    </div>
-                    <div class="valid-feedback">
-                        Answer looks good!
-                    </div>
                 </div>
 
                 <!-- Security Questions Help -->

@@ -172,10 +172,10 @@ function hideLoadingState(button) {
 // Update password strength indicator
 function updatePasswordStrength(password) {
     const strengthBar = document.querySelector('.password-strength-bar');
-    const requirements = document.querySelectorAll('.requirement');
     
     if (!strengthBar) return;
     
+    const validationResults = validatePassword(password);
     const strength = calculatePasswordStrength(password);
     const percentage = (strength / 4) * 100;
     
@@ -183,32 +183,31 @@ function updatePasswordStrength(password) {
     strengthBar.style.width = percentage + '%';
     strengthBar.className = 'password-strength-bar';
     
-    if (strength === 1) {
-        strengthBar.classList.add('strength-weak');
-    } else if (strength === 2) {
-        strengthBar.classList.add('strength-fair');
-    } else if (strength === 3) {
-        strengthBar.classList.add('strength-good');
-    } else if (strength === 4) {
-        strengthBar.classList.add('strength-strong');
-    }
+    if (strength === 1) strengthBar.classList.add('strength-weak');
+    else if (strength === 2) strengthBar.classList.add('strength-fair');
+    else if (strength === 3) strengthBar.classList.add('strength-good');
+    else if (strength === 4) strengthBar.classList.add('strength-strong');
     
-    // Update requirement indicators
-    if (requirements.length > 0) {
-        const validationResults = validatePassword(password);
-        
-        requirements.forEach((req, index) => {
-            const icon = req.querySelector('i');
-            const keys = Object.keys(validationResults);
-            
-            if (index < keys.length && validationResults[keys[index]]) {
-                req.classList.add('met');
-                icon.className = 'fas fa-check me-2';
-            } else {
-                req.classList.remove('met');
-                icon.className = 'fas fa-times me-2';
-            }
-        });
+    // Update each requirement indicator by ID
+    updateRequirement('req-length', validationResults.length);
+    updateRequirement('req-upper', validationResults.upper);
+    updateRequirement('req-lower', validationResults.lower);
+    updateRequirement('req-number', validationResults.number);
+}
+
+// Helper function to update individual requirement
+function updateRequirement(elementId, isMet) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const icon = element.querySelector('i');
+    
+    if (isMet) {
+        element.classList.add('met');
+        icon.className = 'fas fa-check me-2';
+    } else {
+        element.classList.remove('met');
+        icon.className = 'fas fa-times me-2';
     }
 }
 
@@ -345,91 +344,78 @@ function handleRegisterSubmit(e) {
     return true;
 }
 
-// Real-time validation setup
+// Update the real-time validation to set error messages
 function setupRealTimeValidation() {
-    // Username validation
-    const usernameField = document.getElementById('username');
-    if (usernameField) {
-        usernameField.addEventListener('blur', function() {
-            if (this.value && !validateUsername(this.value)) {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-            } else if (this.value) {
-                this.classList.add('is-valid');
-                this.classList.remove('is-invalid');
-            }
-        });
-        
-        // Real-time username validation
-        usernameField.addEventListener('input', function() {
-            if (this.value.length >= 3) {
-                if (validateUsername(this.value)) {
-                    this.classList.add('is-valid');
-                    this.classList.remove('is-invalid');
-                } else {
-                    this.classList.add('is-invalid');
-                    this.classList.remove('is-valid');
-                }
-            } else {
-                this.classList.remove('is-valid', 'is-invalid');
-            }
-        });
-    }
-    
-    // Email validation
-    const emailField = document.getElementById('email');
-    if (emailField) {
-        emailField.addEventListener('blur', function() {
-            if (this.value && !validateEmail(this.value)) {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-            } else if (this.value) {
-                this.classList.add('is-valid');
-                this.classList.remove('is-invalid');
-            }
-        });
-    }
-    
-    // Password strength checking
     const passwordField = document.getElementById('password');
+    
     if (passwordField) {
+        // Trigger validation on every keystroke
         passwordField.addEventListener('input', function() {
             updatePasswordStrength(this.value);
+        });
+        updatePasswordStrength('');
+    }
+    
+    // Username validation with error messages
+    const usernameField = document.getElementById('username');
+    const usernameError = document.getElementById('username-error');
+    
+    if (usernameField) {
+        usernameField.addEventListener('input', function() {
+            const value = this.value;
             
-            if (this.value && Object.values(validatePassword(this.value)).every(Boolean)) {
-                this.classList.add('is-valid');
-                this.classList.remove('is-invalid');
-            } else if (this.value) {
+            if (!value) {
+                this.classList.remove('is-valid', 'is-invalid');
+            } else if (value.length < 3) {
                 this.classList.add('is-invalid');
                 this.classList.remove('is-valid');
+                if (usernameError) usernameError.textContent = 'Username must be at least 3 characters';
+            } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                if (usernameError) usernameError.textContent = 'Only letters, numbers, and underscores allowed';
+            } else {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
             }
         });
     }
     
-    // Confirm password validation
-    const confirmPasswordField = document.getElementById('confirmPassword');
-    if (confirmPasswordField && passwordField) {
-        confirmPasswordField.addEventListener('input', function() {
-            if (this.value && this.value === passwordField.value) {
-                this.classList.add('is-valid');
-                this.classList.remove('is-invalid');
-            } else if (this.value) {
+    // Email validation with error messages
+    const emailField = document.getElementById('email');
+    const emailError = document.getElementById('email-error');
+    
+    if (emailField) {
+        emailField.addEventListener('blur', function() {
+            const value = this.value.trim();
+            
+            if (!value) {
+                this.classList.remove('is-valid', 'is-invalid');
+            } else if (!validateEmail(value)) {
                 this.classList.add('is-invalid');
                 this.classList.remove('is-valid');
+                if (emailError) emailError.textContent = 'Please enter a valid email address';
+            } else {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
             }
         });
     }
     
-    // Security question validation
+    // Security answer validation
     const securityAnswers = document.querySelectorAll('[name*="securityAnswer"]');
     securityAnswers.forEach(field => {
-        field.addEventListener('blur', function() {
-            if (this.value && this.value.length >= 2) {
-                this.classList.add('is-valid');
-                this.classList.remove('is-invalid');
-            } else if (this.value) {
+        field.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (!value) {
+                this.classList.remove('is-valid', 'is-invalid');
+            } else if (value.length < 2) {
                 this.classList.add('is-invalid');
                 this.classList.remove('is-valid');
+            } else {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
             }
         });
     });

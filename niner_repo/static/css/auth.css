@@ -201,17 +201,33 @@
     border-radius: 10px;
     padding: 1rem;
     margin-bottom: 1rem;
-    font-size: 0.85rem;
 }
 
+.password-requirements h6 {
+    color: #495057;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Password Requirements - FIX BOTH CONTAINER AND ICONS */
 .requirement {
-    color: #dc3545;
+    color: #dc3545 !important;  /* Red for unmet requirements */
     transition: color 0.3s ease;
     margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.requirement i {
+    color: #dc3545 !important;  /* Icons also red by default */
+    width: 20px;  /* Fixed width for alignment */
 }
 
 .requirement.met {
-    color: #28a745;
+    color: #28a745 !important;  /* Green for met requirements */
+}
+
+.requirement.met i {
+    color: #28a745 !important;  /* Icons also green when met */
 }
 
 /* Password Strength */
@@ -473,14 +489,23 @@
 
 /* Form Validation Feedback */
 .invalid-feedback {
-    display: block;
+    display: none;
+    color: #dc3545;
     font-size: 0.875rem;
     margin-top: 0.25rem;
 }
 
-.valid-feedback {
+.form-control.is-invalid ~ .invalid-feedback {
     display: block;
+}
+
+.valid-feedback {
+    display: none;
+    color: #28a745;
     font-size: 0.875rem;
     margin-top: 0.25rem;
-    color: #28a745;
+}
+
+.form-control.is-valid ~ .valid-feedback {
+    display: block;
 }
