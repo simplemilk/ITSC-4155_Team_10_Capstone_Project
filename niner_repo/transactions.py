@@ -2,6 +2,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, url_f
 from werkzeug.exceptions import abort
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from gamification import on_transaction_added
 
 # Use local imports (same directory)
 try:
@@ -122,6 +123,12 @@ def create():
                         (description, float(amount), category, transaction_type, date, user_id)
                     )
                     db.commit()
+                    
+                    # GAMIFICATION: Award points for logging transaction
+                    try:
+                        on_transaction_added(g.user['id'])
+                    except Exception as e:
+                        print(f"Gamification error: {e}")
                     
                     # Trigger notification checks for expenses
                     if transaction_type == 'expense':

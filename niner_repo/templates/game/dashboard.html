@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}Game Dashboard - Niner Finance{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gamification.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid game-dashboard">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-gamepad me-2"></i>Game Dashboard</h2>
+            <p class="text-muted">Track your financial journey and achievements</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('gamification.milestones') }}" class="btn btn-outline-primary">
+                <i class="fas fa-trophy me-2"></i>View All Milestones
+            </a>
+        </div>
+    </div>
+
+    <!-- User Progress Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card progress-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <div class="level-badge">
+                                <i class="fas {{ current_level.badge_icon }} fa-3x"></i>
+                                <div class="level-number">{{ progress.current_level }}</div>
+                            </div>
+                            <h5 class="mt-2">{{ current_level.level_name }}</h5>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="progress-info">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><strong>Progress to Next Level</strong></span>
+                                    {% if next_level %}
+                                    <span>{{ progress.experience_points }} / {{ next_level.experience_required }} XP</span>
+                                    {% else %}
+                                    <span>MAX LEVEL!</span>
+                                    {% endif %}
+                                </div>
+                                {% if next_level %}
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
+                                         style="width: {{ (progress.experience_points / next_level.experience_required * 100)|round }}%">
+                                        {{ (progress.experience_points / next_level.experience_required * 100)|round }}%
+                                    </div>
+                                </div>
+                                <small class="text-muted">Next: {{ next_level.level_name }}</small>
+                                {% else %}
+                                <div class="alert alert-success mb-0">
+                                    <i class="fas fa-crown me-2"></i>You've reached the maximum level!
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <i class="fas fa-coins text-warning"></i>
+                                    <div>
+                                        <strong>{{ progress.total_points }}</strong>
+                                        <small>Total Points</small>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-fire text-danger"></i>
+                                    <div>
+                                        <strong>{{ progress.streak_days }}</strong>
+                                        <small>Day Streak</small>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-medal text-primary"></i>
+                                    <div>
+                                        <strong>#{{ leaderboard_position }}</strong>
+                                        <small>Rank</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements & Progress -->
+    <div class="row">
+        <!-- Recent Achievements -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Recent Achievements</h5>
+                </div>
+                <div class="card-body">
+                    {% if achievements %}
+                    <div class="achievements-list">
+                        {% for achievement in achievements[:5] %}
+                        <div class="achievement-item">
+                            <div class="achievement-icon" style="background: {{ achievement.badge_color }}20;">
+                                <i class="fas {{ achievement.badge_icon }}" style="color: {{ achievement.badge_color }}"></i>
+                            </div>
+                            <div class="achievement-info">
+                                <h6>{{ achievement.name }}</h6>
+                                <p class="text-muted mb-1">{{ achievement.description }}</p>
+                                <small class="text-success">+{{ achievement.points_reward }} points</small>
+                                <span class="badge bg-{{ 'warning' if achievement.tier == 'gold' else 'secondary' if achievement.tier == 'silver' else 'info' }} ms-2">
+                                    {{ achievement.tier.upper() }}
+                                </span>
+                            </div>
+                            <div class="achievement-date">
+                                <small class="text-muted">{{ achievement.achieved_at[:10] }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state text-center py-4">
+                        <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
+                        <p>No achievements yet. Start your financial journey!</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if achievements|length > 5 %}
+                    <a href="{{ url_for('gamification.milestones') }}" class="btn btn-sm btn-outline-primary w-100 mt-3">
+                        View All Achievements
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress Milestones -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>In Progress</h5>
+                </div>
+                <div class="card-body">
+                    {% if in_progress %}
+                    <div class="milestones-list">
+                        {% for milestone in in_progress %}
+                        <div class="milestone-item">
+                            <div class="milestone-header">
+                                <i class="fas {{ milestone.badge_icon }} me-2" style="color: {{ milestone.badge_color }}"></i>
+                                <strong>{{ milestone.name }}</strong>
+                            </div>
+                            <p class="text-muted mb-2">{{ milestone.description }}</p>
+                            <div class="progress" style="height: 20px;">
+                                {% set progress_pct = (milestone.progress_value / milestone.criteria_value * 100)|round %}
+                                <div class="progress-bar" style="width: {{ progress_pct }}%">
+                                    {{ milestone.progress_value|int }} / {{ milestone.criteria_value|int }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state text-center py-4">
+                        <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                        <p>All milestones completed or not started yet!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badges Collection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-certificate me-2"></i>Badge Collection ({{ badges|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if badges %}
+                    <div class="badges-grid">
+                        {% for badge in badges %}
+                        <div class="badge-item" title="{{ badge.description }}">
+                            <div class="badge-icon" style="background: {{ badge.color }}20;">
+                                <i class="fas {{ badge.icon }}" style="color: {{ badge.color }}"></i>
+                            </div>
+                            <div class="badge-name">{{ badge.name }}</div>
+                            <div class="badge-rarity">{{ badge.rarity }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state text-center py-4">
+                        <i class="fas fa-certificate fa-3x text-muted mb-3"></i>
+                        <p>No badges earned yet. Complete milestones to earn badges!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Activity</th>
+                                    <th>Description</th>
+                                    <th>Points</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in recent_activities %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-star text-warning me-2"></i>
+                                        {{ activity.activity_type.replace('_', ' ').title() }}
+                                    </td>
+                                    <td>{{ activity.description }}</td>
+                                    <td><span class="badge bg-success">+{{ activity.points_earned }}</span></td>
+                                    <td>{{ activity.created_at[:16] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p>No recent activity. Start earning points!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
+{% endblock %}
