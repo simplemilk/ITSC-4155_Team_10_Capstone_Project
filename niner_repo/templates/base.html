@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Niner Finance{% endblock %}</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/achievement-notifications.css') }}">
-    
+
     <!-- Page-specific CSS -->
     {% block head %}{% endblock %}
 </head>
@@ -36,6 +36,11 @@
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-chart-line me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if 'portfolio' in request.endpoint }}" href="{{ url_for('portfolio.index') }}">
+                            <i class="fas fa-briefcase me-1"></i>Portfolio
                         </a>
                     </li>
                     <li class="nav-item">
@@ -83,7 +88,7 @@
                     </li>
                     {% endif %}
                 </ul>
-                
+
                 <ul class="navbar-nav">
                     {% if g.user %}
                     <!-- Notifications Bell -->
@@ -108,7 +113,7 @@
                             </li>
                         </ul>
                     </li>
-                    
+
                     <!-- User Menu -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -146,9 +151,10 @@
                     </li>
                     {% endif %}
                 </ul>
+            </div>
         </div>
     </nav>
-    
+
     <!-- Achievement Toast Container -->
     <div class="achievement-toast-container" 
          id="achievementToastContainer"
@@ -164,45 +170,38 @@
          {% endwith %}
          ]'>
     </div>
-    
+
     <!-- Main Content -->
-    <main>
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container mt-3">
-                {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <main class="py-4">
+        <div class="container">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-3">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-                        </div>
-        {% endif %}
-        {% endwith %}
+            {% endif %}
+            {% endwith %}
 
-                        <li><a href="{{ url_for('budget.index') }}" class="text-muted text-decoration-none">Budget</a></li>
-    <main>
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container mt-3">
-                {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% endwith %}
-
-        {% block content %}{% endblock %}
+            {% block content %}{% endblock %}
+        </div>
     </main>
-                        {% else %}
-                        <li><a href="{{ url_for('auth.login') }}" class="text-muted text-decoration-none">Login</a></li>
-                        <li><a href="{{ url_for('auth.register') }}" class="text-muted text-decoration-none">Register</a></li>
-                        {% endif %}
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5>Niner Finance</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('budget.index') }}" class="text-white text-decoration-none">Budget</a></li>
+                        <li><a href="{{ url_for('transactions.index') }}" class="text-white text-decoration-none">Transactions</a></li>
+                        <li><a href="{{ url_for('investments.index') }}" class="text-white text-decoration-none">Investments</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">
@@ -221,14 +220,14 @@
             </div>
         </div>
     </footer>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     <script src="{{ url_for('static', filename='js/achievement-notifications.js') }}"></script>
-    
+
     <!-- Page-specific scripts -->
     {% block scripts %}{% endblock %}
 </body>

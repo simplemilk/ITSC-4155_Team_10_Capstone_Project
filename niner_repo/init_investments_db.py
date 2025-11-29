@@ -20,7 +20,19 @@ def apply_schema(db_path):
         print("Database not found; please create or run setup_db.py first.")
         return False
 
-    schema_file = os.path.join(os.path.dirname(__file__), 'investments_schema.sql')
+    # Support both 'investments_schema.sql' and legacy 'investments_schema' filenames
+    schema_dir = os.path.dirname(__file__)
+    candidates = ['investments_schema.sql', 'investments_schema']
+    schema_file = None
+    for c in candidates:
+        p = os.path.join(schema_dir, c)
+        if os.path.exists(p):
+            schema_file = p
+            break
+    if not schema_file:
+        print(f"Schema file not found. Looked for: {candidates}")
+        return False
+
     with open(schema_file, 'r', encoding='utf-8') as f:
         schema_sql = f.read()
 
@@ -68,6 +80,12 @@ def apply_schema(db_path):
         conn.close()
 
     return True
+
+
+def init_investments_db():
+    """Compatibility wrapper expected by app.py: returns True on success."""
+    db_path = get_db_path()
+    return apply_schema(db_path)
 
 
 if __name__ == '__main__':
