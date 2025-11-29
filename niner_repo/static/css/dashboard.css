@@ -1,0 +1,826 @@
+/* Dashboard Layout */
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1rem 0;
+}
+
+.header-content h1 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.header-content p {
+    margin: 0.5rem 0 0;
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.header-actions .btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* Action Cards */
+.action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #1f2937;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.action-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* If the icon is missing, add a default placeholder */
+.action-card:nth-child(4) .action-icon:empty::before {
+    content: "🎯";
+}
+
+/* Specific styling for each action card */
+.action-card:nth-child(1) .action-icon { /* Manage Income */
+    color: #10b981;
+}
+
+.action-card:nth-child(2) .action-icon { /* Create Budget */
+    color: #3b82f6;
+}
+
+.action-card:nth-child(3) .action-icon { /* Add Transaction */
+    color: #f59e0b;
+}
+
+.action-card:nth-child(4) .action-icon { /* Financial Goals */
+    color: #8b5cf6;
+}
+
+.action-card:nth-child(5) .action-icon { /* Set Priorities */
+    color: #ec4899;
+}
+
+.action-card i {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.action-card h6 {
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+}
+
+.action-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Quick Actions Grid */
+.quick-actions {
+    grid-column: 1 / -1;
+    margin-top: 2rem;
+}
+
+.quick-actions h5 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+/* Card Headers */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.375rem 0.375rem 0 0;
+    margin: -1.5rem -1.5rem 1.5rem;
+}
+
+.card-header h5 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.dashboard-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    height: 100%;
+}
+
+/* Budget Categories */
+.budget-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.category-item {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.category-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.category-amount {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+/* Transaction List */
+.transaction-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.transaction-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+}
+
+.transaction-details {
+    flex: 1;
+}
+
+.transaction-description {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.transaction-amount {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Dashboard Sections */
+.dashboard-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+/* Grid Layout */
+.overview-section {
+    grid-column: 1 / -1;
+}
+
+.income-section {
+    grid-column: 1 / 7;
+}
+
+.budget-section {
+    grid-column: 7 / -1;
+}
+
+.activity-section {
+    grid-column: 1 / 8;
+}
+
+.quick-actions-section {
+    grid-column: 8 / -1;
+}
+
+.goals-section {
+    grid-column: 1 / -1;
+}
+
+/* Financial Overview Cards */
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.overview-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 4px solid;
+}
+
+.overview-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.overview-card.total-income {
+    border-left-color: #28a745;
+}
+
+.overview-card.total-expenses {
+    border-left-color: #dc3545;
+}
+
+.overview-card.total-savings {
+    border-left-color: #17a2b8;
+}
+
+.card-icon {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+    font-size: 1.5rem;
+    color: #495057;
+}
+
+.card-content h3 {
+    color: #495057;
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-content .amount {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    line-height: 1;
+}
+
+.card-content .period {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.card-content .savings-rate {
+    color: #17a2b8;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Income Chart */
+.income-chart-container {
+    height: 350px;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.income-chart-container canvas {
+    max-height: 100%;
+}
+
+/* Income List */
+.income-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.income-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background-color 0.3s ease;
+}
+
+.income-item:hover {
+    background-color: #f8f9fa;
+}
+
+.income-item:last-child {
+    border-bottom: none;
+}
+
+.income-category {
+    display: flex;
+    flex-direction: column;
+}
+
+.category-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.entry-count {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.income-amounts {
+    text-align: right;
+}
+
+.total-amount {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.average-amount {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Budget Status */
+.budget-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.budget-item {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+    transition: transform 0.3s ease;
+}
+
+.budget-item:hover {
+    transform: translateX(5px);
+}
+
+.budget-category {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.category-icon {
+    margin-right: 0.75rem;
+    font-size: 1.2rem;
+    color: #007bff;
+}
+
+.budget-category .category-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.budget-progress {
+    margin-top: 0.75rem;
+}
+
+.progress-bar {
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.8s ease;
+    border-radius: 5px;
+}
+
+.budget-amounts {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.budget-status {
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Recent Activity */
+.activity-list {
+    max-height: 500px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background-color 0.3s ease;
+}
+
+.activity-item:hover {
+    background-color: #f8f9fa;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e9ecef;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.activity-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.activity-amount {
+    font-weight: 600;
+}
+
+/* Quick Actions */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.quick-action-btn {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #495057;
+}
+
+.quick-action-btn:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+    color: #007bff;
+    transform: translateY(-2px);
+}
+
+.quick-action-btn i {
+    font-size: 1.8rem;
+}
+
+.quick-action-btn span {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Financial Goals */
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.goal-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+}
+
+.goal-card h4 {
+    margin: 0 0 1rem;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.goal-progress .progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.goal-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #495057;
+    margin-top: 0.5rem;
+}
+
+.goal-details .current {
+    font-weight: 600;
+    color: #28a745;
+}
+
+.goal-details .target {
+    color: #6c757d;
+}
+
+/* Loading State */
+.loading {
+    text-align: center;
+    color: #6c757d;
+    padding: 3rem 2rem;
+    font-size: 1.1rem;
+}
+
+.loading i {
+    color: #007bff;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .dashboard-container {
+        grid-template-columns: repeat(8, 1fr);
+    }
+    
+    .income-section {
+        grid-column: 1 / 5;
+    }
+    
+    .budget-section {
+        grid-column: 5 / -1;
+    }
+    
+    .activity-section {
+        grid-column: 1 / 6;
+    }
+    
+    .quick-actions-section {
+        grid-column: 6 / -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0.5rem;
+    }
+    
+    .overview-section,
+    .income-section,
+    .budget-section,
+    .activity-section,
+    .quick-actions-section,
+    .goals-section {
+        grid-column: 1;
+    }
+    
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .overview-card {
+        padding: 1.5rem;
+    }
+    
+    .overview-card .amount {
+        font-size: 1.8rem;
+    }
+    
+    .income-chart-container {
+        height: 280px;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-section {
+        padding: 1rem;
+    }
+    
+    .overview-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem 1rem;
+    }
+    
+    .card-icon {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .card-content .amount {
+        font-size: 1.6rem;
+    }
+    
+    .activity-item {
+        padding: 0.75rem;
+    }
+    
+    .activity-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .budget-item {
+        padding: 1rem;
+    }
+}
+
+/* Animation Effects */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dashboard-section {
+    animation: slideIn 0.5s ease-out;
+}
+
+.dashboard-section:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-section:nth-child(2) { animation-delay: 0.2s; }
+.dashboard-section:nth-child(3) { animation-delay: 0.3s; }
+.dashboard-section:nth-child(4) { animation-delay: 0.4s; }
+.dashboard-section:nth-child(5) { animation-delay: 0.5s; }
+.dashboard-section:nth-child(6) { animation-delay: 0.6s; }
+
+/* Progress bar animation */
+@keyframes progressAnimation {
+    from {
+        width: 0%;
+    }
+}
+
+.progress-fill {
+    animation: progressAnimation 1.5s ease-out;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .dashboard-section {
+        background: #343a40;
+        color: #f8f9fa;
+        border-color: #495057;
+    }
+    
+    .overview-card,
+    .budget-item,
+    .goal-card,
+    .quick-action-btn {
+        background: #495057;
+        color: #f8f9fa;
+    }
+    
+    .section-header {
+        border-bottom-color: #495057;
+    }
+    
+    .section-header h2,
+    .category-name,
+    .activity-title {
+        color: #f8f9fa;
+    }
+    
+    .income-item,
+    .activity-item {
+        border-bottom-color: #495057;
+    }
+    
+    .income-item:hover,
+    .activity-item:hover {
+        background-color: #495057;
+    }
+    
+    .progress-bar {
+        background: #495057;
+    }
+    
+    .loading {
+        color: #adb5bd;
+    }
+}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Investment{% endblock %}
+{% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/portfolio.css') }}">{% endblock %}
+{% block content %}
+<div class="container">
+  <h1>{{ action }} Investment</h1>
+  <form method="post">
+    {% if action == 'Create' %}
+      <label>Ticker</label>
+      <input name="ticker" required />
+
+      <label>Name</label>
+      <input name="name" required />
+
+      <label>Asset Type</label>
+      <select name="asset_type_id">
+        <option value="">Select type</option>
+        {% for t in asset_types %}
+          <option value="{{ t.id }}">{{ t.name }}</option>
+        {% endfor %}
+      </select>
+
+      <label>Exchange</label>
+      <input name="exchange" />
+    {% else %}
+      <p><strong>{{ position.ticker }}</strong> — {{ position.name }} ({{ position.exchange }})</p>
+      <label>Quantity</label>
+      <input name="quantity" value="{{ position.quantity }}" />
+      <label>Avg Cost</label>
+      <input name="avg_cost" value="{{ position.avg_cost }}" />
+    {% endif %}
+
+    <div style="margin-top:0.75rem">
+      <button class="btn primary" type="submit">{{ action }}</button>
+      <a class="btn" href="{{ url_for('investments.index') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

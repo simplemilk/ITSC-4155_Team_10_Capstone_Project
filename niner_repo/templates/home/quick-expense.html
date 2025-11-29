@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block title %}Quick Expense - Niner Finance{% endblock %}
+
+{% block content %}
+<div class="quick-expense-container">
+    <div class="quick-expense-header">
+        <h1>💸 Quick Expense</h1>
+        <p class="subtitle">Log your expenses in seconds</p>
+    </div>
+
+    <form id="quickExpenseForm" class="quick-expense-form" autocomplete="off">
+        <!-- Amount Input - Primary Field -->
+        <div class="form-group primary-field">
+            <label for="amount" class="required">Amount</label>
+            <div class="amount-input-wrapper">
+                <span class="currency-symbol">$</span>
+                <input 
+                    type="number" 
+                    id="amount" 
+                    name="amount" 
+                    class="form-control amount-input" 
+                    placeholder="0.00" 
+                    step="0.01" 
+                    min="0.01" 
+                    required 
+                    autofocus
+                    inputmode="decimal">
+            </div>
+            <div class="error-message" id="amountError"></div>
+        </div>
+
+        <!-- Category Selector with Auto-suggest -->
+        <div class="form-group primary-field">
+            <label for="category" class="required">Category</label>
+            <div class="category-input-wrapper">
+                <select id="category" name="category" class="form-control category-select" required>
+                    <option value="">Select category...</option>
+                    <option value="Food">🍔 Food</option>
+                    <option value="Transportation">🚗 Transportation</option>
+                    <option value="Entertainment">🎬 Entertainment</option>
+                    <option value="Shopping">🛍️ Shopping</option>
+                    <option value="Health">⚕️ Health</option>
+                    <option value="Utilities">💡 Utilities</option>
+                    <option value="Education">📚 Education</option>
+                    <option value="Other">📦 Other</option>
+                </select>
+                <div id="categorySuggestion" class="category-suggestion"></div>
+            </div>
+            <div class="error-message" id="categoryError"></div>
+        </div>
+
+        <!-- Description/Note - Optional -->
+        <div class="form-group optional-field">
+            <label for="description">Description <span class="optional-label">(optional)</span></label>
+            <input 
+                type="text" 
+                id="description" 
+                name="description" 
+                class="form-control" 
+                placeholder="e.g., Lunch at McDonald's"
+                maxlength="200">
+            <div class="char-count"><span id="charCount">0</span>/200</div>
+        </div>
+
+        <!-- Date Selector - Optional, defaults to today -->
+        <div class="form-group optional-field">
+            <label for="date">Date <span class="optional-label">(optional)</span></label>
+            <input 
+                type="date" 
+                id="date" 
+                name="date" 
+                class="form-control" 
+                value="">
+        </div>
+
+        <!-- Quick Amount Buttons -->
+        <div class="quick-amounts">
+            <button type="button" class="quick-amount-btn" data-amount="5">$5</button>
+            <button type="button" class="quick-amount-btn" data-amount="10">$10</button>
+            <button type="button" class="quick-amount-btn" data-amount="20">$20</button>
+            <button type="button" class="quick-amount-btn" data-amount="50">$50</button>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                <span class="btn-text">💾 Add Expense</span>
+                <span class="btn-loading" style="display: none;">
+                    <span class="spinner"></span> Saving...
+                </span>
+            </button>
+            <button type="button" id="clearBtn" class="btn btn-secondary">
+                🔄 Clear
+            </button>
+        </div>
+    </form>
+
+    <!-- Success Toast -->
+    <div id="successToast" class="success-toast">
+        <div class="toast-icon">✅</div>
+        <div class="toast-content">
+            <div class="toast-title">Expense Added!</div>
+            <div class="toast-message"></div>
+        </div>
+    </div>
+
+    <!-- Recent Expenses Quick View -->
+    <div class="recent-expenses">
+        <h3>Recent Expenses</h3>
+        <div id="recentExpensesList" class="recent-expenses-list">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-expense-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.quick-expense-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.quick-expense-header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 14px;
+}
+
+.quick-expense-form {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group.optional-field {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.optional-label {
+    font-weight: normal;
+    color: #999;
+    font-size: 12px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #00703C;
+    box-shadow: 0 0 0 3px rgba(0, 112, 60, 0.1);
+}
+
+.primary-field .form-control {
+    font-size: 18px;
+    padding: 15px;
+}
+
+.amount-input-wrapper {
+    position: relative;
+}
+
+.currency-symbol {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    font-weight: bold;
+    color: #00703C;
+}
+
+.amount-input {
+    padding-left: 35px !important;
+    font-weight: 600;
+    color: #00703C;
+}
+
+.category-input-wrapper {
+    position: relative;
+}
+
+.category-select {
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.category-suggestion {
+    position: absolute;
+    top: -25px;
+    right: 0;
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: none;
+    animation: slideDown 0.3s ease;
+}
+
+.category-suggestion.show {
+    display: block;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.char-count {
+    text-align: right;
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+}
+
+.quick-amounts {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.quick-amount-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #00703C;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.quick-amount-btn:hover {
+    background: #00703C;
+    color: white;
+    border-color: #00703C;
+    transform: translateY(-2px);
+}
+
+.quick-amount-btn:active {
+    transform: translateY(0);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #00703C;
+    color: white;
+    flex: 1;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #005a30;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 112, 60, 0.3);
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.btn-lg {
+    padding: 18px 40px;
+    font-size: 18px;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 13px;
+    margin-top: 5px;
+    min-height: 18px;
+}
+
+.success-toast {
+    position: fixed;
+    bottom: -100px;
+    right: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    min-width: 300px;
+    transition: bottom 0.3s ease;
+    z-index: 10000;
+}
+
+.success-toast.show {
+    bottom: 30px;
+}
+
+.toast-icon {
+    font-size: 32px;
+}
+
+.toast-title {
+    font-weight: bold;
+    color: #00703C;
+    margin-bottom: 4px;
+}
+
+.toast-message {
+    font-size: 14px;
+    color: #666;
+}
+
+.recent-expenses {
+    margin-top: 40px;
+}
+
+.recent-expenses h3 {
+    font-size: 1.2rem;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.recent-expenses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.recent-expense-item {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+.recent-expense-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.recent-expense-info {
+    flex: 1;
+}
+
+.recent-expense-category {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.recent-expense-description {
+    font-weight: 600;
+    color: #333;
+    margin-top: 2px;
+}
+
+.recent-expense-amount {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+@media (max-width: 768px) {
+    .quick-expense-container {
+        padding: 10px;
+    }
+
+    .quick-expense-form {
+        padding: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .quick-amounts {
+        justify-content: space-between;
+    }
+
+    .quick-amount-btn {
+        min-width: 60px;
+    }
+
+    .success-toast {
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+    }
+
+    .success-toast.show {
+        bottom: 10px;
+    }
+}
+</style>
+
+<script src="{{ url_for('static', filename='js/quick-expense.js') }}"></script>
+{% endblock %}

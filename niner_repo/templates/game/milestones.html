@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Milestones - Niner Finance{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gamification.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid milestones-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-trophy me-2"></i>Milestones & Achievements</h2>
+            <p class="text-muted">Complete milestones to earn points and badges</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('gamification.dashboard') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Milestones by Category -->
+    {% for category, milestones in milestones_by_category.items() %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-{{ 'chart-pie' if category == 'budget' else 'piggy-bank' if category == 'savings' else 'chart-line' if category == 'investment' else 'exchange-alt' if category == 'transaction' else 'fire' if category == 'streak' else 'bullseye' }} me-2"></i>
+                {{ category.title() }} Milestones
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for milestone in milestones %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="milestone-card {% if milestone.is_completed %}completed{% endif %}">
+                        <div class="milestone-tier tier-{{ milestone.tier }}">
+                            {{ milestone.tier.upper() }}
+                        </div>
+                        
+                        <div class="milestone-icon" style="background: {{ milestone.badge_color }}20;">
+                            <i class="fas {{ milestone.badge_icon }} fa-2x" style="color: {{ milestone.badge_color }}"></i>
+                        </div>
+                        
+                        <div class="milestone-content">
+                            <h6 class="milestone-title">{{ milestone.name }}</h6>
+                            <p class="milestone-description">{{ milestone.description }}</p>
+                            
+                            {% if milestone.is_completed %}
+                            <div class="milestone-completed">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span class="text-success">Completed!</span>
+                                <small class="text-muted d-block">{{ milestone.achieved_at[:10] }}</small>
+                            </div>
+                            {% else %}
+                            <div class="milestone-progress">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <small>Progress</small>
+                                    <small>{{ milestone.progress_value|int }} / {{ milestone.criteria_value|int }}</small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    {% set progress_pct = (milestone.progress_value / milestone.criteria_value * 100)|round %}
+                                    <div class="progress-bar bg-{{ 'warning' if milestone.tier == 'gold' else 'secondary' if milestone.tier == 'silver' else 'info' }}" 
+                                         style="width: {{ progress_pct if progress_pct <= 100 else 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="milestone-reward">
+                                <i class="fas fa-coins text-warning me-1"></i>
+                                <strong>{{ milestone.points_reward }}</strong> points
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not milestones_by_category %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-trophy fa-4x text-muted mb-3"></i>
+            <h4>No Milestones Available</h4>
+            <p class="text-muted">Check back later for new challenges!</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
+{% endblock %}

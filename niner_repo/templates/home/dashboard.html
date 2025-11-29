@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Niner Finance{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header mb-4">
+        <div class="header-content">
+            <h1><i class="fas fa-chart-line me-3"></i>Financial Dashboard</h1>
+            <p class="text-muted">Welcome back, {{ g.user.username }}! Here's your financial overview.</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline-primary" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' or category == 'danger' else 'info-circle' }} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Financial Overview Section -->
+    <div class="overview-section dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-chart-line me-2"></i>Financial Overview</h2>
+        </div>
+        <div class="overview-grid">
+            <!-- Weekly Budget Card -->
+            <div class="overview-card budget-overview total-income">
+                <div class="card-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Weekly Budget</h3>
+                    <div class="amount">${{ "%.2f"|format(budget.total_budget) }}</div>
+                    {% if budget.total_budget > 0 %}
+                    <p class="period">
+                        ${{ "%.2f"|format(budget.total_spent) }} spent • 
+                        ${{ "%.2f"|format(budget.remaining) }} remaining
+                    </p>
+                    <p class="savings-rate">{{ budget.week_progress|round(1) }}% used</p>
+                    {% else %}
+                    <p class="period text-warning">No budget set for this week</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Monthly Income Card -->
+            <div class="overview-card income-overview total-income">
+                <div class="card-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Monthly Income</h3>
+                    <div class="amount">${{ "%.2f"|format(monthly.income) }}</div>
+                    <p class="period">This Month</p>
+                </div>
+            </div>
+
+            <!-- Monthly Expenses Card -->
+            <div class="overview-card expense-overview total-expenses">
+                <div class="card-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Monthly Expenses</h3>
+                    <div class="amount">${{ "%.2f"|format(monthly.expenses) }}</div>
+                    <p class="period">This Month</p>
+                </div>
+            </div>
+
+            <!-- Net Balance Card -->
+            <div class="overview-card balance-overview total-savings">
+                <div class="card-icon">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Monthly Net</h3>
+                    <div class="amount">${{ "%.2f"|format(monthly.net) }}</div>
+                    <p class="period">Income - Expenses</p>
+                    <p class="savings-rate">
+                        {% if monthly.income > 0 %}
+                        {{ ((monthly.net / monthly.income) * 100)|round(1) }}% saved
+                        {% else %}
+                        0% saved
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Status Section -->
+    <div class="budget-section dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-chart-pie me-2"></i>Budget Breakdown</h2>
+            <a href="{{ url_for('budget.index') }}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-cog me-1"></i>Manage Budget
+            </a>
+        </div>
+        
+        {% if budget.current_budget %}
+        <div class="budget-grid" id="budget-status">
+            {% for category, data in budget.categories.items() %}
+            <div class="budget-item">
+                <div class="budget-category">
+                    <i class="category-icon fas fa-{{ 'utensils' if category == 'Food' else 'car' if category == 'Transportation' else 'gamepad' if category == 'Entertainment' else 'ellipsis-h' }}"></i>
+                    <span class="category-name">{{ category }}</span>
+                </div>
+                <div class="budget-amounts">
+                    <span class="spent-amount">${{ "%.2f"|format(data.spent) }}</span>
+                    <span class="allocated-amount">/ ${{ "%.2f"|format(data.budget) }}</span>
+                </div>
+                <div class="budget-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ (data.spent / data.budget * 100) if data.budget > 0 else 0|round(1) }}%"></div>
+                    </div>
+                </div>
+                <div class="budget-status">
+                    {% if data.budget > 0 %}
+                        {% if data.spent > data.budget %}
+                            Over Budget
+                        {% elif data.spent > data.budget * 0.9 %}
+                            Nearly Full
+                        {% else %}
+                            On Track
+                        {% endif %}
+                    {% else %}
+                        No Budget Set
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+            <h6>No Budget Set</h6>
+            <p class="text-muted">Create a weekly budget to track your spending</p>
+            <a href="{{ url_for('budget.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Create Budget
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="activity-section dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-history me-2"></i>Recent Activity</h2>
+            <a href="{{ url_for('transactions.index') }}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-list me-1"></i>View All
+            </a>
+        </div>
+        
+        {% if recent_transactions %}
+        <div class="activity-list" id="recent-activity">
+            {% for transaction in recent_transactions %}
+            <div class="activity-item">
+                <div class="activity-icon" style="background-color: {{ '#d4edda' if transaction.type == 'income' else '#f8d7da' }}; color: {{ '#28a745' if transaction.type == 'income' else '#dc3545' }};">
+                    {{ '↗' if transaction.type == 'income' else '↙' }}
+                </div>
+                <div class="activity-details">
+                    <div class="activity-title">{{ transaction.description }}</div>
+                    <div class="activity-meta">
+                        <span>{{ transaction.category }}</span>
+                        <span class="activity-date">{{ transaction.date }}</span>
+                    </div>
+                </div>
+                <div class="activity-amount" style="color: {{ '#28a745' if transaction.type == 'income' else '#dc3545' }};">
+                    {{ '+' if transaction.type == 'income' else '-' }}${{ "%.2f"|format(transaction.amount) }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+            <h6>No Transactions Yet</h6>
+            <p class="text-muted">Start by adding your income and expenses</p>
+            <a href="{{ url_for('transactions.index') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Add Transaction
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="quick-actions-section dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-bolt me-2"></i>Quick Actions</h2>
+        </div>
+        <div class="quick-actions-grid">
+            <a href="{{ url_for('income.index') }}" class="quick-action-btn">
+                <i class="fas fa-coins"></i>
+                <span>Manage Income</span>
+            </a>
+            <a href="{{ url_for('budget.create') }}" class="quick-action-btn">
+                <i class="fas fa-chart-pie"></i>
+                <span>Create Budget</span>
+            </a>
+            <a href="{{ url_for('transactions.index') }}" class="quick-action-btn">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Add Transaction</span>
+            </a>
+            <a href="{{ url_for('subscriptions.index') }}" class="quick-action-btn">
+                <i class="fas fa-sync-alt"></i>
+                <span>Subscriptions</span>
+            </a>
+            <a href="{{ url_for('financial_goals') }}" class="quick-action-btn">
+                <i class="fas fa-bullseye"></i>
+                <span>Financial Goals</span>
+            </a>
+            <a href="{{ url_for('gamification.dashboard') }}" class="quick-action-btn game-action">
+                <i class="fas fa-gamepad"></i>
+                <span>Game Dashboard</span>
+                <span class="badge bg-warning">NEW</span>
+            </a>
+            <a href="{{ url_for('priorities.select_priority') }}" class="quick-action-btn">
+                <i class="fas fa-star"></i>
+                <span>Set Priorities</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Financial Goals Section -->
+    {% if goals is defined and goals %}
+    <div class="goals-section dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-target me-2"></i>Financial Goals</h2>
+            <a href="{{ url_for('financial_goals') }}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-eye me-1"></i>View All
+            </a>
+        </div>
+        <div class="goals-grid">
+            {% for goal in goals[:3] %}
+            <div class="goal-card">
+                <h4>{{ goal.goal_name }}</h4>
+                <div class="goal-progress">
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" style="width: {{ (goal.current_amount / goal.target_amount * 100)|round(1) }}%"></div>
+                    </div>
+                </div>
+                <div class="goal-details">
+                    <span class="current">${{ "%.2f"|format(goal.current_amount) }}</span>
+                    <span class="target">/ ${{ "%.2f"|format(goal.target_amount) }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Hidden Templates for JavaScript -->
+<template id="activity-item-template">
+    <div class="activity-item">
+        <div class="activity-icon"></div>
+        <div class="activity-details">
+            <div class="activity-title"></div>
+            <div class="activity-meta">
+                <span class="activity-category"></span>
+                <span class="activity-date"></span>
+            </div>
+        </div>
+        <div class="activity-amount"></div>
+    </div>
+</template>
+
+<template id="budget-item-template">
+    <div class="budget-item">
+        <div class="budget-category">
+            <i class="category-icon"></i>
+            <span class="category-name"></span>
+        </div>
+        <div class="budget-amounts">
+            <span class="spent-amount"></span>
+            <span class="allocated-amount"></span>
+        </div>
+        <div class="budget-progress">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+        <div class="budget-status"></div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+// Dashboard-specific JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard loaded with financial data');
+    console.log('Budget total:', {{ budget.total_budget }});
+    console.log('Monthly income:', {{ monthly.income }});
+    console.log('Recent transactions:', {{ recent_transactions|length }});
+    
+    // Initialize dashboard animations
+    const dashboardSections = document.querySelectorAll('.dashboard-section');
+    dashboardSections.forEach((section, index) => {
+        section.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+
+function refreshDashboard() {
+    // Show loading state
+    const refreshBtn = document.querySelector('button[onclick="refreshDashboard()"]');
+    const originalText = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+    refreshBtn.disabled = true;
+    
+    // Reload the page after a short delay
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// Auto-refresh every 5 minutes (optional)
+setInterval(() => {
+    if (!document.hidden) {
+        // Uncomment the line below if you want auto-refresh
+        // location.reload();
+    }
+}, 300000); // 5 minutes
+</script>
+{% endblock %}
