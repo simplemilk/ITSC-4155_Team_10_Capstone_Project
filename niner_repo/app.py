@@ -362,6 +362,20 @@ from priorities import bp as priorities_bp
 # Register the priorities blueprint
 app.register_blueprint(priorities_bp)
 
+# Import and register portfolio blueprint (UI prototype)
+try:
+    import portfolio
+    app.register_blueprint(portfolio.bp)
+except ImportError as e:
+    print(f"Portfolio module not found: {e}, skipping...")
+
+# Register investments blueprint
+try:
+    import investments
+    app.register_blueprint(investments.bp)
+except ImportError as e:
+    print(f"Investments module not found: {e}, skipping...")
+
 # Main Routes
 @app.route('/')
 def index():

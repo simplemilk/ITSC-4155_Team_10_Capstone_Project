@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Portfolio{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/portfolio.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container portfolio-container">
+  <header class="portfolio-header">
+    <h1>Portfolio</h1>
+    <div class="portfolio-actions">
+      <input class="search" placeholder="Search holdings..." aria-label="Search holdings">
+      <button class="btn primary">Add Holding</button>
+      <button class="btn">Import CSV</button>
+    </div>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi">
+      <div class="kpi__label">Total Value</div>
+      <div class="kpi__value">${{ '%.2f'|format(summary.total_value) }}</div>
+      <div class="kpi__sub {{ 'positive' if summary.daily_change >= 0 else 'negative' }}">{{ '+' if summary.daily_change>=0 else '' }}${{ '%.2f'|format(summary.daily_change) }} ({{ '%.2f'|format(summary.daily_change_pct) }}%)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label">Cash Available</div>
+      <div class="kpi__value">${{ '%.2f'|format(summary.cash_available) }}</div>
+    </div>
+    <div class="kpi allocation-card">
+      <div class="kpi__label">Allocation</div>
+      <div class="alloc-list">
+        {% for a in summary.allocations %}
+          <div class="alloc-item"><span class="dot" style="background:{{ a.color }}"></span>{{ a.name }} <strong>${{ a.value }}</strong></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="kpi filters">
+      <div class="kpi__label">Period</div>
+      <div class="kpi__value"><button class="chip">1W</button> <button class="chip">1M</button> <button class="chip">YTD</button></div>
+    </div>
+  </section>
+
+  <section class="main-grid">
+    <div class="holdings">
+      <div class="holdings__header">
+        <div>Ticker</div><div>Name</div><div>Qty</div><div>Price</div><div>Value</div><div>P/L</div><div>Alloc</div><div>Actions</div>
+      </div>
+      <div class="holdings__list">
+        {% for h in holdings %}
+          {% include 'home/_investment_card.html' %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <aside class="insights">
+      <h3>Top Movers</h3>
+      <ul>
+        {% for h in holdings[:3] %}
+          <li><strong>{{ h.ticker }}</strong> — {{ h.name }} <span class="muted">${{ '%.2f'|format(h.price) }}</span></li>
+        {% endfor %}
+      </ul>
+      <h3>Performance</h3>
+      <canvas id="performanceChart" width="300" height="200"></canvas>
+      <h3 style="margin-top:1rem">Allocation</h3>
+      <canvas id="allocationChart" width="300" height="200"></canvas>
+    </aside>
+  </section>
+
+  <footer class="portfolio-footer">&nbsp;</footer>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    // Server-provided data
+    const perf = {{ performance_series|tojson }};
+    const alloc = {{ summary.allocations|tojson }};
+
+    // Initialize charts inside a function so we can call it after fallbacks load
+    function initPortfolioCharts(){
+      try{
+        const labels = perf.map(p => p.date);
+        const values = perf.map(p => p.value);
+
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Portfolio Value',
+              data: values,
+              borderColor: '#4f46e5',
+              backgroundColor: 'rgba(79,70,229,0.1)',
+              tension: 0.2,
+              fill: true
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Allocation pie
+        const aLabels = alloc.map(a => a.name);
+        const aValues = alloc.map(a => a.value);
+        const aColors = alloc.map((a,i)=> a.color || ['#4f46e5','#06b6d4','#f59e0b','#ef4444'][i%4]);
+
+        const actx = document.getElementById('allocationChart').getContext('2d');
+        new Chart(actx, {
+          type: 'pie',
+          data: {
+            labels: aLabels,
+            datasets: [{ data: aValues, backgroundColor: aColors }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }catch(e){
+        console.error('Chart initialization failed', e);
+        const perfEl = document.getElementById('performanceChart');
+        if(perfEl) perfEl.insertAdjacentHTML('afterend','<div class="muted">Charts failed to initialize. See console for details.</div>');
+      }
+    }
+
+    // Try to ensure Chart.js is available; if not, try fallbacks (alternate CDNs).
+    function loadChartFallbacksAndInit(){
+      if(typeof Chart !== 'undefined'){
+        initPortfolioCharts();
+        return;
+      }
+
+      // Try alternate CDN UMD builds (explicit dist paths) then cdnjs before giving up
+      // Use explicit UMD/dist builds to ensure a global `Chart` is provided (avoid ESM-only endpoints)
+      var tryUrls = [
+        'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js',
+        // Local fallback (place a Chart.js build at this path if you prefer a local copy)
+        "{{ url_for('static', filename='js/chart.min.js') }}"
+      ];
+
+      var head = document.getElementsByTagName('head')[0];
+      var tried = 0;
+
+      function tryNext(){
+        if(typeof Chart !== 'undefined'){
+          initPortfolioCharts();
+          return;
+        }
+        if(tried >= tryUrls.length){
+          console.error('All Chart.js CDN fallbacks failed.');
+          var perfEl = document.getElementById('performanceChart');
+          if(perfEl) perfEl.insertAdjacentHTML('afterend','<div class="muted">Charts unavailable (network). You can add a local Chart.js to `static/js/chart.min.js` as a fallback.</div>');
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = tryUrls[tried++];
+        s.onload = function(){ setTimeout(initPortfolioCharts, 50); };
+        s.onerror = function(){
+          console.warn('Chart CDN failed:', s.src);
+          tryNext();
+        };
+        head.appendChild(s);
+      }
+
+      tryNext();
+    }
+
+    // Run after DOM ready
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', loadChartFallbacksAndInit);
+    } else {
+      loadChartFallbacksAndInit();
+    }
+  </script>
+{% endblock %}

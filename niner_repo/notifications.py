@@ -5,6 +5,7 @@ Handles detection of overspending, budget warnings, and other financial alerts
 
 from datetime import datetime, timedelta
 from db import get_db
+import sqlite3
 import json
 from flask import g
 
@@ -370,11 +371,15 @@ class NotificationEngine:
     def get_unread_count(user_id):
         """Get count of unread notifications"""
         db = get_db()
-        count_row = db.execute(
-            'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
-            (user_id,)
-        ).fetchone()
-        return count_row['count'] if count_row else 0
+        try:
+            count_row = db.execute(
+                'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
+                (user_id,)
+            ).fetchone()
+            return count_row['count'] if count_row else 0
+        except sqlite3.OperationalError:
+            # If the notifications table does not exist (dev/demo DB), return 0
+            return 0
     
     @staticmethod
     def mark_as_read(notification_id, user_id):

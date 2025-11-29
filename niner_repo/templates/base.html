@@ -53,6 +53,8 @@
             <div class="navbar-nav ms-auto">
                 {% if g.user %}
                     <a class="nav-link" href="/dashboard">Dashboard</a>
+                    <a class="nav-link" href="/portfolio">Portfolio</a>
+                    <a class="nav-link" href="/investments">Investments</a>
                     <a class="nav-link quick-expense-nav" href="/quick-expense">
                         <i class="fas fa-plus-circle"></i> Quick Expense
                     </a>
@@ -81,7 +83,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
                 {% endfor %}
-            </div>
+                        </div>
         {% endif %}
         {% endwith %}
 

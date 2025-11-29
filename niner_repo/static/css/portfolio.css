@@ -1,0 +1,35 @@
+/* Simple portfolio styles (prototype) */
+.portfolio-container { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
+.portfolio-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+.portfolio-actions { display:flex; gap:0.5rem; align-items:center; }
+.search { padding:0.5rem; border:1px solid #ddd; border-radius:4px; }
+.btn { padding:0.4rem 0.6rem; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer; }
+.btn.primary { background:#4f46e5; color:#fff; border-color:transparent }
+.kpis { display:grid; grid-template-columns: repeat(4, 1fr); gap:0.75rem; margin-bottom:1rem; }
+.kpi { background:#fff; border:1px solid #eee; padding:0.75rem; border-radius:6px; }
+.kpi__label { color:#666; font-size:0.85rem }
+.kpi__value { font-size:1.25rem; font-weight:700 }
+.kpi__sub.positive { color: #059669 }
+.kpi__sub.negative { color: #dc2626 }
+.alloc-list { display:flex; flex-direction:column; gap:0.25rem; }
+.alloc-item { font-size:0.9rem }
+.alloc-item .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:0.5rem; vertical-align:middle }
+.chip { background:#f3f4f6; border-radius:999px; padding:0.25rem 0.5rem; border: none; cursor:pointer }
+.main-grid { display:grid; grid-template-columns: 2fr 1fr; gap:1rem; }
+.holdings { background:#fff; border:1px solid #eee; border-radius:6px; padding:0.5rem }
+.holdings__header { display:flex; gap:0.5rem; padding:0.5rem; font-weight:700; border-bottom:1px solid #f3f3f3 }
+.holdings__header > div { flex:1 }
+.investment-row { display:flex; gap:0.5rem; padding:0.6rem; align-items:center; border-bottom:1px solid #f6f6f6 }
+.investment-row .col { flex:1 }
+.investment-row .col.ticker { width:80px; font-weight:700 }
+.investment-row .col.actions { width:140px; text-align:right }
+.positive { color:#059669 }
+.negative { color:#dc2626 }
+.insights { background:#fff; border:1px solid #eee; padding:0.75rem; border-radius:6px }
+.muted { color:#6b7280 }
+
+@media (max-width: 800px) {
+  .kpis { grid-template-columns: repeat(2, 1fr) }
+  .main-grid { grid-template-columns: 1fr }
+  .portfolio-actions { flex-direction:column; align-items:flex-end }
+}

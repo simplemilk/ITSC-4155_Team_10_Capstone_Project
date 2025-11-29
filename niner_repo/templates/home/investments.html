@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Investments{% endblock %}
+{% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/portfolio.css') }}">{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="portfolio-header">
+    <h1>Your Investments</h1>
+    <div class="portfolio-actions">
+      <a class="btn primary" href="{{ url_for('investments.create') }}">Add Investment</a>
+    </div>
+  </header>
+
+  <div class="holdings">
+    <div class="holdings__header">
+      <div>Ticker</div><div>Name</div><div>Qty</div><div>Avg Cost</div><div>Actions</div>
+    </div>
+    <div class="holdings__list">
+      {% for p in positions %}
+        <div class="investment-row">
+          <div class="col ticker">{{ p.ticker }}</div>
+          <div class="col name">{{ p.name }}</div>
+          <div class="col qty">{{ p.quantity }}</div>
+          <div class="col price">${{ '%.2f'|format(p.avg_cost) }}</div>
+          <div class="col actions"><a class="btn small" href="{{ url_for('investments.edit', position_id=p.position_id) }}">Edit</a>
+            <form method="post" action="{{ url_for('investments.delete', position_id=p.position_id) }}" style="display:inline" onsubmit="return confirm('Delete this position?');">
+              <button class="btn small ghost">Delete</button>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <p class="muted">No investments yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+<div class="investment-row">
+  <div class="col ticker">{{ h.ticker }}</div>
+  <div class="col name">{{ h.name }}</div>
+  <div class="col qty">{{ h.qty }}</div>
+  <div class="col price">${{ '%.2f'|format(h.price) }}</div>
+  <div class="col value">${{ '%.2f'|format(h.value) }}</div>
+  <div class="col pl {{ 'positive' if h.pl_amount >=0 else 'negative' }}">{{ '+' if h.pl_amount>=0 else '' }}${{ '%.2f'|format(h.pl_amount) }} ({{ '%.2f'|format(h.pl_percent) }}%)</div>
+  <div class="col alloc">{{ '%.1f'|format(h.allocation) }}%</div>
+  <div class="col actions"><button class="btn small">Buy</button> <button class="btn small ghost">Sell</button></div>
+</div>
