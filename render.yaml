@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: niner-finance
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn --chdir niner_repo app:app"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true

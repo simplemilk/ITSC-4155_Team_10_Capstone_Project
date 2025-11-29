@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+instance/
+.env
+venv/
+*.log
+.DS_Store
+niner_repo/__pycache__/
+niner_repo/instance/

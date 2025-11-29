@@ -1,0 +1,1 @@
+web: gunicorn --chdir niner_repo app:app
