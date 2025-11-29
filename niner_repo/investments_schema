@@ -1,0 +1,58 @@
+-- Investment Portfolio Schema
+
+CREATE TABLE IF NOT EXISTS investments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    asset_name TEXT NOT NULL,
+    asset_type TEXT NOT NULL, -- 'stock', 'bond', 'crypto', 'etf', 'mutual_fund', 'real_estate', 'commodity', 'other'
+    ticker_symbol TEXT,
+    quantity REAL NOT NULL,
+    purchase_price REAL NOT NULL,
+    purchase_date TEXT NOT NULL,
+    current_price REAL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
+    CHECK (quantity > 0),
+    CHECK (purchase_price > 0)
+);
+
+-- Index for faster queries
+CREATE INDEX IF NOT EXISTS idx_investments_user_id ON investments(user_id);
+CREATE INDEX IF NOT EXISTS idx_investments_asset_type ON investments(asset_type);
+CREATE INDEX IF NOT EXISTS idx_investments_ticker ON investments(ticker_symbol);
+
+-- Investment types lookup
+CREATE TABLE IF NOT EXISTS investment_types (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE NOT NULL,
+    icon TEXT,
+    color TEXT,
+    description TEXT
+);
+
+-- Default investment types
+INSERT OR IGNORE INTO investment_types (name, icon, color, description) VALUES
+('stock', 'fa-chart-line', '#3498db', 'Individual company stocks'),
+('bond', 'fa-landmark', '#9b59b6', 'Government and corporate bonds'),
+('crypto', 'fa-bitcoin', '#f39c12', 'Cryptocurrency'),
+('etf', 'fa-layer-group', '#1abc9c', 'Exchange-Traded Funds'),
+('mutual_fund', 'fa-coins', '#27ae60', 'Mutual Funds'),
+('real_estate', 'fa-home', '#e67e22', 'Real Estate Investment'),
+('commodity', 'fa-gem', '#e74c3c', 'Gold, Silver, Oil, etc.'),
+('other', 'fa-ellipsis-h', '#95a5a6', 'Other investments');
+
+-- Portfolio performance tracking (optional for future)
+CREATE TABLE IF NOT EXISTS portfolio_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    snapshot_date TEXT NOT NULL,
+    total_value REAL NOT NULL,
+    total_cost REAL NOT NULL,
+    total_gain_loss REAL NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_portfolio_snapshots_user_date ON portfolio_snapshots(user_id, snapshot_date);

@@ -4,6 +4,7 @@ from flask import Blueprint, g, render_template, redirect, jsonify, request, fla
 from auth import login_required
 from db import get_db
 from priorities import get_personalized_suggestions, get_user_financial_stats
+from gamification import on_goal_created, on_goal_completed
 
 try:
     from db import get_db
@@ -298,3 +299,87 @@ def calculate_monthly_amount(amount, recurrence_period):
         'annually': Decimal('0.0833')  # Annual to monthly
     }
     return amount * multipliers.get(recurrence_period, Decimal('1'))
+
+@bp.route('/create-goal', methods=['GET', 'POST'])
+@login_required
+def create_goal():
+    """Create a new financial goal"""
+    if request.method == 'POST':
+        goal_name = request.form.get('goal_name')
+        target_amount = request.form.get('target_amount')
+        current_amount = request.form.get('current_amount', 0)
+        deadline = request.form.get('deadline')
+        category = request.form.get('category')
+        description = request.form.get('description')
+
+        # Basic validation
+        if not goal_name or not target_amount or not deadline:
+            flash('Please fill in all required fields.', 'error')
+            return redirect(request.url)
+
+        try:
+            target_amount = Decimal(target_amount)
+            current_amount = Decimal(current_amount)
+        except:
+            flash('Invalid amount format.', 'error')
+            return redirect(request.url)
+
+        if target_amount <= 0:
+            flash('Target amount must be greater than zero.', 'error')
+            return redirect(request.url)
+
+        # Insert the new goal into the database
+        db = get_db()
+        db.execute(
+            '''INSERT INTO financial_goals 
+               (user_id, goal_name, target_amount, current_amount, deadline, category, description)
+               VALUES (?, ?, ?, ?, ?, ?, ?)''',
+            (g.user['id'], goal_name, target_amount, current_amount, deadline, category, description)
+        )
+        db.commit()
+        
+        # GAMIFICATION: Award points for creating goal
+        try:
+            on_goal_created(g.user['id'])
+        except Exception as e:
+            print(f"Gamification error: {e}")
+        
+        flash('Financial goal created successfully!', 'success')
+        return redirect(url_for('financial_goals'))
+    
+    return render_template('goals/create_goal.html')
+
+@bp.route('/update-goal/<int:goal_id>', methods=['POST'])
+@login_required
+def update_goal(goal_id):
+    """Update goal progress"""
+    new_amount = request.form.get('current_amount', type=Decimal)
+    
+    db = get_db()
+    goal = db.execute(
+        '''SELECT * FROM financial_goals WHERE id = ? AND user_id = ?''',
+        (goal_id, g.user['id'])
+    ).fetchone()
+
+    if goal is None:
+        return jsonify({'error': 'Goal not found'}), 404
+
+    # Update the goal's current amount
+    db.execute(
+        '''UPDATE financial_goals 
+           SET current_amount = ?, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = ?''',
+        (new_amount, goal_id)
+    )
+
+    # Check if goal is completed
+    if new_amount >= goal['target_amount'] and goal['current_amount'] < goal['target_amount']:
+        # Goal just completed!
+        try:
+            on_goal_completed(g.user['id'])
+        except Exception as e:
+            print(f"Gamification error: {e}")
+    
+    db.commit()
+
+    return jsonify({'success': True, 'new_amount': str(new_amount)})

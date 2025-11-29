@@ -4,6 +4,7 @@ from werkzeug.exceptions import abort
 from auth import login_required
 from db import get_db
 import json
+from gamification import on_budget_created
 
 bp = Blueprint('budget', __name__, url_prefix='/budget')
 
@@ -189,7 +190,7 @@ def index():
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
 def create():
-    """Create a new weekly budget"""
+    """Create a new budget"""
     if request.method == 'POST':
         try:
             # Get form data

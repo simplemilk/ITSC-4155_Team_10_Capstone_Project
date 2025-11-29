@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Apply investments schema to the project's sqlite database and insert sample data.
@@ -45,14 +46,18 @@ def apply_schema(db_path):
 
         # Insert a few investments (if not exists)
         cur.execute("SELECT id FROM asset_types WHERE name = 'Equity'")
-        equity_id = cur.fetchone()[0]
-        cur.execute("INSERT OR IGNORE INTO investments (ticker, name, asset_type_id, exchange, currency) VALUES (?,?,?,?,?)",
-                    ('AAPL', 'Apple Inc.', equity_id, 'NASDAQ', 'USD'))
+        equity_row = cur.fetchone()
+        equity_id = equity_row[0] if equity_row else None
+        if equity_id:
+            cur.execute("INSERT OR IGNORE INTO investments (ticker, name, asset_type_id, exchange, currency) VALUES (?,?,?,?,?)",
+                        ('AAPL', 'Apple Inc.', equity_id, 'NASDAQ', 'USD'))
 
         cur.execute("SELECT id FROM asset_types WHERE name = 'Crypto'")
-        crypto_id = cur.fetchone()[0]
-        cur.execute("INSERT OR IGNORE INTO investments (ticker, name, asset_type_id, exchange, currency) VALUES (?,?,?,?,?)",
-                    ('BTC', 'Bitcoin', crypto_id, 'Coinbase', 'USD'))
+        crypto_row = cur.fetchone()
+        crypto_id = crypto_row[0] if crypto_row else None
+        if crypto_id:
+            cur.execute("INSERT OR IGNORE INTO investments (ticker, name, asset_type_id, exchange, currency) VALUES (?,?,?,?,?)",
+                        ('BTC', 'Bitcoin', crypto_id, 'Coinbase', 'USD'))
 
         conn.commit()
         print("Inserted sample asset types and investments (if they were missing).")

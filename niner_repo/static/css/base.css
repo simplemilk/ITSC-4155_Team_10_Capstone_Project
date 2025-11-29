@@ -1,0 +1,102 @@
+/* Base Layout Styles */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+footer {
+    margin-top: auto;
+}
+
+footer a:hover {
+    color: #28a745 !important;
+}
+
+/* Notification Dropdown Styles */
+.notification-dropdown {
+    width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-dropdown .dropdown-item {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.notification-dropdown .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Navbar Badge Styles */
+.navbar .badge {
+    font-size: 0.65rem;
+    padding: 0.25em 0.5em;
+}
+
+/* Social Links Hover Effect */
+.social-links a {
+    transition: color 0.3s ease;
+}
+
+.social-links a:hover {
+    opacity: 0.8;
+}
+
+/* Active Navigation Link */
+.nav-link.active {
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+}
+
+/* Dropdown Menu Styling */
+.dropdown-menu {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #e9ecef;
+}
+
+/* Notification Badge Animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.badge.bg-danger {
+    animation: pulse 2s infinite;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .notification-dropdown {
+        width: 300px;
+    }
+    
+    footer .row {
+        text-align: center;
+    }
+    
+    footer .col-md-4 {
+        margin-bottom: 1.5rem;
+    }
+}
