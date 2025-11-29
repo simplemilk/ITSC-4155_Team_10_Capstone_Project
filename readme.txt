@@ -15,7 +15,7 @@ Version Updates:
 
 0.0.0 10/16/25 - Project Started
 
-0.0.1 10.23/25 - First Sprint Completed
+0.0.1 10/23/25 - First Sprint Completed
   - Implemented User registration and login pages.
   - Implemented User password change options.
   - Implemented the Main UI and ability to add in expense categories.
@@ -24,59 +24,42 @@ Version Updates:
   - Scrapped the idea of using React.js to move to Flask for convenience.
   - Translated previous sprint to second sprint while adding in improvements.
 
+
 Installation Guide:
 
-  To start the project, start two terminals with both terminals starting a virtual environment and locate the terminal to be on the project folder.
+Make sure to have the following programs installed prior to launching the app:
+  - Latest Version of Python
+  - Latest Version of Pip
 
-  The virtual environment should be located outside of the repository and to start the virtual environment write the following command:
+When installing the app, make sure to set up a virtual environment before starting which can be done by having to change to the directory of the app then having to type in the following command in command prompt or terminal:
 
-    python -m venv venv
+python -m venv venv
 
-  Next, install the flask framework:
+The virtual environment should start and you should see it in the beginning portion of the terminal with the following words "venv".
 
-    pip install Flask
+If you already have the virtual environment installed then all you have to do is the following command:
 
-  Once completed go into the niner_repo repository and start the following files based on the circumstances:
+source venv/bin/activate
 
-    python3 app.py - To start the flask environment
+Assuming you are in the base repository it should start up the virtual environment.
 
-    python3 db.py - To start the database
+Then type in the following command:
 
-  To open the pages, look at the terminal and copy paste the link that links you to the localhost that it works with.
+pip install -r requirements.txt
 
-  Turning off the App:
+Change into the niner_repo then type in the following command:
 
-  To exit the environment, just press ctrl + c.
+python3 setup_db.py (This is in order to make sure you have the right database information set up prior to launching the app)
+python3 app.py
 
-Turning on the App from where you left off:
+If there are errors found in python3 app.py this is due to some of the files missing as sometimes the requirements are outdated based on PC to PC in this case make sure to type the following command:
 
-  If you want to start where you left off, locate the venv file and place the terminal in a repository just outside the venv folder then type the following:
+pip3 install flask              
+pip3 install flask-cors
+pip3 install werkzeug
+pip3 install flask-sqlalchemy
+pip3 install flask-login
+pip3 install flask-wtf
+pip3 install flask-bcrypt
 
-    source venv/bin/activate
-
-  or for Windows Users
-
-    venv\Scripts\activate
-
-  The webpages should load as well as the database and backend afterwards!!! 
-
-Common problems:
-
-If there is an issue with some library not being installed type the following command:
-
-pip3 install <module>
-
-To run the tests do the following commands:
-
-// All tests
-python -m pytest tests/ -v
-
-
-// Run specific test file
-python -m pytests tests/<file name>
-
-// Run coverage
-python -m pytest tests/ --cov=. --cov-report=html
-
-// Run specific test class or method: (ex with test budget)
-python -m pytest tests/test_budget.py::TestBudget::test_budget_create_sucess -v
+If there are any resources mentioning that they need to be updated follow the instructions found in the terminal.
