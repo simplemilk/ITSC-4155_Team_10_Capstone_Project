@@ -395,7 +395,8 @@ def internal_error(error):
 # Context processor
 @app.context_processor
 def inject_user():
-    return dict(user=g.user)
+    """Make user and datetime available in all templates"""
+    return dict(user=g.user, now=datetime.now)
 
 @app.template_filter('date_diff')
 def date_diff_filter(date_str):
@@ -456,6 +457,20 @@ if __name__ == '__main__':
                 import traceback
                 traceback.print_exc()
             
+            # Initialize notifications database
+            print("\n🔔 Initializing notifications module...")
+            try:
+                from init_notifications_db import init_notifications_db
+                success = init_notifications_db()
+                if not success:
+                    print("⚠️  WARNING: Notifications tables may not have been created properly")
+                    print("   Try running: python init_notifications_db.py")
+            except Exception as notif_error:
+                print(f"❌ Notifications initialization error: {notif_error}")
+                print("   To fix: python init_notifications_db.py")
+                import traceback
+                traceback.print_exc()
+            
             print("\n" + "=" * 50)
             print("✓ App initialization complete")
             
@@ -477,7 +492,7 @@ if __name__ == '__main__':
     print("  • Financial Goals:   http://localhost:5001/goals")
     print("  • Subscriptions:     http://localhost:5001/subscriptions")
     print("  • Investments:       http://localhost:5001/investments")
-    print("  • Priorities:        http://localhost:5001/priorities")
+    print("  • Notifications:     http://localhost:5001/notifications")
     print("  • Game Dashboard:    http://localhost:5001/game")
     print("  • Login/Register:    http://localhost:5001/auth/login")
     print("\n👤 Demo Account Credentials:")

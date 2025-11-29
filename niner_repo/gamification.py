@@ -179,6 +179,101 @@ def get_user_progress(user_id):
     
     return progress
 
+def complete_milestone(user_id, milestone_id):
+    """Mark milestone as completed and award points"""
+    db = get_db()
+    
+    # Check if already completed
+    achievement = db.execute(
+        'SELECT * FROM user_achievements WHERE user_id = ? AND milestone_id = ?',
+        (user_id, milestone_id)
+    ).fetchone()
+    
+    if achievement and achievement['is_completed']:
+        return  # Already completed
+    
+    # Get milestone details
+    milestone = db.execute(
+        'SELECT * FROM milestones WHERE id = ?',
+        (milestone_id,)
+    ).fetchone()
+    
+    # Mark as completed
+    db.execute(
+        '''UPDATE user_achievements 
+           SET is_completed = 1, achieved_at = CURRENT_TIMESTAMP
+           WHERE user_id = ? AND milestone_id = ?''',
+        (user_id, milestone_id)
+    )
+    db.commit()
+    
+    # Award points
+    points_awarded = award_points(
+        user_id,
+        milestone['points_reward'],
+        f'milestone_{milestone["category"]}',
+        f'Completed: {milestone["name"]}'
+    )
+    
+    # Create achievement data for popup
+    achievement_data = {
+        'type': 'achievement',
+        'name': milestone['name'],
+        'description': milestone['description'],
+        'points': points_awarded,
+        'icon': milestone['badge_icon'],
+        'color': milestone['badge_color'],
+        'tier': milestone['tier']
+    }
+    
+    # Use a special category for achievement notifications
+    flash(json.dumps(achievement_data), 'achievement')
+    
+    # Award tier-specific badges
+    if milestone['tier'] == 'platinum':
+        award_badge(user_id, f'{milestone["category"].title()} Master')
+
+def award_badge(user_id, badge_name):
+    """Award a badge to user"""
+    db = get_db()
+    
+    # Get badge
+    badge = db.execute(
+        'SELECT * FROM badges WHERE name = ?',
+        (badge_name,)
+    ).fetchone()
+    
+    if not badge:
+        return
+    
+    # Check if already awarded
+    existing = db.execute(
+        'SELECT * FROM user_badges WHERE user_id = ? AND badge_id = ?',
+        (user_id, badge['id'])
+    ).fetchone()
+    
+    if existing:
+        return
+    
+    # Award badge
+    db.execute(
+        'INSERT INTO user_badges (user_id, badge_id) VALUES (?, ?)',
+        (user_id, badge['id'])
+    )
+    db.commit()
+    
+    # Create badge data for popup
+    badge_data = {
+        'type': 'badge',
+        'name': badge['name'],
+        'description': badge['description'],
+        'icon': badge['icon'],
+        'color': badge['color'],
+        'rarity': badge['rarity']
+    }
+    
+    flash(json.dumps(badge_data), 'badge')
+
 def award_points(user_id, points, activity_type, description):
     """Award points to user and check for level up"""
     db = get_db()
@@ -210,7 +305,16 @@ def award_points(user_id, points, activity_type, description):
     new_level = progress['current_level']
     if next_level:
         new_level = next_level['level_number']
-        flash(f'🎉 Level Up! You reached {next_level["level_name"]}!', 'success')
+        
+        # Create level up data for popup
+        level_data = {
+            'type': 'level_up',
+            'level': new_level,
+            'level_name': next_level['level_name'],
+            'icon': next_level['badge_icon'],
+            'multiplier': next_level['points_multiplier']
+        }
+        flash(json.dumps(level_data), 'level_up')
         
         # Award level-up badge if applicable
         if new_level == 10:
@@ -311,7 +415,19 @@ def complete_milestone(user_id, milestone_id):
         f'Completed: {milestone["name"]}'
     )
     
-    flash(f'🏆 Achievement Unlocked: {milestone["name"]}! (+{points_awarded} points)', 'success')
+    # Create achievement data for popup
+    achievement_data = {
+        'type': 'achievement',
+        'name': milestone['name'],
+        'description': milestone['description'],
+        'points': points_awarded,
+        'icon': milestone['badge_icon'],
+        'color': milestone['badge_color'],
+        'tier': milestone['tier']
+    }
+    
+    # Use a special category for achievement notifications
+    flash(json.dumps(achievement_data), 'achievement')
     
     # Award tier-specific badges
     if milestone['tier'] == 'platinum':
@@ -346,7 +462,17 @@ def award_badge(user_id, badge_name):
     )
     db.commit()
     
-    flash(f'🎖️ Badge Earned: {badge["name"]}!', 'info')
+    # Create badge data for popup
+    badge_data = {
+        'type': 'badge',
+        'name': badge['name'],
+        'description': badge['description'],
+        'icon': badge['icon'],
+        'color': badge['color'],
+        'rarity': badge['rarity']
+    }
+    
+    flash(json.dumps(badge_data), 'badge')
 
 def update_streak(user_id):
     """Update user's activity streak"""
