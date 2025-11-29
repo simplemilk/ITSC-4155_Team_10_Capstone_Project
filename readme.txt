@@ -21,11 +21,9 @@ Version Updates:
   - Implemented the Main UI and ability to add in expense categories.
 
 0.0.2 10/30/25 - Second Sprint Completed
-  - Changed framework to Flask in order to complete the project requirements.
-  - Changed database to SQLAlchemy due to previous database having problems logging in.
-  - Implemented Profile Page
-  - Implemented Main UI that would include user being able to see changes in the expense categories
-  - Implemented Financial Goals Section
+  - Scrapped the idea of using React.js to move to Flask for convenience.
+  - Translated previous sprint to second sprint while adding in improvements.
+
 
 Installation Guide:
 
