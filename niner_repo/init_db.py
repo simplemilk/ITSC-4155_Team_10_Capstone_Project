@@ -73,31 +73,50 @@ def seed_demo_data(db_path):
                 VALUES (?, 'income', ?, ?, ?)
             ''', (user_id, amount, source, date))
         
-        # 4. Add Sample Expenses
+        # 4. Add Sample Expenses with proper categories
         expenses_data = [
-            ('food', 45.50, 'Grocery shopping', 1),
-            ('food', 22.00, 'Restaurant', 2),
-            ('food', 15.75, 'Coffee shop', 3),
-            ('transportation', 50.00, 'Gas', 1),
-            ('transportation', 25.00, 'Uber', 4),
-            ('entertainment', 40.00, 'Movie tickets', 2),
-            ('entertainment', 60.00, 'Concert', 5),
-            ('other', 30.00, 'Miscellaneous', 3),
+            # Food expenses
+            ('Food', 45.50, 'Grocery shopping at Harris Teeter', 1),
+            ('Food', 22.00, 'Lunch at Student Union', 2),
+            ('Food', 15.75, 'Coffee at Starbucks', 3),
+            ('Food', 35.20, 'Dinner at Chipotle', 4),
+            ('Food', 18.50, 'Pizza delivery', 5),
+            
+            # Transportation expenses
+            ('Transportation', 50.00, 'Gas for the week', 1),
+            ('Transportation', 25.00, 'Uber to airport', 4),
+            ('Transportation', 15.00, 'Parking fee', 6),
+            ('Transportation', 40.00, 'Monthly bus pass', 7),
+            
+            # Entertainment expenses
+            ('Entertainment', 40.00, 'Movie tickets with friends', 2),
+            ('Entertainment', 60.00, 'Concert at Fillmore', 5),
+            ('Entertainment', 25.00, 'Bowling night', 8),
+            ('Entertainment', 30.00, 'Video game purchase', 10),
+            
+            # Other expenses
+            ('Other', 30.00, 'Miscellaneous supplies', 3),
+            ('Other', 45.00, 'Textbook purchase', 6),
+            ('Other', 20.00, 'Phone case', 9),
         ]
         
         for category, amount, desc, days_ago in expenses_data:
             expense_date = (datetime.now() - timedelta(days=days_ago)).date()
             
+            # Normalize category to lowercase for database consistency
+            category_lower = category.lower()
+            
+            # Insert into expenses table
             cursor.execute('''
                 INSERT INTO expenses (user_id, category, amount, description, date, created_by, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, 1)
-            ''', (user_id, category, amount, desc, expense_date, user_id))
+            ''', (user_id, category_lower, amount, desc, expense_date, user_id))
             
-            # Also add to transactions
+            # Also add to transactions table WITH CATEGORY
             cursor.execute('''
-                INSERT INTO transactions (user_id, transaction_type, amount, description, date)
-                VALUES (?, 'expense', ?, ?, ?)
-            ''', (user_id, amount, desc, expense_date))
+                INSERT INTO transactions (user_id, transaction_type, category, amount, description, date)
+                VALUES (?, 'expense', ?, ?, ?, ?)
+            ''', (user_id, category_lower, amount, desc, expense_date))
         
         # 5. Add Sample Subscriptions
         subscriptions_data = [
@@ -105,6 +124,7 @@ def seed_demo_data(db_path):
             ('Spotify', 9.99, 'monthly', 'Music', 5, True),
             ('Amazon Prime', 14.99, 'monthly', 'Other', 10, True),
             ('Gym Membership', 29.99, 'monthly', 'Fitness', 1, True),
+            ('Adobe Creative Cloud', 52.99, 'monthly', 'Software', 15, True),
         ]
         
         for name, amount, frequency, category, day_of_month, is_active in subscriptions_data:
@@ -130,6 +150,10 @@ def seed_demo_data(db_path):
         print(f"  - 1 weekly budget")
         print(f"  - 2 income records")
         print(f"  - {len(expenses_data)} expense records")
+        print(f"    • Food: {len([e for e in expenses_data if e[0].lower() == 'food'])} expenses")
+        print(f"    • Transportation: {len([e for e in expenses_data if e[0].lower() == 'transportation'])} expenses")
+        print(f"    • Entertainment: {len([e for e in expenses_data if e[0].lower() == 'entertainment'])} expenses")
+        print(f"    • Other: {len([e for e in expenses_data if e[0].lower() == 'other'])} expenses")
         print(f"  - {len(subscriptions_data)} subscriptions")
         return True
         

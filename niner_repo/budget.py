@@ -99,9 +99,9 @@ def get_financial_summary(user_id):
     # Convert to list of dicts
     recent_transactions = [dict(row) for row in recent_transactions_rows]
     
-    # Process budget data
-    total_budget = float(current_budget['total_amount']) if current_budget else 0.0
-    total_spent = float(total_weekly_spent['total']) if total_weekly_spent else 0.0
+    # Process budget data - Round to 2 decimal places
+    total_budget = round(float(current_budget['total_amount']), 2) if current_budget else 0.0
+    total_spent = round(float(total_weekly_spent['total']), 2) if total_weekly_spent else 0.0
     
     # Category data with defaults
     categories = {
@@ -111,33 +111,33 @@ def get_financial_summary(user_id):
         'Other': {'budget': 0.0, 'spent': 0.0}
     }
     
-    # Set budget amounts if budget exists
+    # Set budget amounts if budget exists - Round to 2 decimal places
     if current_budget:
-        categories['Food']['budget'] = float(current_budget['food_budget'] or 0)
-        categories['Transportation']['budget'] = float(current_budget['transportation_budget'] or 0)
-        categories['Entertainment']['budget'] = float(current_budget['entertainment_budget'] or 0)
-        categories['Other']['budget'] = float(current_budget['other_budget'] or 0)
+        categories['Food']['budget'] = round(float(current_budget['food_budget'] or 0), 2)
+        categories['Transportation']['budget'] = round(float(current_budget['transportation_budget'] or 0), 2)
+        categories['Entertainment']['budget'] = round(float(current_budget['entertainment_budget'] or 0), 2)
+        categories['Other']['budget'] = round(float(current_budget['other_budget'] or 0), 2)
     
-    # Set actual spending amounts
+    # Set actual spending amounts - Round to 2 decimal places
     for spending in week_spending:
         category = spending['category']
         if category in categories:
-            categories[category]['spent'] = float(spending['spent'])
+            categories[category]['spent'] = round(float(spending['total']), 2)
     
     return {
         'budget': {
             'total_budget': total_budget,
             'total_spent': total_spent,
-            'remaining': total_budget - total_spent,
+            'remaining': round(total_budget - total_spent, 2),
             'categories': categories,
             'current_budget': current_budget,
-            'week_progress': (total_spent / total_budget * 100) if total_budget > 0 else 0
+            'week_progress': round((total_spent / total_budget * 100), 2) if total_budget > 0 else 0
         },
         'monthly': {
-            'income': float(monthly_income['total']) if monthly_income else 0.0,
-            'expenses': float(monthly_expenses['total']) if monthly_expenses else 0.0,
-            'net': (float(monthly_income['total']) if monthly_income else 0.0) - 
-                   (float(monthly_expenses['total']) if monthly_expenses else 0.0)
+            'income': round(float(monthly_income['total']), 2) if monthly_income else 0.0,
+            'expenses': round(float(monthly_expenses['total']), 2) if monthly_expenses else 0.0,
+            'net': round((float(monthly_income['total']) if monthly_income else 0.0) - 
+                   (float(monthly_expenses['total']) if monthly_expenses else 0.0), 2)
         },
         'recent_transactions': recent_transactions,
         'week_dates': {

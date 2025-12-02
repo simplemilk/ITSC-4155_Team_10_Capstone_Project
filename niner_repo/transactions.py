@@ -42,8 +42,9 @@ def show_visuals():
 @bp.route('/transactions')
 @login_required
 def index():
-    """Show all transactions with statistics"""
+    """Show all transactions with statistics and deleted transactions"""
     transactions = []
+    deleted_transactions = []
     total_income = 0.0
     total_expenses = 0.0
     category_totals = {
@@ -65,8 +66,9 @@ def index():
             # Determine type column name
             type_column = 'transaction_type' if 'transaction_type' in columns else 'type'
             has_category = 'category' in columns
+            has_is_active = 'is_active' in columns
             
-            # Build query based on available columns
+            # Build query for ACTIVE transactions
             if has_category:
                 query = f"""
                     SELECT 
@@ -78,6 +80,7 @@ def index():
                         category
                     FROM transactions 
                     WHERE user_id = ? 
+                    {'AND is_active = 1' if has_is_active else ''}
                     ORDER BY date DESC, id DESC
                     LIMIT 50
                 """
@@ -92,31 +95,71 @@ def index():
                         NULL as category
                     FROM transactions 
                     WHERE user_id = ? 
+                    {'AND is_active = 1' if has_is_active else ''}
                     ORDER BY date DESC, id DESC
                     LIMIT 50
                 """
             
-            transactions = db.execute(query, (user_id,)).fetchall()
+            # Get active transactions
+            cursor = db.execute(query, (user_id,))
+            transactions = [dict(row) for row in cursor.fetchall()]
             
-            # Calculate total income
+            # Build query for DELETED transactions
+            if has_is_active:
+                if has_category:
+                    deleted_query = f"""
+                        SELECT 
+                            id, 
+                            description, 
+                            amount, 
+                            date,
+                            {type_column} as type,
+                            category,
+                            updated_at as deleted_at
+                        FROM transactions 
+                        WHERE user_id = ? AND is_active = 0
+                        ORDER BY updated_at DESC
+                    """
+                else:
+                    deleted_query = f"""
+                        SELECT 
+                            id, 
+                            description, 
+                            amount, 
+                            date,
+                            {type_column} as type,
+                            NULL as category,
+                            updated_at as deleted_at
+                        FROM transactions 
+                        WHERE user_id = ? AND is_active = 0
+                        ORDER BY updated_at DESC
+                    """
+                
+                # Get deleted transactions
+                cursor = db.execute(deleted_query, (user_id,))
+                deleted_transactions = [dict(row) for row in cursor.fetchall()]
+            
+            # Calculate total income (only active)
             income_query = f"""
                 SELECT COALESCE(SUM(amount), 0) as total 
                 FROM transactions 
                 WHERE user_id = ? AND {type_column} = 'income'
+                {'AND is_active = 1' if has_is_active else ''}
             """
             income_result = db.execute(income_query, (user_id,)).fetchone()
             total_income = float(income_result['total'])
             
-            # Calculate total expenses
+            # Calculate total expenses (only active)
             expense_query = f"""
                 SELECT COALESCE(SUM(amount), 0) as total 
                 FROM transactions 
                 WHERE user_id = ? AND {type_column} = 'expense'
+                {'AND is_active = 1' if has_is_active else ''}
             """
             expense_result = db.execute(expense_query, (user_id,)).fetchone()
             total_expenses = float(expense_result['total'])
             
-            # Calculate category totals (only if category column exists)
+            # Calculate category totals (only if category column exists and only active)
             if has_category:
                 category_query = f"""
                     SELECT 
@@ -124,6 +167,7 @@ def index():
                         COALESCE(SUM(amount), 0) as total 
                     FROM transactions 
                     WHERE user_id = ? AND {type_column} = 'expense' AND category IS NOT NULL
+                    {'AND is_active = 1' if has_is_active else ''}
                     GROUP BY category
                 """
                 category_results = db.execute(category_query, (user_id,)).fetchall()
@@ -166,6 +210,7 @@ def index():
     return render_template(
         'home/transaction.html', 
         transactions=transactions,
+        deleted_transactions=deleted_transactions,
         total_income=total_income,
         total_expenses=total_expenses,
         net_income=net_income,
@@ -186,7 +231,7 @@ def create():
     if request.method == 'POST':
         description = request.form.get('description', '').strip()
         amount = request.form.get('amount', '').strip()
-        category = request.form.get('category', '').strip()
+        category = request.form.get('category', '').strip().lower()  # Normalize to lowercase
         transaction_type = request.form.get('type', 'expense')
         date = request.form.get('date', datetime.now().strftime('%Y-%m-%d'))
         
@@ -215,27 +260,26 @@ def create():
                 if db:
                     user_id = g.user['id'] if hasattr(g, 'user') and g.user else 1
                     
-                    # Check which columns exist
+                    # Check if table has is_active column
                     cursor = db.execute("PRAGMA table_info(transactions)")
                     columns = [row[1] for row in cursor.fetchall()]
+                    has_is_active = 'is_active' in columns
                     
-                    has_category = 'category' in columns
-                    type_column = 'transaction_type' if 'transaction_type' in columns else 'type'
-                    
-                    # Insert based on available columns
-                    if has_category:
+                    # Insert into transactions table WITH category and is_active
+                    if has_is_active:
                         db.execute(
-                            f'INSERT INTO transactions (description, amount, category, {type_column}, date, user_id)'
-                            ' VALUES (?, ?, ?, ?, ?, ?)',
-                            (description, float(amount), category, transaction_type, date, user_id)
+                            'INSERT INTO transactions (user_id, transaction_type, category, amount, description, date, is_active)'
+                            ' VALUES (?, ?, ?, ?, ?, ?, 1)',
+                            (user_id, transaction_type, category if transaction_type == 'expense' else None, 
+                             float(amount), description, date)
                         )
                     else:
                         db.execute(
-                            f'INSERT INTO transactions (description, amount, {type_column}, date, user_id)'
-                            ' VALUES (?, ?, ?, ?, ?)',
-                            (description, float(amount), transaction_type, date, user_id)
+                            'INSERT INTO transactions (user_id, transaction_type, category, amount, description, date)'
+                            ' VALUES (?, ?, ?, ?, ?, ?)',
+                            (user_id, transaction_type, category if transaction_type == 'expense' else None, 
+                             float(amount), description, date)
                         )
-                    
                     db.commit()
                     
                     # Also insert into expenses or income table if they exist
@@ -247,8 +291,8 @@ def create():
                                 (user_id, category, float(amount), description, date, user_id)
                             )
                             db.commit()
-                        except:
-                            pass  # expenses table might not exist
+                        except Exception as e:
+                            print(f"Could not insert into expenses table: {e}")
                     elif transaction_type == 'income':
                         try:
                             # Get default income category
@@ -261,8 +305,8 @@ def create():
                                     (user_id, category_id, float(amount), description, date, user_id)
                                 )
                                 db.commit()
-                        except:
-                            pass  # income table might not exist
+                        except Exception as e:
+                            print(f"Could not insert into income table: {e}")
                     
                     # GAMIFICATION: Award points for logging transaction
                     try:
@@ -293,26 +337,221 @@ def create():
 @bp.route('/transactions/<int:id>/delete', methods=('POST',))
 @login_required
 def delete(id):
-    """Delete a transaction"""
+    """Soft delete a transaction"""
     try:
         db = get_db()
         if db:
             # Check if transaction exists and belongs to user
             transaction = db.execute(
-                'SELECT id FROM transactions WHERE id = ? AND user_id = ?', 
+                'SELECT id, description, date FROM transactions WHERE id = ? AND user_id = ?', 
                 (id, g.user['id'])
             ).fetchone()
             
             if transaction is None:
                 flash('Transaction not found.', 'error')
             else:
-                db.execute('DELETE FROM transactions WHERE id = ? AND user_id = ?', (id, g.user['id']))
+                # Soft delete - mark as inactive
+                db.execute(
+                    '''UPDATE transactions 
+                       SET is_active = 0, updated_at = CURRENT_TIMESTAMP 
+                       WHERE id = ? AND user_id = ?''', 
+                    (id, g.user['id'])
+                )
+                
+                # Also soft delete from expenses/income tables if they exist
+                try:
+                    db.execute(
+                        '''UPDATE expenses 
+                           SET is_active = 0, updated_at = CURRENT_TIMESTAMP 
+                           WHERE user_id = ? AND description = ? AND date = ?''',
+                        (g.user['id'], transaction['description'], transaction['date'])
+                    )
+                except:
+                    pass  # expenses table might not exist
+                
+                try:
+                    db.execute(
+                        '''UPDATE income 
+                           SET is_active = 0, updated_at = CURRENT_TIMESTAMP 
+                           WHERE user_id = ? AND source = ? AND date = ?''',
+                        (g.user['id'], transaction['description'], transaction['date'])
+                    )
+                except:
+                    pass  # income table might not exist
+                
                 db.commit()
-                flash('Transaction deleted successfully!', 'success')
+                flash('Transaction moved to deleted items. You can restore it from the Deleted tab.', 'success')
         else:
             flash('Database not available', 'error')
     except Exception as e:
         flash(f'Error deleting transaction: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+    
+    return redirect(url_for('transactions.index'))
+
+
+@bp.route('/transactions/deleted')
+@login_required
+def deleted():
+    """Show deleted transactions page (redirects to main page with deleted view)"""
+    # Since we merged everything into transaction.html, just redirect to index
+    # The JavaScript will handle showing the deleted view
+    return redirect(url_for('transactions.index') + '#deleted')
+
+
+@bp.route('/transactions/<int:id>/restore', methods=('POST',))
+@login_required
+def restore(id):
+    """Restore a deleted transaction"""
+    try:
+        db = get_db()
+        if db:
+            # Check if transaction exists and belongs to user
+            transaction = db.execute(
+                'SELECT id, description, date, transaction_type FROM transactions WHERE id = ? AND user_id = ? AND is_active = 0', 
+                (id, g.user['id'])
+            ).fetchone()
+            
+            if transaction is None:
+                flash('Transaction not found or already active.', 'error')
+            else:
+                # Restore - mark as active
+                db.execute(
+                    '''UPDATE transactions 
+                       SET is_active = 1, updated_at = CURRENT_TIMESTAMP 
+                       WHERE id = ? AND user_id = ?''', 
+                    (id, g.user['id'])
+                )
+                
+                # Also restore in expenses/income tables if they exist
+                try:
+                    db.execute(
+                        '''UPDATE expenses 
+                           SET is_active = 1, updated_at = CURRENT_TIMESTAMP 
+                           WHERE user_id = ? AND description = ? AND date = ?''',
+                        (g.user['id'], transaction['description'], transaction['date'])
+                    )
+                except:
+                    pass
+                
+                try:
+                    db.execute(
+                        '''UPDATE income 
+                           SET is_active = 1, updated_at = CURRENT_TIMESTAMP 
+                           WHERE user_id = ? AND source = ? AND date = ?''',
+                        (g.user['id'], transaction['description'], transaction['date'])
+                    )
+                except:
+                    pass
+                
+                db.commit()
+                flash('Transaction restored successfully!', 'success')
+        else:
+            flash('Database not available', 'error')
+    except Exception as e:
+        flash(f'Error restoring transaction: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+    
+    return redirect(url_for('transactions.index'))
+
+
+@bp.route('/transactions/<int:id>/permanent-delete', methods=('POST',))
+@login_required
+def permanent_delete(id):
+    """Permanently delete a transaction"""
+    try:
+        db = get_db()
+        if db:
+            # Check if transaction exists and belongs to user
+            transaction = db.execute(
+                'SELECT id, description, date FROM transactions WHERE id = ? AND user_id = ? AND is_active = 0', 
+                (id, g.user['id'])
+            ).fetchone()
+            
+            if transaction is None:
+                flash('Transaction not found or not deleted.', 'error')
+            else:
+                # Permanently delete from expenses/income tables first
+                try:
+                    db.execute(
+                        'DELETE FROM expenses WHERE user_id = ? AND description = ? AND date = ?',
+                        (g.user['id'], transaction['description'], transaction['date'])
+                    )
+                except:
+                    pass
+                
+                try:
+                    db.execute(
+                        'DELETE FROM income WHERE user_id = ? AND source = ? AND date = ?',
+                        (g.user['id'], transaction['description'], transaction['date'])
+                    )
+                except:
+                    pass
+                
+                # Permanently delete from transactions table
+                db.execute('DELETE FROM transactions WHERE id = ? AND user_id = ?', (id, g.user['id']))
+                
+                db.commit()
+                flash('Transaction permanently deleted.', 'warning')
+        else:
+            flash('Database not available', 'error')
+    except Exception as e:
+        flash(f'Error permanently deleting transaction: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+    
+    return redirect(url_for('transactions.index'))
+
+
+@bp.route('/transactions/permanent-delete-all', methods=('GET', 'POST'))
+@login_required
+def permanent_delete_all():
+    """Permanently delete all deleted transactions"""
+    try:
+        db = get_db()
+        if db:
+            # Get all deleted transactions
+            deleted_trans = db.execute(
+                'SELECT id, description, date FROM transactions WHERE user_id = ? AND is_active = 0',
+                (g.user['id'],)
+            ).fetchall()
+            
+            count = len(deleted_trans)
+            
+            if count > 0:
+                # Delete from expenses/income tables
+                for trans in deleted_trans:
+                    try:
+                        db.execute(
+                            'DELETE FROM expenses WHERE user_id = ? AND description = ? AND date = ?',
+                            (g.user['id'], trans['description'], trans['date'])
+                        )
+                    except:
+                        pass
+                    
+                    try:
+                        db.execute(
+                            'DELETE FROM income WHERE user_id = ? AND source = ? AND date = ?',
+                            (g.user['id'], trans['description'], trans['date'])
+                        )
+                    except:
+                        pass
+                
+                # Permanently delete all inactive transactions
+                db.execute('DELETE FROM transactions WHERE user_id = ? AND is_active = 0', (g.user['id'],))
+                
+                db.commit()
+                flash(f'{count} transaction(s) permanently deleted.', 'warning')
+            else:
+                flash('No deleted transactions to remove.', 'info')
+        else:
+            flash('Database not available', 'error')
+    except Exception as e:
+        flash(f'Error permanently deleting transactions: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
     
     return redirect(url_for('transactions.index'))
 

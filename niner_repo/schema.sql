@@ -19,11 +19,12 @@ CREATE TABLE user (
     is_active BOOLEAN NOT NULL DEFAULT 1
 );
 
--- Transactions table (enhanced to match your finance system)
+-- Transactions table (enhanced with category column)
 CREATE TABLE transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,  -- Changed from author_id to match your pattern
+    user_id INTEGER NOT NULL,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
+    category VARCHAR(50),  -- Added category column
     category_id INTEGER,
     amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
     description TEXT NOT NULL,
@@ -129,6 +130,9 @@ CREATE INDEX idx_income_category ON income(category_id);
 CREATE INDEX idx_income_recurring ON income(is_recurring, next_recurrence_date) 
     WHERE is_recurring = 1;
 CREATE INDEX idx_income_source ON income(source);
+CREATE INDEX idx_transactions_category ON transactions(category);
+CREATE INDEX idx_transactions_user_type ON transactions(user_id, transaction_type);
+CREATE INDEX idx_transactions_date ON transactions(date);
 
 -- Create trigger to update the updated_at timestamp
 CREATE TRIGGER income_update_timestamp

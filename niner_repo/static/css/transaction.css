@@ -15,7 +15,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
     pointer-events: none;
 }
 
@@ -187,6 +190,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Transaction Item - Base styling with disabled interaction */
 .transaction-item {
     display: flex;
     justify-content: space-between;
@@ -196,6 +200,10 @@
     transition: all 0.3s ease;
     opacity: 1;
     transform: translateX(0);
+    cursor: default !important;
+    position: relative;
+    z-index: 1;
+    user-select: none;
 }
 
 .transaction-item:last-child {
@@ -212,8 +220,25 @@
 .transaction-item.filtering-out {
     opacity: 0;
     transform: translateX(-20px);
+    pointer-events: none;
 }
 
+.transaction-item.fade-in {
+    animation: fadeSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeSlideIn {
+    from { 
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Transaction Icon - Non-clickable */
 .transaction-icon {
     width: 40px;
     height: 40px;
@@ -224,32 +249,44 @@
     color: white;
     font-size: 1.2rem;
     transition: transform 0.3s ease;
+    pointer-events: none !important;
+    user-select: none;
 }
 
 .transaction-item:hover .transaction-icon {
     transform: scale(1.1);
 }
 
+/* Transaction Details - Non-clickable */
 .transaction-details {
-    flex-grow: 1;
+    flex: 1;
     margin-left: 1rem;
+    pointer-events: none !important;
+    user-select: none;
 }
 
 .transaction-description {
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 0.25rem;
+    pointer-events: none !important;
+    user-select: none;
 }
 
 .transaction-meta {
     font-size: 0.85rem;
     color: #7f8c8d;
+    pointer-events: none !important;
+    user-select: none;
 }
 
+/* Transaction Amount - Non-clickable */
 .transaction-amount {
     font-weight: bold;
     font-size: 1.1rem;
     transition: transform 0.3s ease;
+    pointer-events: none !important;
+    user-select: none;
 }
 
 .transaction-item:hover .transaction-amount {
@@ -264,6 +301,40 @@
     color: #27ae60;
 }
 
+/* Transaction Actions - HIGHEST z-index, fully clickable */
+.transaction-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    position: relative;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+}
+
+.transaction-item:hover .transaction-actions {
+    opacity: 1;
+}
+
+/* Delete Button - Maximum z-index and full interactivity */
+.transaction-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative;
+    z-index: 10000 !important;
+    background-color: white;
+    border: 1px solid #dee2e6;
+}
+
+.transaction-actions .btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+}
+
 /* Filter Tabs */
 .filter-tabs {
     background: white;
@@ -271,6 +342,11 @@
     padding: 0.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 10;
 }
 
 .filter-tab {
@@ -283,6 +359,7 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    z-index: 1;
 }
 
 .filter-tab::before {
@@ -294,8 +371,10 @@
     height: 100%;
     background: linear-gradient(135deg, #667eea, #764ba2);
     transform: scaleX(0);
+    transform-origin: left;
     transition: transform 0.3s ease;
     z-index: -1;
+    border-radius: 10px;
 }
 
 .filter-tab.active::before,
@@ -308,23 +387,57 @@
     color: white;
 }
 
+.filter-tab.active {
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
 /* Empty State */
 .empty-state {
     text-align: center;
-    padding: 3rem;
-    color: #7f8c8d;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 15px;
+    margin: 2rem 0;
 }
 
 .empty-state-icon {
     font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.3;
+    color: #95a5a6;
+    margin-bottom: 1.5rem;
     animation: float 3s ease-in-out infinite;
 }
 
+/* Filter-specific empty state styling */
+.filter-empty-state {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%) !important;
+}
+
+.filter-empty-state .empty-state-icon {
+    color: #e17055 !important;
+}
+
 @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+/* Deleted Transaction Styles */
+.deleted-item {
+    opacity: 0.6;
+    background-color: #f8f9fa;
+}
+
+.deleted-item:hover {
+    opacity: 0.8;
+    background-color: #e9ecef;
+}
+
+.deleted-item .transaction-description {
+    text-decoration: line-through;
 }
 
 /* Loading States */
@@ -350,7 +463,7 @@
 
 /* Toast Notifications */
 .toast-container {
-    z-index: 1055;
+    z-index: 99999 !important;
 }
 
 .toast {
@@ -375,6 +488,19 @@
     border-radius: 0 0 15px 15px;
 }
 
+/* Modal Z-Index Fix */
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-dialog {
+    z-index: 1051 !important;
+}
+
 /* Form Enhancements */
 .form-control {
     border-radius: 10px;
@@ -392,6 +518,41 @@
     border: 2px solid #ecf0f1;
     border-right: none;
     background-color: #f8f9fa;
+}
+
+/* Category Badge */
+.category-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.category-badge.food { background-color: rgba(255, 107, 107, 0.2); color: #FF6B6B; }
+.category-badge.transportation { background-color: rgba(78, 205, 196, 0.2); color: #4ECDC4; }
+.category-badge.entertainment { background-color: rgba(69, 183, 209, 0.2); color: #45B7D1; }
+.category-badge.other { background-color: rgba(150, 206, 180, 0.2); color: #96CEB4; }
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5a67d8;
 }
 
 /* Responsive Design */
@@ -423,6 +584,13 @@
     .transaction-amount {
         margin-top: 0.5rem;
         align-self: flex-end;
+    }
+    
+    .transaction-actions {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
     }
     
     .filter-tabs {
@@ -473,79 +641,5 @@
         overflow-x: auto;
         white-space: nowrap;
     }
-    
-    .filter-tabs .d-flex {
-        flex-wrap: nowrap;
-    }
 }
 
-/* Animation Classes */
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-.slide-in {
-    animation: slideIn 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideIn {
-    from { 
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to { 
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Success/Error States */
-.state-success {
-    border-left: 4px solid #27ae60;
-    background-color: rgba(39, 174, 96, 0.1);
-}
-
-.state-error {
-    border-left: 4px solid #e74c3c;
-    background-color: rgba(231, 76, 60, 0.1);
-}
-
-/* Category Badge */
-.category-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.category-badge.food { background-color: rgba(255, 107, 107, 0.2); color: #FF6B6B; }
-.category-badge.transportation { background-color: rgba(78, 205, 196, 0.2); color: #4ECDC4; }
-.category-badge.entertainment { background-color: rgba(69, 183, 209, 0.2); color: #45B7D1; }
-.category-badge.other { background-color: rgba(150, 206, 180, 0.2); color: #96CEB4; }
-
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #667eea;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #5a67d8;
-}

@@ -19,18 +19,18 @@
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h1 class="mb-2">
-                    <i class="fas fa-exchange-alt me-3"></i>
-                    Transaction Center
+                <h1 class="mb-2" id="header-title">
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    Transaction Management
                 </h1>
-                <p class="mb-0 opacity-75">Manage your expenses and income across all categories</p>
+                <p class="mb-0" id="header-subtitle">Track your income and expenses in one place</p>
             </div>
-            <div class="col-md-4 text-md-end">
-                <button class="btn btn-light quick-action-btn me-2" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
-                    <i class="fas fa-plus me-2"></i>Add Expense
+            <div class="col-md-4 text-md-end" id="header-actions">
+                <button class="btn btn-light me-2" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
+                    <i class="fas fa-plus-circle me-2"></i>Add Income
                 </button>
-                <button class="btn btn-success quick-action-btn" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
-                    <i class="fas fa-plus me-2"></i>Add Income
+                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                    <i class="fas fa-minus-circle me-2"></i>Add Expense
                 </button>
             </div>
         </div>
@@ -39,58 +39,48 @@
 
 <div class="container">
     <!-- Transaction Stats Overview -->
-    <div class="row mb-4">
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stats-card expenses-card">
-                <div class="stats-value text-danger">${{ total_expenses|round(2) if total_expenses else '0.00' }}</div>
-                <div class="stats-label">Total Expenses</div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stats-card income-card">
-                <div class="stats-value text-success">${{ total_income|round(2) if total_income else '0.00' }}</div>
+    <div class="row mb-4" id="stats-section">
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-value text-success">+${% if total_income % 1 == 0 %}{{ total_income|int }}{% else %}{{ "%.2f"|format(total_income) }}{% endif %}</div>
                 <div class="stats-label">Total Income</div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stats-card net-card">
-                <div class="stats-value {{ 'text-success' if (net_income|default(0)) >= 0 else 'text-danger' }}">
-                    ${{ net_income|round(2) if net_income else '0.00' }}
-                </div>
-                <div class="stats-label">Net Income</div>
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-value text-danger">-${% if total_expenses % 1 == 0 %}{{ total_expenses|int }}{% else %}{{ "%.2f"|format(total_expenses) }}{% endif %}</div>
+                <div class="stats-label">Total Expenses</div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stats-card count-card">
-                <div class="stats-value text-info">{{ transaction_count|default(0) }}</div>
-                <div class="stats-label">Total Transactions</div>
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-value {{ 'text-success' if net_income >= 0 else 'text-danger' }}">
+                    ${% if net_income % 1 == 0 %}{{ net_income|int }}{% else %}{{ "%.2f"|format(net_income) }}{% endif %}
+                </div>
+                <div class="stats-label">Net Income</div>
             </div>
         </div>
     </div>
 
     <!-- Category Navigation -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h3 class="mb-3">
-                <i class="fas fa-th-large me-2"></i>
-                Transaction Categories
-            </h3>
-        </div>
-        
+    <div class="row mb-4" id="category-section">
         <!-- Food Category -->
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card category-card food-card h-100">
                 <div class="card-body text-center">
                     <i class="fas fa-utensils category-icon food-category"></i>
                     <h5 class="card-title">Food & Dining</h5>
-                    <p class="card-text text-muted">Groceries, restaurants, coffee, and dining expenses</p>
+                    <p class="card-text text-muted">Groceries, restaurants, coffee</p>
                     <div class="mb-3">
-                        <div class="text-danger fw-bold">${{ category_totals.food|round(2) if category_totals and category_totals.food else '0.00' }}</div>
+                        <div class="text-danger fw-bold">
+                            ${% if category_totals and category_totals.food %}
+                                {% if category_totals.food % 1 == 0 %}{{ category_totals.food|int }}{% else %}{{ "%.2f"|format(category_totals.food) }}{% endif %}
+                            {% else %}0{% endif %}
+                        </div>
                         <small class="text-muted">This month</small>
                     </div>
                     <div class="d-grid gap-2">
-                        <!-- Fixed: Changed from main.expenses to transactions.index -->
-                        <a href="{{ url_for('transactions.index', category='food') }}" class="btn btn-outline-danger">
+                        <a href="{{ url_for('transactions.index', filter='food') }}" class="btn btn-outline-danger">
                             View Food Expenses
                         </a>
                         <button class="btn btn-sm btn-danger" data-category="food" data-bs-toggle="modal" data-bs-target="#addExpenseModal" onclick="setExpenseCategory('food')">
@@ -107,13 +97,17 @@
                 <div class="card-body text-center">
                     <i class="fas fa-car category-icon transportation-category"></i>
                     <h5 class="card-title">Transportation</h5>
-                    <p class="card-text text-muted">Gas, parking, public transit, and travel costs</p>
+                    <p class="card-text text-muted">Gas, parking, public transit</p>
                     <div class="mb-3">
-                        <div class="text-info fw-bold">${{ category_totals.transportation|round(2) if category_totals and category_totals.transportation else '0.00' }}</div>
+                        <div class="text-info fw-bold">
+                            ${% if category_totals and category_totals.transportation %}
+                                {% if category_totals.transportation % 1 == 0 %}{{ category_totals.transportation|int }}{% else %}{{ "%.2f"|format(category_totals.transportation) }}{% endif %}
+                            {% else %}0{% endif %}
+                        </div>
                         <small class="text-muted">This month</small>
                     </div>
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('transactions.index', category='transportation') }}" class="btn btn-outline-info">
+                        <a href="{{ url_for('transactions.index', filter='transportation') }}" class="btn btn-outline-info">
                             View Transport Expenses
                         </a>
                         <button class="btn btn-sm btn-info" data-category="transportation" data-bs-toggle="modal" data-bs-target="#addExpenseModal" onclick="setExpenseCategory('transportation')">
@@ -130,13 +124,17 @@
                 <div class="card-body text-center">
                     <i class="fas fa-film category-icon entertainment-category"></i>
                     <h5 class="card-title">Entertainment</h5>
-                    <p class="card-text text-muted">Movies, games, streaming, and leisure activities</p>
+                    <p class="card-text text-muted">Movies, games, streaming</p>
                     <div class="mb-3">
-                        <div class="text-primary fw-bold">${{ category_totals.entertainment|round(2) if category_totals and category_totals.entertainment else '0.00' }}</div>
+                        <div class="text-primary fw-bold">
+                            ${% if category_totals and category_totals.entertainment %}
+                                {% if category_totals.entertainment % 1 == 0 %}{{ category_totals.entertainment|int }}{% else %}{{ "%.2f"|format(category_totals.entertainment) }}{% endif %}
+                            {% else %}0{% endif %}
+                        </div>
                         <small class="text-muted">This month</small>
                     </div>
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('transactions.index', category='entertainment') }}" class="btn btn-outline-primary">
+                        <a href="{{ url_for('transactions.index', filter='entertainment') }}" class="btn btn-outline-primary">
                             View Entertainment Expenses
                         </a>
                         <button class="btn btn-sm btn-primary" data-category="entertainment" data-bs-toggle="modal" data-bs-target="#addExpenseModal" onclick="setExpenseCategory('entertainment')">
@@ -153,13 +151,17 @@
                 <div class="card-body text-center">
                     <i class="fas fa-ellipsis-h category-icon other-category"></i>
                     <h5 class="card-title">Other</h5>
-                    <p class="card-text text-muted">Utilities, healthcare, shopping, and miscellaneous</p>
+                    <p class="card-text text-muted">Utilities, healthcare, shopping</p>
                     <div class="mb-3">
-                        <div class="text-success fw-bold">${{ category_totals.other|round(2) if category_totals and category_totals.other else '0.00' }}</div>
+                        <div class="text-success fw-bold">
+                            ${% if category_totals and category_totals.other %}
+                                {% if category_totals.other % 1 == 0 %}{{ category_totals.other|int }}{% else %}{{ "%.2f"|format(category_totals.other) }}{% endif %}
+                            {% else %}0{% endif %}
+                        </div>
                         <small class="text-muted">This month</small>
                     </div>
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('transactions.index', category='other') }}" class="btn btn-outline-success">
+                        <a href="{{ url_for('transactions.index', filter='other') }}" class="btn btn-outline-success">
                             View Other Expenses
                         </a>
                         <button class="btn btn-sm btn-success" data-category="other" data-bs-toggle="modal" data-bs-target="#addExpenseModal" onclick="setExpenseCategory('other')">
@@ -185,34 +187,41 @@
         <button class="filter-tab" data-filter="recent">
             <i class="fas fa-clock me-2"></i>Recent (7 days)
         </button>
+        <button class="filter-tab" data-filter="deleted">
+            <i class="fas fa-trash-restore me-2"></i>Deleted
+        </button>
+    </div>
+
+    <!-- Deleted Transactions Alert (Hidden by default) -->
+    <div id="deleted-alert" class="alert alert-info" style="display: none;">
+        <i class="fas fa-info-circle me-2"></i>
+        These transactions have been deleted but can be restored. They will be permanently removed after 30 days.
+        {% if deleted_transactions %}
+        <button class="btn btn-sm btn-danger float-end" onclick="confirmPermanentDeleteAll()">
+            <i class="fas fa-trash-alt me-2"></i>Permanently Delete All
+        </button>
+        {% endif %}
     </div>
 
     <!-- Recent Transactions -->
     <div class="row">
         <div class="col-12">
             <div class="recent-transactions">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">
-                        <i class="fas fa-history me-2"></i>
-                        Recent Transactions
-                    </h4>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-secondary" data-action="export" onclick="exportTransactions()">
-                            <i class="fas fa-download me-1"></i>Export
-                        </button>
-                        <!-- Fixed: Changed from main.expenses to transactions.index -->
-                        <a href="{{ url_for('transactions.index') }}" class="btn btn-sm btn-outline-primary">
-                            View All
-                        </a>
-                    </div>
-                </div>
+                <h4 class="mb-3" id="transactions-title">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Transactions
+                    <span class="badge bg-secondary ms-2" id="transaction-count">{{ transaction_count }}</span>
+                </h4>
 
+                <!-- Active Transactions List -->
                 <div id="transactions-list">
                     {% if transactions %}
                         {% for transaction in transactions %}
                         <div class="transaction-item" 
                              data-type="{{ transaction.type }}" 
-                             data-category="{{ transaction.category if transaction.type == 'expense' else 'income' }}">
+                             data-category="{{ transaction.category if transaction.type == 'expense' else 'income' }}"
+                             data-date="{{ transaction.date }}"
+                             data-id="{{ transaction.id }}">
                             {% if transaction.category == 'food' %}
                                 <div class="transaction-icon" style="background-color: #FF6B6B;">
                             {% elif transaction.category == 'transportation' %}
@@ -243,7 +252,13 @@
                                 </div>
                             </div>
                             <div class="transaction-amount {{ 'amount-expense' if transaction.type == 'expense' else 'amount-income' }}">
-                                {{ '-' if transaction.type == 'expense' else '+' }}${{ transaction.amount|round(2) }}
+                                {{ '-' if transaction.type == 'expense' else '+' }}${% if transaction.amount % 1 == 0 %}{{ transaction.amount|int }}{% else %}{{ "%.2f"|format(transaction.amount) }}{% endif %}
+                            </div>
+                            <div class="transaction-actions">
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        title="Delete transaction">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </div>
                         {% endfor %}
@@ -260,46 +275,77 @@
                         </div>
                     {% endif %}
                 </div>
+
+                <!-- Deleted Transactions List (Hidden by default) -->
+                <div id="deleted-transactions-list" style="display: none;">
+                    {% if deleted_transactions %}
+                        {% for transaction in deleted_transactions %}
+                        <div class="transaction-item deleted-item" data-id="{{ transaction.id }}" data-deleted="true">
+                            <div class="transaction-icon" style="background-color: #95a5a6; opacity: 0.6;">
+                                <i class="{{ 
+                                    'fas fa-utensils' if transaction.category == 'food' else
+                                    'fas fa-car' if transaction.category == 'transportation' else
+                                    'fas fa-film' if transaction.category == 'entertainment' else
+                                    'fas fa-ellipsis-h' if transaction.category == 'other' else
+                                    'fas fa-plus'
+                                }}"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-description">
+                                    {{ transaction.description }}
+                                    <span class="badge bg-secondary ms-2">Deleted</span>
+                                </div>
+                                <div class="transaction-meta">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    {{ transaction.date }} • 
+                                    {{ transaction.category.title() if transaction.category else 'Uncategorized' }}
+                                    {% if transaction.deleted_at %}
+                                     • <span class="text-muted">Deleted {{ transaction.deleted_at }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="transaction-amount text-muted">
+                                {{ '-' if transaction.type == 'expense' else '+' }}${% if transaction.amount % 1 == 0 %}{{ transaction.amount|int }}{% else %}{{ "%.2f"|format(transaction.amount) }}{% endif %}
+                            </div>
+                            <div class="transaction-actions" style="opacity: 1;">
+                                <form method="POST" action="{{ url_for('transactions.restore', id=transaction.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success" title="Restore transaction">
+                                        <i class="fas fa-undo me-1"></i>Restore
+                                    </button>
+                                </form>
+                                <button class="btn btn-sm btn-danger ms-2" 
+                                        onclick="confirmPermanentDelete({{ transaction.id }}, '{{ transaction.description }}')"
+                                        title="Permanently delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                            <h5>No Deleted Transactions</h5>
+                            <p>You haven't deleted any transactions yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Quick Actions Section -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-bolt me-2"></i>
-                        Quick Actions
-                    </h5>
-                    <div class="row">
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            <!-- Fixed: Changed from main.budget to budget.index -->
-                            <a href="{{ url_for('budget.index') }}" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-chart-pie me-2"></i>View Budget
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            <!-- Fixed: Changed from main.income to income.index -->
-                            <a href="{{ url_for('income.index') }}" class="btn btn-outline-success w-100">
-                                <i class="fas fa-coins me-2"></i>Manage Income
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            <button class="btn btn-outline-info w-100" data-action="report" onclick="generateReport()">
-                                <i class="fas fa-chart-line me-2"></i>Generate Report
-                            </button>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            <!-- Fixed: Changed from main.dashboard to dashboard -->
-                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="row mt-4" id="quick-actions-section">
+        <div class="col-md-6 mb-3">
+            <button class="btn btn-primary w-100 quick-action-btn" onclick="window.exportTransactions()">
+                <i class="fas fa-download me-2"></i>Export Transactions
+            </button>
+        </div>
+        <div class="col-md-6 mb-3">
+            <button class="btn btn-secondary w-100 quick-action-btn" onclick="window.generateReport()">
+                <i class="fas fa-chart-bar me-2"></i>Generate Report
+            </button>
         </div>
     </div>
 </div>
@@ -315,45 +361,47 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <!-- Fixed: Changed from main.add_expense to transactions.create -->
-            <form id="addExpenseForm" method="POST" action="{{ url_for('transactions.create') }}">
-                <div class="modal-body">
+            <div class="modal-body">
+                <form id="addExpenseForm" method="POST" action="{{ url_for('transactions.create') }}">
+                    <input type="hidden" name="type" value="expense">
+                    
                     <div class="mb-3">
                         <label for="expense-description" class="form-label">Description</label>
                         <input type="text" class="form-control" id="expense-description" name="description" required>
-                        <div class="form-text">Enter a brief description of the expense</div>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="expense-amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="expense-amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" step="0.01" class="form-control" id="expense-amount" name="amount" required>
                         </div>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="expense-category" class="form-label">Category</label>
                         <select class="form-select" id="expense-category" name="category" required>
-                            <option value="">Select Category</option>
+                            <option value="">Select a category</option>
                             <option value="food">Food & Dining</option>
                             <option value="transportation">Transportation</option>
                             <option value="entertainment">Entertainment</option>
                             <option value="other">Other</option>
                         </select>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="expense-date" class="form-label">Date</label>
                         <input type="date" class="form-control" id="expense-date" name="date" required>
                     </div>
-                    <!-- Add hidden field for type -->
-                    <input type="hidden" name="type" value="expense">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-save me-2"></i>Add Expense
-                    </button>
-                </div>
-            </form>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Add Expense
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -369,70 +417,97 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <!-- Fixed: Changed from main.add_income to income.add -->
-            <form id="addIncomeForm" method="POST" action="{{ url_for('income.add') }}">
-                <div class="modal-body">
+            <div class="modal-body">
+                <form id="addIncomeForm" method="POST" action="{{ url_for('transactions.create') }}">
+                    <input type="hidden" name="type" value="income">
+                    
                     <div class="mb-3">
-                        <label for="income-source" class="form-label">Source</label>
-                        <input type="text" class="form-control" id="income-source" name="source" required>
-                        <div class="form-text">Enter the source of income (e.g., Salary, Freelance)</div>
+                        <label for="income-description" class="form-label">Source</label>
+                        <input type="text" class="form-control" id="income-description" name="description" placeholder="e.g., Salary, Freelance" required>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="income-amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="income-amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" step="0.01" class="form-control" id="income-amount" name="amount" required>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="income-recurrence" class="form-label">Recurrence</label>
-                        <select class="form-select" id="income-recurrence" name="recurrence_period">
-                            <option value="none">One-time</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly" selected>Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                    </div>
+                    
                     <div class="mb-3">
                         <label for="income-date" class="form-label">Date</label>
                         <input type="date" class="form-control" id="income-date" name="date" required>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save me-2"></i>Add Income
-                    </button>
-                </div>
-            </form>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Add Income
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-// Set today's date as default
-document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('expense-date').value = today;
-    document.getElementById('income-date').value = today;
-});
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this transaction?</p>
+                <p class="fw-bold" id="deleteTransactionName"></p>
+                <p class="text-muted small">Don't worry - you can restore it from the "Deleted" tab if needed.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Transaction
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-// Function to set expense category when clicking category-specific buttons
-function setExpenseCategory(category) {
-    document.getElementById('expense-category').value = category;
-}
+<!-- Permanent Delete Confirmation Modal -->
+<div class="modal fade" id="permanentDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Permanent Delete Warning
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger fw-bold">⚠️ This action cannot be undone!</p>
+                <p>Are you sure you want to permanently delete this transaction?</p>
+                <p class="fw-bold" id="permanentDeleteName"></p>
+                <p class="text-muted small">This will remove the transaction from the database completely.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="permanentDeleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Permanently Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-// Placeholder functions for JavaScript functionality
-function exportTransactions() {
-    alert('Export functionality coming soon!');
-}
-
-function generateReport() {
-    alert('Report generation coming soon!');
-}
-</script>
-{% endblock %}
-
-{% block scripts %}
 <script src="{{ url_for('static', filename='js/transaction.js') }}"></script>
+
 {% endblock %}
