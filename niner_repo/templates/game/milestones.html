@@ -51,7 +51,13 @@
                             <div class="milestone-completed">
                                 <i class="fas fa-check-circle text-success me-2"></i>
                                 <span class="text-success">Completed!</span>
-                                <small class="text-muted d-block">{{ milestone.achieved_at[:10] }}</small>
+                                {% if milestone.achieved_at %}
+                                    {% if milestone.achieved_at is string %}
+                                        <small class="text-muted d-block">{{ milestone.achieved_at[:10] }}</small>
+                                    {% else %}
+                                        <small class="text-muted d-block">{{ milestone.achieved_at.strftime('%Y-%m-%d') }}</small>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                             {% else %}
                             <div class="milestone-progress">

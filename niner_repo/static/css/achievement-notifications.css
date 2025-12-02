@@ -1,0 +1,248 @@
+/**
+ * Achievement Notification System Styles
+ */
+
+/* Toast Container */
+.achievement-toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    pointer-events: none;
+}
+
+.achievement-toast-container > * {
+    pointer-events: auto;
+}
+
+/* Achievement Toast */
+.achievement-toast {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 350px;
+    max-width: 450px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideInRight 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.badge-toast {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.level-up-toast {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.achievement-toast.hiding {
+    animation: slideOutRight 0.5s ease-in-out forwards;
+}
+
+/* Toast Header */
+.achievement-toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.achievement-toast-title {
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toast-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+/* Toast Body */
+.achievement-toast-body {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.achievement-icon-large {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    flex-shrink: 0;
+}
+
+.achievement-content {
+    flex: 1;
+}
+
+.achievement-name {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.achievement-description {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.achievement-points {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.achievement-tier {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.tier-bronze {
+    background: #cd7f32;
+}
+
+.tier-silver {
+    background: #c0c0c0;
+}
+
+.tier-gold {
+    background: #ffd700;
+    color: #333;
+}
+
+.tier-platinum {
+    background: #e5e4e2;
+    color: #333;
+}
+
+.rarity-common {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.rarity-uncommon {
+    background: #2ecc71;
+}
+
+.rarity-rare {
+    background: #3498db;
+}
+
+.rarity-epic {
+    background: #9b59b6;
+}
+
+.rarity-legendary {
+    background: #f39c12;
+    color: #333;
+}
+
+/* Level Badge */
+.level-badge-large {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.level-number-badge {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    background: #f39c12;
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    border: 3px solid white;
+}
+
+/* Confetti Particle */
+.confetti-particle {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    z-index: 9998;
+    pointer-events: none;
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .achievement-toast-container {
+        left: 20px;
+        right: 20px;
+    }
+
+    .achievement-toast {
+        min-width: auto;
+        max-width: 100%;
+    }
+}

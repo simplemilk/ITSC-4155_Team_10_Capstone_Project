@@ -115,7 +115,13 @@
                                 </span>
                             </div>
                             <div class="achievement-date">
-                                <small class="text-muted">{{ achievement.achieved_at[:10] }}</small>
+                                {% if achievement.achieved_at %}
+                                    {% if achievement.achieved_at is string %}
+                                        <small class="text-muted">{{ achievement.achieved_at[:10] }}</small>
+                                    {% else %}
+                                        <small class="text-muted">{{ achievement.achieved_at.strftime('%Y-%m-%d') }}</small>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
@@ -231,7 +237,15 @@
                                     </td>
                                     <td>{{ activity.description }}</td>
                                     <td><span class="badge bg-success">+{{ activity.points_earned }}</span></td>
-                                    <td>{{ activity.created_at[:16] }}</td>
+                                    <td>
+                                        {% if activity.created_at %}
+                                            {% if activity.created_at is string %}
+                                                {{ activity.created_at[:16] }}
+                                            {% else %}
+                                                {{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
