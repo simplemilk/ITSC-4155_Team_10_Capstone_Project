@@ -25,6 +25,7 @@ def seed_demo_data(db_path):
         cursor.execute("DELETE FROM budgets WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM transactions WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM subscriptions WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM financial_goals WHERE user_id = ?", (user_id,))
         conn.commit()
         
         # 1. Add Weekly Budget
@@ -76,47 +77,44 @@ def seed_demo_data(db_path):
         # 4. Add Sample Expenses with proper categories
         expenses_data = [
             # Food expenses
-            ('Food', 45.50, 'Grocery shopping at Harris Teeter', 1),
-            ('Food', 22.00, 'Lunch at Student Union', 2),
-            ('Food', 15.75, 'Coffee at Starbucks', 3),
-            ('Food', 35.20, 'Dinner at Chipotle', 4),
-            ('Food', 18.50, 'Pizza delivery', 5),
+            ('food', 45.50, 'Grocery shopping at Harris Teeter', 1),
+            ('food', 22.00, 'Lunch at Student Union', 2),
+            ('food', 15.75, 'Coffee at Starbucks', 3),
+            ('food', 35.20, 'Dinner at Chipotle', 4),
+            ('food', 18.50, 'Pizza delivery', 5),
             
             # Transportation expenses
-            ('Transportation', 50.00, 'Gas for the week', 1),
-            ('Transportation', 25.00, 'Uber to airport', 4),
-            ('Transportation', 15.00, 'Parking fee', 6),
-            ('Transportation', 40.00, 'Monthly bus pass', 7),
+            ('transportation', 50.00, 'Gas for the week', 1),
+            ('transportation', 25.00, 'Uber to airport', 4),
+            ('transportation', 15.00, 'Parking fee', 6),
+            ('transportation', 40.00, 'Monthly bus pass', 7),
             
             # Entertainment expenses
-            ('Entertainment', 40.00, 'Movie tickets with friends', 2),
-            ('Entertainment', 60.00, 'Concert at Fillmore', 5),
-            ('Entertainment', 25.00, 'Bowling night', 8),
-            ('Entertainment', 30.00, 'Video game purchase', 10),
+            ('entertainment', 40.00, 'Movie tickets with friends', 2),
+            ('entertainment', 60.00, 'Concert at Fillmore', 5),
+            ('entertainment', 25.00, 'Bowling night', 8),
+            ('entertainment', 30.00, 'Video game purchase', 10),
             
             # Other expenses
-            ('Other', 30.00, 'Miscellaneous supplies', 3),
-            ('Other', 45.00, 'Textbook purchase', 6),
-            ('Other', 20.00, 'Phone case', 9),
+            ('other', 30.00, 'Miscellaneous supplies', 3),
+            ('other', 45.00, 'Textbook purchase', 6),
+            ('other', 20.00, 'Phone case', 9),
         ]
         
         for category, amount, desc, days_ago in expenses_data:
             expense_date = (datetime.now() - timedelta(days=days_ago)).date()
             
-            # Normalize category to lowercase for database consistency
-            category_lower = category.lower()
-            
             # Insert into expenses table
             cursor.execute('''
                 INSERT INTO expenses (user_id, category, amount, description, date, created_by, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, 1)
-            ''', (user_id, category_lower, amount, desc, expense_date, user_id))
+            ''', (user_id, category, amount, desc, expense_date, user_id))
             
             # Also add to transactions table WITH CATEGORY
             cursor.execute('''
                 INSERT INTO transactions (user_id, transaction_type, category, amount, description, date)
                 VALUES (?, 'expense', ?, ?, ?, ?)
-            ''', (user_id, category_lower, amount, desc, expense_date))
+            ''', (user_id, category, amount, desc, expense_date))
         
         # 5. Add Sample Subscriptions
         subscriptions_data = [
@@ -143,6 +141,25 @@ def seed_demo_data(db_path):
             ''', (user_id, name, amount, frequency, category, next_billing.date().isoformat(), 
                   datetime.now().date().isoformat(), is_active))
         
+        # 6. Add Sample Financial Goals
+        goals_data = [
+            ('Emergency Fund', 5000.00, 1200.00, 'emergency', 'Build 3-6 months emergency savings', 'high', 180),
+            ('New Laptop', 1500.00, 450.00, 'technology', 'Save for MacBook Pro', 'medium', 90),
+            ('Spring Break Trip', 800.00, 200.00, 'travel', 'Beach vacation with friends', 'medium', 120),
+            ('Car Down Payment', 3000.00, 500.00, 'transportation', 'Save for used car', 'high', 365),
+            ('Professional Certification', 600.00, 150.00, 'education', 'AWS certification course', 'low', 60),
+        ]
+        
+        for goal_name, target, current, category, description, priority, days in goals_data:
+            target_date = (datetime.now() + timedelta(days=days)).date().isoformat()
+            
+            cursor.execute('''
+                INSERT INTO financial_goals 
+                (user_id, goal_name, target_amount, current_amount, target_date, 
+                 category, description, priority, is_completed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+            ''', (user_id, goal_name, target, current, target_date, category, description, priority))
+        
         conn.commit()
         conn.close()
         
@@ -150,11 +167,12 @@ def seed_demo_data(db_path):
         print(f"  - 1 weekly budget")
         print(f"  - 2 income records")
         print(f"  - {len(expenses_data)} expense records")
-        print(f"    • Food: {len([e for e in expenses_data if e[0].lower() == 'food'])} expenses")
-        print(f"    • Transportation: {len([e for e in expenses_data if e[0].lower() == 'transportation'])} expenses")
-        print(f"    • Entertainment: {len([e for e in expenses_data if e[0].lower() == 'entertainment'])} expenses")
-        print(f"    • Other: {len([e for e in expenses_data if e[0].lower() == 'other'])} expenses")
+        print(f"    • Food: {len([e for e in expenses_data if e[0] == 'food'])} expenses")
+        print(f"    • Transportation: {len([e for e in expenses_data if e[0] == 'transportation'])} expenses")
+        print(f"    • Entertainment: {len([e for e in expenses_data if e[0] == 'entertainment'])} expenses")
+        print(f"    • Other: {len([e for e in expenses_data if e[0] == 'other'])} expenses")
         print(f"  - {len(subscriptions_data)} subscriptions")
+        print(f"  - {len(goals_data)} financial goals")
         return True
         
     except Exception as e:
@@ -317,8 +335,8 @@ def init_all_databases():
     except Exception as e:
         print(f"❌ Budget error: {e}")
     
-    # 3. Schema.sql (transactions, income, expenses)
-    print("\n📝 Initializing transaction/income/expense tables...")
+    # 3. Schema.sql (transactions, income, expenses, financial_goals)
+    print("\n📝 Initializing transaction/income/expense/goals tables...")
     total_count += 1
     try:
         conn = sqlite3.connect(db_path)
@@ -329,6 +347,8 @@ def init_all_databases():
         success_count += 1
     except Exception as e:
         print(f"❌ Schema error: {e}")
+        import traceback
+        traceback.print_exc()
     
     # 4. Create demo user
     print("\n👤 Creating demo user...")

@@ -1,10 +1,11 @@
 from decimal import Decimal
 from datetime import datetime
-from flask import Blueprint, g, render_template, redirect, jsonify, request, flash
+from flask import Blueprint, g, render_template, redirect, jsonify, request, flash, url_for
 from auth import login_required
 from db import get_db
 from priorities import get_personalized_suggestions, get_user_financial_stats
 from gamification import on_goal_created, on_goal_completed
+import budget
 
 try:
     from db import get_db
@@ -142,7 +143,342 @@ def dashboard():
         priority_insights=priority_insights
     )
 
+# FINANCIAL GOALS ROUTES - These match app.py routes
+@bp.route('/goals')
+@login_required
+def goals():
+    """Financial goals page with user's data"""
+    db_conn = get_db()
+    try:
+        # Check if financial_goals table exists
+        table_check = db_conn.execute('''
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='financial_goals'
+        ''').fetchone()
+        
+        user_goals = []
+        if table_check:
+            # Get user's goals from database
+            user_goals = db_conn.execute('''
+                SELECT * FROM financial_goals 
+                WHERE user_id = ? 
+                ORDER BY created_at DESC
+            ''', (g.user['id'],)).fetchall()
+        else:
+            # Create the table if it doesn't exist
+            db_conn.execute('''
+                CREATE TABLE IF NOT EXISTS financial_goals (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    goal_name TEXT NOT NULL,
+                    target_amount REAL NOT NULL,
+                    current_amount REAL DEFAULT 0,
+                    target_date TEXT,
+                    category TEXT,
+                    description TEXT,
+                    priority TEXT DEFAULT 'medium',
+                    is_completed BOOLEAN DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (id)
+                )
+            ''')
+            db_conn.commit()
+    except Exception as e:
+        print(f"Database error in goals: {e}")
+        user_goals = []
+    
+    # Get financial summary for the split view
+    financial_summary = budget.get_financial_summary(g.user['id'])
+    
+    # Convert goals to list of dicts for easier template access
+    goals_data = []
+    for goal in user_goals:
+        # Parse target_date from string to datetime object
+        target_date = None
+        if goal['target_date']:
+            try:
+                target_date = datetime.strptime(goal['target_date'], '%Y-%m-%d')
+            except (ValueError, TypeError):
+                try:
+                    # Try ISO format
+                    target_date = datetime.fromisoformat(goal['target_date'])
+                except:
+                    target_date = None
+        
+        # Parse created_at from string to datetime object
+        created_at = None
+        if goal['created_at']:
+            try:
+                created_at = datetime.strptime(goal['created_at'], '%Y-%m-%d %H:%M:%S')
+            except (ValueError, TypeError):
+                try:
+                    # Try ISO format
+                    created_at = datetime.fromisoformat(goal['created_at'])
+                except:
+                    created_at = datetime.now()
+        
+        goals_data.append({
+            'id': goal['id'],
+            'goal_name': goal['goal_name'],
+            'target_amount': float(goal['target_amount']),
+            'current_amount': float(goal['current_amount']),
+            'target_date': target_date,  # Now a datetime object
+            'target_date_str': goal['target_date'] if goal['target_date'] else '',  # Keep string for form
+            'category': goal['category'] if goal['category'] else 'other',
+            'description': goal['description'] if goal['description'] else '',
+            'priority': goal['priority'] if goal['priority'] else 'medium',
+            'is_completed': bool(goal['is_completed']),
+            'created_at': created_at  # Now a datetime object
+        })
+    
+    return render_template('home/finance-goals.html', 
+                         goals=goals_data,
+                         **financial_summary)
 
+@bp.route('/goals/create', methods=['GET', 'POST'])
+@login_required
+def create_goal():
+    """Create a new financial goal - uses edit-goal.html as template"""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            goal_name = request.form['goal_name']
+            target_amount = float(request.form['target_amount'])
+            current_amount = float(request.form.get('current_amount', 0))
+            target_date = request.form.get('target_date', '')
+            category = request.form.get('category', 'other')
+            description = request.form.get('description', '')
+            priority = request.form.get('priority', 'medium')
+            
+            # Validation
+            if not goal_name or target_amount <= 0:
+                flash('Please provide a valid goal name and target amount.', 'error')
+                return redirect(url_for('finance.create_goal'))
+            
+            # Insert into database
+            db_conn = get_db()
+            db_conn.execute('''
+                INSERT INTO financial_goals 
+                (user_id, goal_name, target_amount, current_amount, target_date, 
+                 category, description, priority, is_completed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                g.user['id'],
+                goal_name,
+                target_amount,
+                current_amount,
+                target_date,
+                category,
+                description,
+                priority,
+                False
+            ))
+            db_conn.commit()
+            
+            # GAMIFICATION: Award points for creating goal
+            try:
+                on_goal_created(g.user['id'])
+            except Exception as e:
+                print(f"Gamification error: {e}")
+            
+            flash(f'Goal "{goal_name}" created successfully!', 'success')
+            return redirect(url_for('finance.goals'))
+            
+        except ValueError:
+            flash('Please enter valid amounts for target and current values.', 'error')
+        except Exception as e:
+            flash(f'Error creating goal: {str(e)}', 'error')
+    
+    # Use edit-goal.html template with empty goal for create mode
+    empty_goal = {
+        'id': None,
+        'goal_name': '',
+        'target_amount': 0,
+        'current_amount': 0,
+        'target_date': '',
+        'category': 'other',
+        'description': '',
+        'priority': 'medium',
+        'is_completed': False
+    }
+    return render_template('home/edit-goal.html', goal=empty_goal, create_mode=True)
+
+@bp.route('/goals/<int:goal_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_goal(goal_id):
+    """Edit an existing financial goal"""
+    db_conn = get_db()
+    
+    # Get the goal and verify ownership
+    goal = db_conn.execute('''
+        SELECT * FROM financial_goals 
+        WHERE id = ? AND user_id = ?
+    ''', (goal_id, g.user['id'])).fetchone()
+    
+    if not goal:
+        flash('Goal not found.', 'error')
+        return redirect(url_for('finance.goals'))
+    
+    if request.method == 'POST':
+        try:
+            # Get form data
+            goal_name = request.form['goal_name']
+            target_amount = float(request.form['target_amount'])
+            current_amount = float(request.form.get('current_amount', 0))
+            target_date = request.form.get('target_date', '')
+            category = request.form.get('category', 'other')
+            description = request.form.get('description', '')
+            priority = request.form.get('priority', 'medium')
+            is_completed = bool(request.form.get('is_completed', False))
+            
+            # Validation
+            if not goal_name or target_amount <= 0:
+                flash('Please provide a valid goal name and target amount.', 'error')
+                return redirect(url_for('finance.edit_goal', goal_id=goal_id))
+            
+            # Update in database
+            db_conn.execute('''
+                UPDATE financial_goals SET
+                    goal_name = ?, target_amount = ?, current_amount = ?,
+                    target_date = ?, category = ?, description = ?,
+                    priority = ?, is_completed = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND user_id = ?
+            ''', (
+                goal_name, target_amount, current_amount,
+                target_date, category, description, priority, is_completed,
+                goal_id, g.user['id']
+            ))
+            db_conn.commit()
+            
+            flash(f'Goal "{goal_name}" updated successfully!', 'success')
+            return redirect(url_for('finance.goals'))
+            
+        except ValueError:
+            flash('Please enter valid amounts for target and current values.', 'error')
+        except Exception as e:
+            flash(f'Error updating goal: {str(e)}', 'error')
+    
+    return render_template('home/edit-goal.html', goal=goal, create_mode=False)
+
+@bp.route('/goals/<int:goal_id>/contribute', methods=['POST'])
+@login_required
+def add_contribution(goal_id):
+    """Add contribution to a goal"""
+    try:
+        contribution = float(request.form['contribution'])
+        
+        if contribution <= 0:
+            flash('Contribution amount must be positive.', 'error')
+            return redirect(url_for('finance.goals'))
+        
+        db_conn = get_db()
+        
+        # Get current goal
+        goal = db_conn.execute('''
+            SELECT * FROM financial_goals 
+            WHERE id = ? AND user_id = ?
+        ''', (goal_id, g.user['id'])).fetchone()
+        
+        if not goal:
+            flash('Goal not found.', 'error')
+            return redirect(url_for('finance.goals'))
+        
+        # Update current amount
+        new_amount = float(goal['current_amount']) + contribution
+        old_amount = float(goal['current_amount'])
+        target_amount = float(goal['target_amount']);
+        
+        db_conn.execute('''
+            UPDATE financial_goals SET
+                current_amount = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+        ''', (new_amount, goal_id, g.user['id']))
+        db_conn.commit()
+        
+        # Check if goal just completed
+        if new_amount >= target_amount and old_amount < target_amount:
+            try:
+                on_goal_completed(g.user['id'])
+            except Exception as e:
+                print(f"Gamification error: {e}")
+        
+        flash(f'Added ${contribution:.2f} to "{goal["goal_name"]}"!', 'success')
+        
+    except ValueError:
+        flash('Please enter a valid contribution amount.', 'error')
+    except Exception as e:
+        flash(f'Error adding contribution: {str(e)}', 'error')
+    
+    return redirect(url_for('finance.goals'))
+
+@bp.route('/goals/<int:goal_id>/delete', methods=['POST'])
+@login_required
+def delete_goal(goal_id):
+    """Delete a financial goal"""
+    try:
+        db_conn = get_db()
+        
+        # Get goal name for flash message
+        goal = db_conn.execute('''
+            SELECT goal_name FROM financial_goals 
+            WHERE id = ? AND user_id = ?
+        ''', (goal_id, g.user['id'])).fetchone()
+        
+        if not goal:
+            flash('Goal not found.', 'error')
+            return redirect(url_for('finance.goals'))
+        
+        # Delete the goal
+        db_conn.execute('''
+            DELETE FROM financial_goals 
+            WHERE id = ? AND user_id = ?
+        ''', (goal_id, g.user['id']))
+        db_conn.commit()
+        
+        flash(f'Goal "{goal["goal_name"]}" deleted successfully.', 'success')
+        
+    except Exception as e:
+        flash(f'Error deleting goal: {str(e)}', 'error')
+    
+    return redirect(url_for('finance.goals'))
+
+@bp.route('/goals/<int:goal_id>/toggle', methods=['POST'])
+@login_required
+def toggle_goal_completion(goal_id):
+    """Toggle goal completion status"""
+    try:
+        db_conn = get_db()
+        
+        # Get current status
+        goal = db_conn.execute('''
+            SELECT goal_name, is_completed FROM financial_goals 
+            WHERE id = ? AND user_id = ?
+        ''', (goal_id, g.user['id'])).fetchone()
+        
+        if not goal:
+            flash('Goal not found.', 'error')
+            return redirect(url_for('finance.goals'))
+        
+        # Toggle completion status
+        new_status = not bool(goal['is_completed'])
+        
+        db_conn.execute('''
+            UPDATE financial_goals SET
+                is_completed = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+        ''', (new_status, goal_id, g.user['id']))
+        db_conn.commit()
+        
+        status_text = 'completed' if new_status else 'reopened'
+        flash(f'Goal "{goal["goal_name"]}" marked as {status_text}!', 'success')
+        
+    except Exception as e:
+        flash(f'Error updating goal status: {str(e)}', 'error')
+    
+    return redirect(url_for('finance.goals'))
+
+# API ROUTES
 @bp.route('/finance/summary', methods=['GET'])
 @login_required
 def get_financial_summary():
@@ -291,95 +627,11 @@ def calculate_monthly_amount(amount, recurrence_period):
     """Convert an amount to its monthly equivalent based on recurrence period."""
     amount = Decimal(str(amount))
     multipliers = {
-        'daily': Decimal('30.44'),  # Average days per month
-        'weekly': Decimal('4.348'),  # Average weeks per month
-        'biweekly': Decimal('2.174'),  # Biweekly to monthly
+        'daily': Decimal('30.44'),
+        'weekly': Decimal('4.348'),
+        'biweekly': Decimal('2.174'),
         'monthly': Decimal('1'),
-        'quarterly': Decimal('0.333'),  # Quarterly to monthly
-        'annually': Decimal('0.0833')  # Annual to monthly
+        'quarterly': Decimal('0.333'),
+        'annually': Decimal('0.0833')
     }
     return amount * multipliers.get(recurrence_period, Decimal('1'))
-
-@bp.route('/create-goal', methods=['GET', 'POST'])
-@login_required
-def create_goal():
-    """Create a new financial goal"""
-    if request.method == 'POST':
-        goal_name = request.form.get('goal_name')
-        target_amount = request.form.get('target_amount')
-        current_amount = request.form.get('current_amount', 0)
-        deadline = request.form.get('deadline')
-        category = request.form.get('category')
-        description = request.form.get('description')
-
-        # Basic validation
-        if not goal_name or not target_amount or not deadline:
-            flash('Please fill in all required fields.', 'error')
-            return redirect(request.url)
-
-        try:
-            target_amount = Decimal(target_amount)
-            current_amount = Decimal(current_amount)
-        except:
-            flash('Invalid amount format.', 'error')
-            return redirect(request.url)
-
-        if target_amount <= 0:
-            flash('Target amount must be greater than zero.', 'error')
-            return redirect(request.url)
-
-        # Insert the new goal into the database
-        db = get_db()
-        db.execute(
-            '''INSERT INTO financial_goals 
-               (user_id, goal_name, target_amount, current_amount, deadline, category, description)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            (g.user['id'], goal_name, target_amount, current_amount, deadline, category, description)
-        )
-        db.commit()
-        
-        # GAMIFICATION: Award points for creating goal
-        try:
-            on_goal_created(g.user['id'])
-        except Exception as e:
-            print(f"Gamification error: {e}")
-        
-        flash('Financial goal created successfully!', 'success')
-        return redirect(url_for('financial_goals'))
-    
-    return render_template('goals/create_goal.html')
-
-@bp.route('/update-goal/<int:goal_id>', methods=['POST'])
-@login_required
-def update_goal(goal_id):
-    """Update goal progress"""
-    new_amount = request.form.get('current_amount', type=Decimal)
-    
-    db = get_db()
-    goal = db.execute(
-        '''SELECT * FROM financial_goals WHERE id = ? AND user_id = ?''',
-        (goal_id, g.user['id'])
-    ).fetchone()
-
-    if goal is None:
-        return jsonify({'error': 'Goal not found'}), 404
-
-    # Update the goal's current amount
-    db.execute(
-        '''UPDATE financial_goals 
-           SET current_amount = ?, updated_at = CURRENT_TIMESTAMP 
-           WHERE id = ?''',
-        (new_amount, goal_id)
-    )
-
-    # Check if goal is completed
-    if new_amount >= goal['target_amount'] and goal['current_amount'] < goal['target_amount']:
-        # Goal just completed!
-        try:
-            on_goal_completed(g.user['id'])
-        except Exception as e:
-            print(f"Gamification error: {e}")
-    
-    db.commit()
-
-    return jsonify({'success': True, 'new_amount': str(new_amount)})

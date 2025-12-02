@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS income_category;
 DROP TABLE IF EXISTS weekly_budgets;
 DROP TABLE IF EXISTS budget_categories;
 DROP TABLE IF EXISTS budget_allocations;
+DROP TABLE IF EXISTS financial_goals;
 
 -- Users table (enhanced from your basic version)
 CREATE TABLE user (
@@ -124,6 +125,23 @@ CREATE TABLE IF NOT EXISTS weekly_budgets (
     UNIQUE(user_id, week_start)
 );
 
+-- Financial Goals Table
+CREATE TABLE financial_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    goal_name TEXT NOT NULL,
+    target_amount REAL NOT NULL CHECK (target_amount > 0),
+    current_amount REAL DEFAULT 0 CHECK (current_amount >= 0),
+    target_date TEXT,
+    category TEXT CHECK (category IN ('emergency', 'education', 'travel', 'technology', 'housing', 'transportation', 'other')),
+    description TEXT,
+    priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+    is_completed BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_income_user_date ON income(user_id, date);
 CREATE INDEX idx_income_category ON income(category_id);
@@ -133,6 +151,8 @@ CREATE INDEX idx_income_source ON income(source);
 CREATE INDEX idx_transactions_category ON transactions(category);
 CREATE INDEX idx_transactions_user_type ON transactions(user_id, transaction_type);
 CREATE INDEX idx_transactions_date ON transactions(date);
+CREATE INDEX idx_financial_goals_user ON financial_goals(user_id);
+CREATE INDEX idx_financial_goals_completed ON financial_goals(is_completed);
 
 -- Create trigger to update the updated_at timestamp
 CREATE TRIGGER income_update_timestamp
@@ -141,6 +161,15 @@ BEGIN
     UPDATE income 
     SET updated_at = CURRENT_TIMESTAMP,
         updated_by = NEW.updated_by
+    WHERE id = NEW.id;
+END;
+
+-- Create trigger for financial goals updated_at
+CREATE TRIGGER financial_goals_update_timestamp
+AFTER UPDATE ON financial_goals
+BEGIN
+    UPDATE financial_goals 
+    SET updated_at = CURRENT_TIMESTAMP
     WHERE id = NEW.id;
 END;
 
