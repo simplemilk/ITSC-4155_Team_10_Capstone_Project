@@ -111,3 +111,27 @@ def api():
 def test():
     """Test route to verify blueprint is working"""
     return "Income blueprint is working!"
+
+@bp.route('/delete/<int:income_id>', methods=['POST'])
+@login_required
+def delete(income_id):
+    """Delete an income record"""
+    try:
+        db = get_db()
+        
+        # Check if the income record exists for the current user
+        income = db.execute('SELECT * FROM income WHERE id = ? AND user_id = ?', (income_id, g.user['id'])).fetchone()
+        
+        if not income:
+            flash('Income record not found or you do not have permission to delete it.', 'error')
+            return redirect(url_for('income.index'))
+        
+        db.execute('UPDATE income SET is_active = 0 WHERE id = ?', (income_id,))
+        db.commit()
+
+        flash('Income record deleted successfully!', 'success')
+        return redirect(url_for('income.index'))
+        
+    except Exception as e:
+        flash(f'Error deleting income record: {str(e)}', 'error')
+        return redirect(url_for('income.index'))

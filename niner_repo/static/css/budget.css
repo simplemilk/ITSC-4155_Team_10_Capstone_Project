@@ -3,7 +3,7 @@
 .budget-header {
     background: linear-gradient(135deg, #00703C 0%, #005A2D 100%);
     color: white;
-    padding: 2rem 0;
+    padding: 2rem 2rem;
     margin-bottom: 2rem;
     border-radius: 15px;
 }
