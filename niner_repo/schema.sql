@@ -31,7 +31,7 @@ CREATE TABLE transactions (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES user (id)
+    FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 -- Expenses table (separate from transactions for better organization)
@@ -53,9 +53,9 @@ CREATE TABLE expenses (
     created_by INTEGER NOT NULL,
     updated_by INTEGER,
     is_active BOOLEAN NOT NULL DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES user (id),
-    FOREIGN KEY (created_by) REFERENCES user (id),
-    FOREIGN KEY (updated_by) REFERENCES user (id)
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (created_by) REFERENCES users (id),
+    FOREIGN KEY (updated_by) REFERENCES users (id)
 );
 
 -- Income Categories Table
@@ -67,7 +67,7 @@ CREATE TABLE income_category (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT 1,
-    FOREIGN KEY (created_by) REFERENCES user (id),
+    FOREIGN KEY (created_by) REFERENCES users (id),
     UNIQUE(name)
 );
 
@@ -101,10 +101,10 @@ CREATE TABLE income (
     created_by INTEGER NOT NULL,
     updated_by INTEGER,
     is_active BOOLEAN NOT NULL DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES user (id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (category_id) REFERENCES income_category (id),
-    FOREIGN KEY (created_by) REFERENCES user (id),
-    FOREIGN KEY (updated_by) REFERENCES user (id)
+    FOREIGN KEY (created_by) REFERENCES users (id),
+    FOREIGN KEY (updated_by) REFERENCES users (id)
 );
 
 -- Weekly budgets table
@@ -166,7 +166,7 @@ CREATE TABLE budget_categories (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES user (id)
+    FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 -- Budget Allocations Table
@@ -180,9 +180,9 @@ CREATE TABLE budget_allocations (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     updated_by INTEGER,
-    FOREIGN KEY (user_id) REFERENCES user (id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (category_id) REFERENCES budget_categories (id),
-    FOREIGN KEY (updated_by) REFERENCES user (id),
+    FOREIGN KEY (updated_by) REFERENCES users (id),
     UNIQUE(user_id, category_id, month_year)
 );    
 

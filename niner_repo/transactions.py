@@ -49,27 +49,32 @@ def index():
     try:
         db = get_db()
         if db and g.user:
-           # First, let's check what columns exist in the transactions table
+            # First, let's check what columns exist in the transactions table
             cursor = db.execute("PRAGMA table_info(transactions)")
             columns = [row[1] for row in cursor.fetchall()]
             print(f"Available columns in transactions table: {columns}")
             
-            base_columns = ['t.id', 't.description', 't.amount', 't.date', 't.type']
-            optional_columns = []
-
-            # Use only columns that actually exist
-            if 'category' in columns:
-                optional_columns.append('t.category')
-            if 'type' in columns:
-                optional_columns.append('t.type')
+            # Build the column list based on what exists
+            select_columns = ['t.id', 't.description', 't.amount', 't.date']
             
-            all_columns = base_columns + optional_columns
-            query = f"SELECT {', '.join(all_columns)} FROM transactions t WHERE t.user_id = ? ORDER BY t.date DESC"
+            # Check for type/transaction_type column
+            if 'transaction_type' in columns:
+                select_columns.append('t.transaction_type as type')
+            elif 'type' in columns:
+                select_columns.append('t.type')
+            
+            # Check for category column
+            if 'category' in columns:
+                select_columns.append('t.category')
+            
+            query = f"SELECT {', '.join(select_columns)} FROM transactions t WHERE t.user_id = ? ORDER BY t.date DESC"
             
             transactions = db.execute(query, (g.user['id'],)).fetchall()
                 
     except Exception as e:
         flash(f'Error loading transactions: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
     
     return render_template('home/transaction.html', transactions=transactions)
 
@@ -117,11 +122,23 @@ def create():
                     # Use g.user['id'] if available, otherwise fallback to 1
                     user_id = g.user['id'] if hasattr(g, 'user') and g.user else 1
                     
-                    db.execute(
-                        'INSERT INTO transactions (description, amount, category, type, date, user_id)'
-                        ' VALUES (?, ?, ?, ?, ?, ?)',
-                        (description, float(amount), category, transaction_type, date, user_id)
-                    )
+                    # Check which column name to use
+                    cursor = db.execute("PRAGMA table_info(transactions)")
+                    columns = [row[1] for row in cursor.fetchall()]
+                    
+                    if 'transaction_type' in columns:
+                        db.execute(
+                            'INSERT INTO transactions (description, amount, category, transaction_type, date, user_id)'
+                            ' VALUES (?, ?, ?, ?, ?, ?)',
+                            (description, float(amount), category, transaction_type, date, user_id)
+                        )
+                    else:
+                        db.execute(
+                            'INSERT INTO transactions (description, amount, category, type, date, user_id)'
+                            ' VALUES (?, ?, ?, ?, ?, ?)',
+                            (description, float(amount), category, transaction_type, date, user_id)
+                        )
+                    
                     db.commit()
                     
                     # GAMIFICATION: Award points for logging transaction
@@ -151,6 +168,8 @@ def create():
                     flash('Database not available', 'error')
             except Exception as e:
                 flash(f'Error saving transaction: {str(e)}', 'error')
+                import traceback
+                traceback.print_exc()
     
     return render_template('home/update.html')
 
@@ -232,11 +251,23 @@ def update(id):
             try:
                 db = get_db()
                 if db:
-                    db.execute(
-                        'UPDATE transactions SET description = ?, amount = ?, category = ?, type = ?, date = ?'
-                        ' WHERE id = ?',
-                        (description, float(amount), category, transaction_type, date, id)
-                    )
+                    # Check which column name to use
+                    cursor = db.execute("PRAGMA table_info(transactions)")
+                    columns = [row[1] for row in cursor.fetchall()]
+                    
+                    if 'transaction_type' in columns:
+                        db.execute(
+                            'UPDATE transactions SET description = ?, amount = ?, category = ?, transaction_type = ?, date = ?'
+                            ' WHERE id = ?',
+                            (description, float(amount), category, transaction_type, date, id)
+                        )
+                    else:
+                        db.execute(
+                            'UPDATE transactions SET description = ?, amount = ?, category = ?, type = ?, date = ?'
+                            ' WHERE id = ?',
+                            (description, float(amount), category, transaction_type, date, id)
+                        )
+                    
                     db.commit()
                     flash('Transaction updated successfully!', 'success')
                     return redirect(url_for('transactions.detail', id=id))
@@ -285,15 +316,20 @@ def stats():
     try:
         db = get_db()
         if db:
+            # Check which column name to use
+            cursor = db.execute("PRAGMA table_info(transactions)")
+            columns = [row[1] for row in cursor.fetchall()]
+            type_column = 'transaction_type' if 'transaction_type' in columns else 'type'
+            
             # Get total income
             income_result = db.execute(
-                "SELECT SUM(amount) as total FROM transactions WHERE type = 'income'"
+                f"SELECT SUM(amount) as total FROM transactions WHERE {type_column} = 'income'"
             ).fetchone()
             stats_data['total_income'] = float(income_result['total'] or 0)
             
             # Get total expenses
             expense_result = db.execute(
-                "SELECT SUM(amount) as total FROM transactions WHERE type = 'expense'"
+                f"SELECT SUM(amount) as total FROM transactions WHERE {type_column} = 'expense'"
             ).fetchone()
             stats_data['total_expenses'] = float(expense_result['total'] or 0)
             

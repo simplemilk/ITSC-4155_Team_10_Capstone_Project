@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/budget.css') }}">
 
 <!-- Add data attribute for monthly income -->
-<div id="budget-data" data-monthly-income="{{ monthly_income }}" style="display: none;"></div>
+<div id="budget-data" data-monthly-income="{{ monthly_income|default(0) }}" style="display: none;"></div>
 
 <div class="container-fluid">
     <!-- Budget Header -->
@@ -20,10 +20,10 @@
                 <p class="mb-0 text-muted">Plan your future spending and track your financial goals</p>
             </div>
             <div class="col-md-4 text-md-end">
-                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createBudgetModal">
+                <a href="{{ url_for('budget.create') }}" class="btn btn-primary me-2">
                     <i class="fas fa-plus me-2"></i>Create New Budget
-                </button>
-                <button class="btn btn-outline-secondary" onclick="generateBudgetReport()">
+                </a>
+                <button class="btn btn-outline-secondary btn-back-budget" onclick="generateBudgetReport()">
                     <i class="fas fa-download me-2"></i>Export
                 </button>
             </div>
@@ -39,7 +39,7 @@
                         <div>
                             <div class="budget-label">Total Weekly Budget</div>
                             <div class="budget-amount">
-                                ${{ current_budget['total_budget']|round(2) if current_budget else '0.00' }}
+                                ${{ (current_budget['total_amount']|default(0))|round(2) }}
                             </div>
                         </div>
                         <div class="budget-icon">
@@ -57,7 +57,7 @@
                         <div>
                             <div class="budget-label">Total Spent</div>
                             <div class="budget-amount text-danger">
-                                ${{ (expenses.values() | sum)|round(2) if expenses else '0.00' }}
+                                ${{ (expenses.values()|sum|default(0))|round(2) }}
                             </div>
                         </div>
                         <div class="budget-icon">
@@ -75,8 +75,8 @@
                         <div>
                             <div class="budget-label">Remaining Budget</div>
                             <div class="budget-amount text-success">
-                                {% set total_budget = current_budget['total_budget'] if current_budget else 0 %}
-                                {% set total_spent = expenses.values() | sum if expenses else 0 %}
+                                {% set total_budget = current_budget['total_amount']|default(0) if current_budget else 0 %}
+                                {% set total_spent = expenses.values()|sum|default(0) %}
                                 ${{ (total_budget - total_spent)|round(2) }}
                             </div>
                         </div>
@@ -95,7 +95,7 @@
                         <div>
                             <div class="budget-label">Monthly Income</div>
                             <div class="budget-amount text-info">
-                                ${{ monthly_income|round(2) }}
+                                ${{ (monthly_income|default(0))|round(2) }}
                             </div>
                         </div>
                         <div class="budget-icon">
@@ -131,7 +131,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header bg-niner-green">
                     <h5 class="mb-0">
                         <i class="fas fa-calendar-week me-2"></i>
                         Current Week Budget ({{ week_start }} to {{ week_end }})
@@ -148,12 +148,12 @@
                                     <span>Food & Dining</span>
                                 </div>
                                 <div class="budget-progress">
-                                    {% set food_spent = expenses.get('food', 0) %}
-                                    {% set food_budget = current_budget.get('food_budget', 0) %}
+                                    {% set food_spent = expenses.get('food', 0)|default(0) %}
+                                    {% set food_budget = current_budget.get('food_budget', 0)|default(0) %}
                                     {% set food_percentage = (food_spent / food_budget * 100) if food_budget > 0 else 0 %}
                                     
                                     <div class="progress mb-2">
-                                        <div class="progress-bar bg-danger" style="width: {{ food_percentage|min(100) }}%"></div>
+                                        <div class="progress-bar bg-danger" style="width: {{ [food_percentage, 100]|min }}%"></div>
                                     </div>
                                     <div class="budget-numbers">
                                         <span class="spent">${{ food_spent|round(2) }}</span>
@@ -174,12 +174,12 @@
                                     <span>Transportation</span>
                                 </div>
                                 <div class="budget-progress">
-                                    {% set transport_spent = expenses.get('transportation', 0) %}
-                                    {% set transport_budget = current_budget.get('transportation_budget', 0) %}
+                                    {% set transport_spent = expenses.get('transportation', 0)|default(0) %}
+                                    {% set transport_budget = current_budget.get('transportation_budget', 0)|default(0) %}
                                     {% set transport_percentage = (transport_spent / transport_budget * 100) if transport_budget > 0 else 0 %}
                                     
                                     <div class="progress mb-2">
-                                        <div class="progress-bar bg-info" style="width: {{ transport_percentage|min(100) }}%"></div>
+                                        <div class="progress-bar bg-info" style="width: {{ [transport_percentage, 100]|min }}%"></div>
                                     </div>
                                     <div class="budget-numbers">
                                         <span class="spent">${{ transport_spent|round(2) }}</span>
@@ -200,12 +200,12 @@
                                     <span>Entertainment</span>
                                 </div>
                                 <div class="budget-progress">
-                                    {% set entertainment_spent = expenses.get('entertainment', 0) %}
-                                    {% set entertainment_budget = current_budget.get('entertainment_budget', 0) %}
+                                    {% set entertainment_spent = expenses.get('entertainment', 0)|default(0) %}
+                                    {% set entertainment_budget = current_budget.get('entertainment_budget', 0)|default(0) %}
                                     {% set entertainment_percentage = (entertainment_spent / entertainment_budget * 100) if entertainment_budget > 0 else 0 %}
                                     
                                     <div class="progress mb-2">
-                                        <div class="progress-bar bg-primary" style="width: {{ entertainment_percentage|min(100) }}%"></div>
+                                        <div class="progress-bar bg-primary" style="width: {{ [entertainment_percentage, 100]|min }}%"></div>
                                     </div>
                                     <div class="budget-numbers">
                                         <span class="spent">${{ entertainment_spent|round(2) }}</span>
@@ -226,12 +226,12 @@
                                     <span>Other</span>
                                 </div>
                                 <div class="budget-progress">
-                                    {% set other_spent = expenses.get('other', 0) %}
-                                    {% set other_budget = current_budget.get('other_budget', 0) %}
+                                    {% set other_spent = expenses.get('other', 0)|default(0) %}
+                                    {% set other_budget = current_budget.get('other_budget', 0)|default(0) %}
                                     {% set other_percentage = (other_spent / other_budget * 100) if other_budget > 0 else 0 %}
                                     
                                     <div class="progress mb-2">
-                                        <div class="progress-bar bg-success" style="width: {{ other_percentage|min(100) }}%"></div>
+                                        <div class="progress-bar bg-success" style="width: {{ [other_percentage, 100]|min }}%"></div>
                                     </div>
                                     <div class="budget-numbers">
                                         <span class="spent">${{ other_spent|round(2) }}</span>
@@ -249,9 +249,9 @@
                         <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
                         <h5>No Budget Set for This Week</h5>
                         <p class="text-muted">Create your first budget to start tracking your spending.</p>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBudgetModal">
+                        <a href="{{ url_for('budget.create') }}" class="btn btn-niner-green">
                             <i class="fas fa-plus me-2"></i>Create Budget
-                        </button>
+                        </a>
                     </div>
                     {% endif %}
                 </div>
@@ -264,7 +264,7 @@
         <!-- Budget Suggestions -->
         <div class="col-md-6 mb-3">
             <div class="card h-100">
-                <div class="card-header">
+                <div class="card-header bg-niner-green">
                     <h5 class="mb-0">
                         <i class="fas fa-lightbulb me-2"></i>
                         Smart Budget Suggestions
@@ -309,7 +309,7 @@
         <!-- Quick Actions -->
         <div class="col-md-6 mb-3">
             <div class="card h-100">
-                <div class="card-header">
+                <div class="card-header bg-niner-green">
                     <h5 class="mb-0">
                         <i class="fas fa-bolt me-2"></i>
                         Quick Actions
@@ -317,120 +317,18 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary" onclick="adjustBudget()">
-                            <i class="fas fa-edit me-2"></i>Adjust Current Budget
-                        </button>
-                        <button class="btn btn-outline-success" onclick="copyLastWeek()">
-                            <i class="fas fa-copy me-2"></i>Copy Last Week's Budget
-                        </button>
+                        <a href="{{ url_for('budget.create') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Create/Adjust Budget
+                        </a>
                         <a href="{{ url_for('transactions.index') }}" class="btn btn-outline-info">
                             <i class="fas fa-list me-2"></i>View Transactions
                         </a>
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-back-budget">
                             <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Create Budget Modal -->
-<div class="modal fade" id="createBudgetModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-plus-circle me-2"></i>
-                    Create Weekly Budget
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="createBudgetForm">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="totalBudget" class="form-label">Total Weekly Budget</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="totalBudget" 
-                                       name="total_budget" step="0.01" min="0" required>
-                            </div>
-                            <div class="form-text">Recommended: 25% of monthly income</div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Budget Distribution</label>
-                            <div class="budget-slider-container">
-                                <input type="range" class="form-range" id="budgetSlider" 
-                                       min="0" max="100" value="50">
-                                <div class="slider-labels">
-                                    <small>Conservative</small>
-                                    <small class="active">Balanced</small>
-                                    <small>Flexible</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="foodBudget" class="form-label">
-                                <i class="fas fa-utensils me-1"></i>Food & Dining
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control budget-input" 
-                                       id="foodBudget" name="food_budget" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="transportBudget" class="form-label">
-                                <i class="fas fa-car me-1"></i>Transportation
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control budget-input" 
-                                       id="transportBudget" name="transportation_budget" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="entertainmentBudget" class="form-label">
-                                <i class="fas fa-film me-1"></i>Entertainment
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control budget-input" 
-                                       id="entertainmentBudget" name="entertainment_budget" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="otherBudget" class="form-label">
-                                <i class="fas fa-ellipsis-h me-1"></i>Other Expenses
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control budget-input" 
-                                       id="otherBudget" name="other_budget" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <span id="budgetSummary">Total allocated: $0.00</span>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Create Budget
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>

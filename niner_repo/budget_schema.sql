@@ -1,5 +1,29 @@
--- Budget Categories Table
+-- Drop existing tables
+DROP VIEW IF EXISTS v_budget_status;
+DROP TABLE IF EXISTS budget_allocations;
 DROP TABLE IF EXISTS budget_categories;
+DROP TABLE IF EXISTS budgets;
+
+-- Budgets Table (Weekly budget tracking)
+CREATE TABLE budgets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    food_budget DECIMAL(10,2) NOT NULL DEFAULT 0,
+    transportation_budget DECIMAL(10,2) NOT NULL DEFAULT 0,
+    entertainment_budget DECIMAL(10,2) NOT NULL DEFAULT 0,
+    other_budget DECIMAL(10,2) NOT NULL DEFAULT 0,
+    week_start_date DATE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_budgets_user ON budgets(user_id);
+CREATE INDEX idx_budgets_week ON budgets(week_start_date);
+CREATE UNIQUE INDEX idx_budgets_user_week ON budgets(user_id, week_start_date);
+
+-- Budget Categories Table
 CREATE TABLE budget_categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -14,16 +38,14 @@ CREATE TABLE budget_categories (
     created_by INTEGER NOT NULL,
     updated_by INTEGER,
     is_active BOOLEAN NOT NULL DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES user (id),
-    FOREIGN KEY (created_by) REFERENCES user (id),
-    FOREIGN KEY (updated_by) REFERENCES user (id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (updated_by) REFERENCES users(id)
 );
 
--- Create index for budget categories
 CREATE INDEX idx_budget_categories_user ON budget_categories(user_id, is_active);
 
 -- Budget Allocations Table
-DROP TABLE IF EXISTS budget_allocations;
 CREATE TABLE budget_allocations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -35,14 +57,13 @@ CREATE TABLE budget_allocations (
     created_by INTEGER NOT NULL,
     updated_by INTEGER,
     is_active BOOLEAN NOT NULL DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES user (id),
-    FOREIGN KEY (category_id) REFERENCES budget_categories (id),
-    FOREIGN KEY (created_by) REFERENCES user (id),
-    FOREIGN KEY (updated_by) REFERENCES user (id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (category_id) REFERENCES budget_categories(id),
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (updated_by) REFERENCES users(id),
     UNIQUE(user_id, category_id, month_year)
 );
 
--- Create index for budget allocations
 CREATE INDEX idx_budget_allocations_user_month 
 ON budget_allocations(user_id, month_year, is_active);
 
@@ -65,45 +86,3 @@ LEFT JOIN expenses e ON e.category_id = bc.id
     AND e.is_active = 1
 WHERE ba.is_active = 1 AND bc.is_active = 1
 GROUP BY ba.user_id, bc.id, bc.name, ba.month_year, ba.allocated_amount;
-
--- Create trigger to validate total allocation percentage
-CREATE TRIGGER validate_budget_allocation_percentage
-BEFORE INSERT ON budget_categories
-BEGIN
-    SELECT CASE
-        WHEN (
-            SELECT SUM(allocation_percentage) 
-            FROM budget_categories 
-            WHERE user_id = NEW.user_id AND is_active = 1
-        ) + NEW.allocation_percentage > 100
-        THEN RAISE(ABORT, 'Total budget allocation percentage cannot exceed 100%')
-    END;
-END;
-
--- Create trigger to update budget allocations when income changes
-CREATE TRIGGER update_budget_on_income_change
-AFTER INSERT ON income
-BEGIN
-    INSERT INTO budget_allocations (
-        user_id,
-        category_id,
-        allocated_amount,
-        month_year,
-        created_by,
-        is_active
-    )
-    SELECT 
-        NEW.user_id,
-        bc.id,
-        (NEW.amount * bc.allocation_percentage / 100),
-        date(NEW.date, 'start of month'),
-        NEW.user_id,
-        1
-    FROM budget_categories bc
-    WHERE bc.user_id = NEW.user_id AND bc.is_active = 1
-    ON CONFLICT(user_id, category_id, month_year) 
-    DO UPDATE SET 
-        allocated_amount = allocated_amount + (NEW.amount * bc.allocation_percentage / 100),
-        updated_at = CURRENT_TIMESTAMP,
-        updated_by = NEW.user_id;
-END;

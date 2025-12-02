@@ -62,15 +62,15 @@ def register():
                 db = get_db()
                 print(f"Database connection successful")
                 
-                # Check if user already exists
+                # Check if users already exists
                 existing_user = db.execute(
-                    'SELECT id FROM user WHERE username = ? OR email = ?', 
+                    'SELECT id FROM users WHERE username = ? OR email = ?', 
                     (username, email)
                 ).fetchone()
                 
                 if existing_user:
                     existing_check = db.execute(
-                        'SELECT username, email FROM user WHERE username = ? OR email = ?', 
+                        'SELECT username, email FROM users WHERE username = ? OR email = ?', 
                         (username, email)
                     ).fetchone()
                     if existing_check['username'] == username:
@@ -82,10 +82,10 @@ def register():
                     hashed_answer_1 = generate_password_hash(security_answer_1.lower())
                     hashed_answer_2 = generate_password_hash(security_answer_2.lower())
                     
-                    # Insert new user with security questions
-                    print(f"Inserting new user: {username}, {email}")
+                    # Insert new users with security questions
+                    print(f"Inserting new users: {username}, {email}")
                     db.execute('''
-                        INSERT INTO user (username, email, password, security_question_1, security_answer_1, security_question_2, security_answer_2) 
+                        INSERT INTO users (username, email, password, security_question_1, security_answer_1, security_question_2, security_answer_2) 
                         VALUES (?, ?, ?, ?, ?, ?, ?)
                     ''', (
                         username, 
@@ -97,7 +97,7 @@ def register():
                         hashed_answer_2
                     ))
                     db.commit()
-                    print("User inserted successfully")
+                    print("users inserted successfully")
                     flash('Registration successful! Please log in.', 'success')
                     return redirect(url_for("auth.login"))
                     
@@ -137,17 +137,17 @@ def login():
         else:
             try:
                 db = get_db()
-                user = db.execute(
-                    'SELECT * FROM user WHERE username = ?', (username,)
+                users = db.execute(
+                    'SELECT * FROM users WHERE username = ?', (username,)
                 ).fetchone()
 
-                if user is None:
+                if users is None:
                     error = 'Username not found.'
-                elif not check_password_hash(user['password'], password):
+                elif not check_password_hash(users['password'], password):
                     error = 'Incorrect password.'
                 else:
                     session.clear()
-                    session['user_id'] = user['id']
+                    session['user_id'] = users['id']
                     flash('Welcome back!', 'success')
                     return redirect(url_for('dashboard'))
                     
@@ -165,13 +165,13 @@ def demo_login():
     """Automatically log in with demo account"""
     try:
         db = get_db()
-        user = db.execute(
-            'SELECT * FROM user WHERE username = ?', ('demo',)
+        users = db.execute(
+            'SELECT * FROM users WHERE username = ?', ('demo',)
         ).fetchone()
         
-        if user:
+        if users:
             session.clear()
-            session['user_id'] = user['id']
+            session['user_id'] = users['id']
             flash('Welcome to the demo!', 'success')
             return redirect(url_for('dashboard'))
         else:
@@ -200,25 +200,25 @@ def forgot_password_questions():
             try:
                 db = get_db()
                 
-                # Find user by username or email
+                # Find users by username or email
                 if '@' in identifier:
-                    user = db.execute('''
+                    users = db.execute('''
                         SELECT id, username, email, security_question_1, security_question_2 
-                        FROM user WHERE email = ?
+                        FROM users WHERE email = ?
                     ''', (identifier,)).fetchone()
                 else:
-                    user = db.execute('''
+                    users = db.execute('''
                         SELECT id, username, email, security_question_1, security_question_2 
-                        FROM user WHERE username = ?
+                        FROM users WHERE username = ?
                     ''', (identifier,)).fetchone()
                 
-                if user and user['security_question_1'] and user['security_question_2']:
+                if users and users['security_question_1'] and users['security_question_2']:
                     # Show security questions
                     return render_template('auth/forgot_password_questions.html', 
                                          step=2, 
-                                         user=user)
+                                         users=users)
                 else:
-                    flash('User not found or security questions not set up.', 'error')
+                    flash('users not found or security questions not set up.', 'error')
                     return render_template('auth/forgot_password_questions.html', step=1)
                     
             except Exception as e:
@@ -249,23 +249,23 @@ def forgot_password_questions():
             try:
                 db = get_db()
                 
-                # Get user's security answers
-                user = db.execute('''
+                # Get users's security answers
+                users = db.execute('''
                     SELECT username, security_answer_1, security_answer_2 
-                    FROM user WHERE id = ?
+                    FROM users WHERE id = ?
                 ''', (user_id,)).fetchone()
                 
-                if not user:
-                    flash('Invalid user.', 'error')
+                if not users:
+                    flash('Invalid users.', 'error')
                     return redirect(url_for('auth.forgot_password_questions'))
                 
                 # Verify security answers (compare lowercase)
-                if (check_password_hash(user['security_answer_1'], answer_1.lower()) and 
-                    check_password_hash(user['security_answer_2'], answer_2.lower())):
+                if (check_password_hash(users['security_answer_1'], answer_1.lower()) and 
+                    check_password_hash(users['security_answer_2'], answer_2.lower())):
                     
                     # Reset password
                     new_password_hash = generate_password_hash(new_password)
-                    db.execute('UPDATE user SET password = ? WHERE id = ?', 
+                    db.execute('UPDATE users SET password = ? WHERE id = ?', 
                               (new_password_hash, user_id))
                     db.commit()
                     
@@ -312,7 +312,7 @@ def reset_password():
             db = get_db()
             reset_record = db.execute('''
                 SELECT pr.*, u.username FROM password_resets pr
-                JOIN user u ON pr.user_id = u.id
+                JOIN users u ON pr.user_id = u.id
                 WHERE pr.token = ? AND pr.expires_at > ?
             ''', (token, datetime.now())).fetchone()
             
@@ -321,7 +321,7 @@ def reset_password():
                 return redirect(url_for('auth.forgot_password'))
             
             # Update password and delete token
-            db.execute('UPDATE user SET password = ? WHERE id = ?',
+            db.execute('UPDATE users SET password = ? WHERE id = ?',
                       (generate_password_hash(new_password), reset_record['user_id']))
             db.execute('DELETE FROM password_resets WHERE token = ?', (token,))
             db.commit()
@@ -365,10 +365,10 @@ def profile():
         if error is None:
             try:
                 db = get_db()
-                db.execute('UPDATE user SET email = ? WHERE id = ?', (email, g.user['id']))
+                db.execute('UPDATE users SET email = ? WHERE id = ?', (email, g.user['id']))
                 
                 if new_password:
-                    db.execute('UPDATE user SET password = ? WHERE id = ?',
+                    db.execute('UPDATE users SET password = ? WHERE id = ?',
                               (generate_password_hash(new_password), g.user['id']))
                 
                 db.commit()
@@ -390,9 +390,9 @@ def load_logged_in_user():
         g.user = None
     else:
         try:
-            g.user = get_db().execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
+            g.user = get_db().execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
         except Exception as e:
-            print(f"Error loading user: {e}")
+            print(f"Error loading users: {e}")
             g.user = None
 
 @bp.route('/logout')
@@ -411,18 +411,18 @@ def login_required(view):
     return wrapped_view
 
 def create_demo_user():
-    """Create a demo user for testing purposes"""
+    """Create a demo users for testing purposes"""
     try:
         db = get_db()
-        existing_user = db.execute('SELECT * FROM user WHERE username = ?', ('demo',)).fetchone()
+        existing_user = db.execute('SELECT * FROM users WHERE username = ?', ('demo',)).fetchone()
         
         if not existing_user:
-            # Hash security answers for demo user
+            # Hash security answers for demo users
             demo_answer_1 = generate_password_hash('fluffy')
             demo_answer_2 = generate_password_hash('rover')
             
             db.execute('''
-                INSERT INTO user (username, email, password, security_question_1, security_answer_1, security_question_2, security_answer_2) 
+                INSERT INTO users (username, email, password, security_question_1, security_answer_1, security_question_2, security_answer_2) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (
                 'demo', 
@@ -434,9 +434,9 @@ def create_demo_user():
                 demo_answer_2
             ))
             db.commit()
-            print("Demo user created successfully")
+            print("Demo users created successfully")
         else:
-            print("Demo user already exists")
+            print("Demo users already exists")
             
     except Exception as e:
-        print(f"Error creating demo user: {e}")
+        print(f"Error creating demo users: {e}")

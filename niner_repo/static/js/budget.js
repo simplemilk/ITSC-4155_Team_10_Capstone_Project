@@ -14,10 +14,203 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeFilterTabs();
     initializeBudgetCards();
     loadBudgetData();
+    initializeBudgetCreateForm(); // New function for budget-create.html
 });
 
 /**
- * Initialize the budget creation form
+ * Initialize the budget creation form (for budget-create.html)
+ */
+function initializeBudgetCreateForm() {
+    const totalAmountInput = document.getElementById('total_amount');
+    const budgetInputs = document.querySelectorAll('.budget-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const budgetCreateForm = document.getElementById('budgetCreateForm');
+    
+    if (!totalAmountInput || !budgetCreateForm) {
+        return; // Not on budget-create page
+    }
+    
+    // Update calculations when inputs change
+    totalAmountInput.addEventListener('input', updateBudgetCreateCalculations);
+    budgetInputs.forEach(input => {
+        input.addEventListener('input', updateBudgetCreateCalculations);
+    });
+    
+    // Form submission
+    budgetCreateForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const totalBudget = parseFloat(totalAmountInput.value) || 0;
+        const totalAllocated = Array.from(budgetInputs).reduce((sum, input) => {
+            return sum + (parseFloat(input.value) || 0);
+        }, 0);
+        
+        if (Math.abs(totalBudget - totalAllocated) > 0.01) {
+            alert('Total allocated amount must equal the total budget amount.');
+            return;
+        }
+        
+        // Submit the form
+        this.submit();
+    });
+}
+
+/**
+ * Update budget creation calculations
+ */
+function updateBudgetCreateCalculations() {
+    const totalAmount = parseFloat(document.getElementById('total_amount')?.value) || 0;
+    const budgetInputs = document.querySelectorAll('.budget-input');
+    const percentageDisplays = document.querySelectorAll('.percentage-display');
+    
+    let totalAllocated = 0;
+    
+    // Calculate totals and percentages
+    budgetInputs.forEach((input, index) => {
+        const value = parseFloat(input.value) || 0;
+        totalAllocated += value;
+        
+        const percentage = totalAmount > 0 ? (value / totalAmount * 100) : 0;
+        if (percentageDisplays[index]) {
+            percentageDisplays[index].textContent = `${percentage.toFixed(1)}%`;
+        }
+        
+        // Add validation classes
+        if (value > 0 && totalAmount > 0) {
+            input.classList.add('is-valid');
+            input.classList.remove('is-invalid');
+        } else if (totalAmount > 0) {
+            input.classList.remove('is-valid', 'is-invalid');
+        }
+    });
+    
+    // Update summary
+    const remaining = totalAmount - totalAllocated;
+    const allocationPercentage = totalAmount > 0 ? (totalAllocated / totalAmount * 100) : 0;
+    
+    const totalAllocatedEl = document.getElementById('total-allocated');
+    const budgetAmountEl = document.getElementById('budget-amount');
+    const remainingAmountEl = document.getElementById('remaining-amount');
+    
+    if (totalAllocatedEl) totalAllocatedEl.textContent = `$${totalAllocated.toFixed(2)}`;
+    if (budgetAmountEl) budgetAmountEl.textContent = `$${totalAmount.toFixed(2)}`;
+    if (remainingAmountEl) remainingAmountEl.textContent = `$${remaining.toFixed(2)}`;
+    
+    // Update progress bar
+    const progressBar = document.getElementById('allocation-progress');
+    const statusText = document.getElementById('allocation-status');
+    
+    if (progressBar && statusText) {
+        progressBar.style.width = `${Math.min(allocationPercentage, 100)}%`;
+        
+        if (totalAmount === 0) {
+            progressBar.className = 'progress-bar';
+            statusText.textContent = 'Enter your budget to see allocation';
+        } else if (remaining === 0) {
+            progressBar.className = 'progress-bar bg-success';
+            statusText.textContent = 'Perfect allocation!';
+        } else if (remaining > 0) {
+            progressBar.className = 'progress-bar bg-warning';
+            statusText.textContent = `$${remaining.toFixed(2)} remaining to allocate`;
+        } else {
+            progressBar.className = 'progress-bar bg-danger';
+            statusText.textContent = `Over budget by $${Math.abs(remaining).toFixed(2)}`;
+        }
+    }
+    
+    // Update submit button
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn) {
+        if (totalAmount > 0 && Math.abs(remaining) < 0.01) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-niner-green');
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('btn-niner-green');
+            submitBtn.classList.add('btn-secondary');
+        }
+    }
+}
+
+/**
+ * Apply budget preset
+ */
+function applyPreset(type) {
+    const totalAmount = parseFloat(document.getElementById('total_amount')?.value) || 0;
+    
+    if (totalAmount === 0) {
+        alert('Please enter a total budget amount first.');
+        return;
+    }
+    
+    let distribution;
+    
+    switch(type) {
+        case 'conservative':
+            distribution = { food: 0.5, transportation: 0.25, entertainment: 0.1, other: 0.15 };
+            break;
+        case 'balanced':
+            distribution = { food: 0.4, transportation: 0.3, entertainment: 0.15, other: 0.15 };
+            break;
+        case 'flexible':
+            distribution = { food: 0.35, transportation: 0.25, entertainment: 0.25, other: 0.15 };
+            break;
+        default:
+            return;
+    }
+    
+    // Apply distribution
+    const foodBudget = document.getElementById('food_budget');
+    const transportBudget = document.getElementById('transportation_budget');
+    const entertainmentBudget = document.getElementById('entertainment_budget');
+    const otherBudget = document.getElementById('other_budget');
+    
+    if (foodBudget) foodBudget.value = (totalAmount * distribution.food).toFixed(2);
+    if (transportBudget) transportBudget.value = (totalAmount * distribution.transportation).toFixed(2);
+    if (entertainmentBudget) entertainmentBudget.value = (totalAmount * distribution.entertainment).toFixed(2);
+    if (otherBudget) otherBudget.value = (totalAmount * distribution.other).toFixed(2);
+    
+    updateBudgetCreateCalculations();
+}
+
+/**
+ * Get budget suggestions from API
+ */
+async function getSuggestions() {
+    try {
+        const response = await fetch('/budget/api/suggestions');
+        if (response.ok) {
+            const suggestions = await response.json();
+            
+            if (suggestions.total > 0) {
+                const totalAmountInput = document.getElementById('total_amount');
+                const foodBudget = document.getElementById('food_budget');
+                const transportBudget = document.getElementById('transportation_budget');
+                const entertainmentBudget = document.getElementById('entertainment_budget');
+                const otherBudget = document.getElementById('other_budget');
+                
+                if (totalAmountInput) totalAmountInput.value = suggestions.total.toFixed(2);
+                if (suggestions.Food && foodBudget) foodBudget.value = suggestions.Food.toFixed(2);
+                if (suggestions.Transportation && transportBudget) transportBudget.value = suggestions.Transportation.toFixed(2);
+                if (suggestions.Entertainment && entertainmentBudget) entertainmentBudget.value = suggestions.Entertainment.toFixed(2);
+                if (suggestions.Other && otherBudget) otherBudget.value = suggestions.Other.toFixed(2);
+                
+                updateBudgetCreateCalculations();
+                
+                alert('Budget suggestions applied based on your spending history!');
+            } else {
+                alert('No spending history found. Add some transactions first to get suggestions.');
+            }
+        }
+    } catch (error) {
+        console.error('Error getting suggestions:', error);
+        alert('Unable to get suggestions at this time.');
+    }
+}
+
+/**
+ * Initialize the budget creation form (for modal)
  */
 function initializeBudgetForm() {
     const totalBudgetInput = document.getElementById('totalBudget');
@@ -48,7 +241,7 @@ function initializeBudgetForm() {
     
     // Update budget distribution when slider changes
     budgetSlider.addEventListener('input', function() {
-        distributebudget();
+        distributeBudget();
     });
     
     // Update summary when inputs change
@@ -59,7 +252,7 @@ function initializeBudgetForm() {
     totalBudgetInput.addEventListener('input', function() {
         updateBudgetSummary();
         if (this.value) {
-            distributebudget();
+            distributeBudget();
         }
     });
     
@@ -76,7 +269,7 @@ function initializeBudgetForm() {
 /**
  * Distribute budget based on slider value and total budget
  */
-function distributebudget() {
+function distributeBudget() {
     const budgetSlider = document.getElementById('budgetSlider');
     const totalBudgetInput = document.getElementById('totalBudget');
     
@@ -646,3 +839,5 @@ window.generateBudgetReport = generateBudgetReport;
 window.adjustBudget = adjustBudget;
 window.copyLastWeek = copyLastWeek;
 window.setBudgetAlerts = setBudgetAlerts;
+window.applyPreset = applyPreset;
+window.getSuggestions = getSuggestions;

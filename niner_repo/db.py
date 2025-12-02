@@ -28,18 +28,21 @@ def init_db():
     try:
         db = get_db()
         
-        # Create user table
+        # Change 'user' to 'users'
         db.execute('''
-            CREATE TABLE IF NOT EXISTS user (
+            CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
+                security_question_1 TEXT,
+                security_answer_1 TEXT,
+                security_question_2 TEXT,
+                security_answer_2 TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         
-        # Create password_resets table
         db.execute('''
             CREATE TABLE IF NOT EXISTS password_resets (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,19 +50,15 @@ def init_db():
                 token TEXT NOT NULL UNIQUE,
                 expires_at TIMESTAMP NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES user (id)
+                FOREIGN KEY (user_id) REFERENCES users (id)
             )
         ''')
         
         db.commit()
-        print("Database tables created successfully")
-        
-        # Check tables
-        tables = db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
-        print(f"Available tables: {[table[0] for table in tables]}")
+        print("✓ Database tables created successfully")
         
     except Exception as e:
-        print(f"Database initialization error: {e}")
+        print(f"❌ Database initialization error: {e}")
         raise
 
 @click.command('init-db')

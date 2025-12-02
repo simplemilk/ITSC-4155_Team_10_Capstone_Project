@@ -19,18 +19,114 @@ footer a:hover {
 
 /* Notification Dropdown Styles */
 .notification-dropdown {
-    width: 350px;
-    max-height: 400px;
+    width: 380px;
+    max-height: 450px;
     overflow-y: auto;
 }
 
 .notification-dropdown .dropdown-item {
     white-space: normal;
     word-wrap: break-word;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.notification-dropdown .dropdown-item:last-child {
+    border-bottom: none;
 }
 
 .notification-dropdown .dropdown-item:hover {
     background-color: #f8f9fa;
+}
+
+/* Badge Notification Styles */
+.badge-notification-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.badge-icon-wrapper {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.badge-icon-wrapper i {
+    font-size: 20px;
+}
+
+.badge-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.badge-rarity-common {
+    background: #ecf0f1;
+    color: #7f8c8d;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.badge-rarity-uncommon {
+    background: #d5f4e6;
+    color: #27ae60;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.badge-rarity-rare {
+    background: #dfe6fd;
+    color: #3498db;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.badge-rarity-legendary {
+    background: #ffeaa7;
+    color: #f39c12;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* Achievement Notification Styles */
+.achievement-notification-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.achievement-notification-item i {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Level Up Notification Styles */
+.level-up-notification-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.05), rgba(142, 68, 173, 0.05));
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.level-up-notification-item i {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.text-purple {
+    color: #9b59b6;
 }
 
 /* Navbar Badge Styles */
@@ -89,7 +185,8 @@ footer a:hover {
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .notification-dropdown {
-        width: 300px;
+        width: 320px;
+        max-height: 400px;
     }
     
     footer .row {
@@ -99,4 +196,23 @@ footer a:hover {
     footer .col-md-4 {
         margin-bottom: 1.5rem;
     }
+}
+
+/* Scrollbar Styling for Notification Dropdown */
+.notification-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-dropdown::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.notification-dropdown::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.notification-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

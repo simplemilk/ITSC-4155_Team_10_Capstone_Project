@@ -42,12 +42,37 @@ function loadRecentNotifications() {
         });
 }
 
+// Parse JSON message if it's in JSON format
+function parseNotificationMessage(message) {
+    try {
+        // Check if message is JSON
+        if (typeof message === 'string' && message.trim().startsWith('{')) {
+            return JSON.parse(message);
+        }
+    } catch (e) {
+        // Not JSON, return as-is
+    }
+    return { text: message };
+}
+
 // Create notification item HTML
 function createNotificationItem(notification) {
     const isUnread = !notification.is_read;
+    const parsedMessage = parseNotificationMessage(notification.message);
+    
+    // Check if it's a special notification type (badge, achievement, etc.)
+    if (parsedMessage.type === 'badge') {
+        return createBadgeNotificationItem(notification, parsedMessage, isUnread);
+    } else if (parsedMessage.type === 'achievement' || parsedMessage.type === 'milestone') {
+        return createAchievementNotificationItem(notification, parsedMessage, isUnread);
+    } else if (parsedMessage.type === 'level_up') {
+        return createLevelUpNotificationItem(notification, parsedMessage, isUnread);
+    }
+    
+    // Regular notification
     const severityIcon = getSeverityIcon(notification.severity);
     const severityClass = getSeverityClass(notification.severity);
-    const messagePreview = truncateMessage(notification.message, 50);
+    const messagePreview = truncateMessage(parsedMessage.text || notification.message, 50);
     const formattedDate = formatNotificationDate(notification.created_at);
     
     return `
@@ -59,6 +84,77 @@ function createNotificationItem(notification) {
                         <div class="fw-bold small">${escapeHtml(notification.title)}</div>
                         <div class="text-muted small">${escapeHtml(messagePreview)}</div>
                         <div class="text-muted small">${formattedDate}</div>
+                    </div>
+                </div>
+            </a>
+        </li>
+    `;
+}
+
+// Create badge notification item
+function createBadgeNotificationItem(notification, data, isUnread) {
+    const formattedDate = formatNotificationDate(notification.created_at);
+    const rarityClass = `badge-rarity-${data.rarity || 'common'}`;
+    
+    return `
+        <li>
+            <a class="dropdown-item py-2 ${isUnread ? 'bg-light' : ''}" href="/gamification">
+                <div class="badge-notification-item">
+                    <div class="badge-icon-wrapper" style="background-color: ${data.color}15;">
+                        <i class="fas ${data.icon}" style="color: ${data.color};"></i>
+                    </div>
+                    <div class="badge-content">
+                        <div class="fw-bold small">🎖️ ${escapeHtml(data.name)}</div>
+                        <div class="text-muted small">${escapeHtml(data.description)}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span class="badge ${rarityClass}">${(data.rarity || 'common').toUpperCase()}</span>
+                            <span class="text-muted small">${formattedDate}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </li>
+    `;
+}
+
+// Create achievement notification item
+function createAchievementNotificationItem(notification, data, isUnread) {
+    const formattedDate = formatNotificationDate(notification.created_at);
+    
+    return `
+        <li>
+            <a class="dropdown-item py-2 ${isUnread ? 'bg-light' : ''}" href="/gamification">
+                <div class="achievement-notification-item">
+                    <i class="fas ${data.icon || 'fa-trophy'}" style="color: ${data.color || '#f39c12'}; font-size: 24px;"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold small">🏆 ${escapeHtml(data.name)}</div>
+                        <div class="text-muted small">${escapeHtml(data.description)}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            ${data.points ? `<span class="badge bg-success">+${data.points} points</span>` : ''}
+                            <span class="text-muted small">${formattedDate}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </li>
+    `;
+}
+
+// Create level up notification item
+function createLevelUpNotificationItem(notification, data, isUnread) {
+    const formattedDate = formatNotificationDate(notification.created_at);
+    
+    return `
+        <li>
+            <a class="dropdown-item py-2 ${isUnread ? 'bg-light' : ''}" href="/gamification">
+                <div class="level-up-notification-item">
+                    <i class="fas fa-level-up-alt" style="color: #9b59b6; font-size: 24px;"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold small text-purple">⬆️ Level Up!</div>
+                        <div class="text-muted small">
+                            You've reached Level ${data.level}${data.level_name ? ': ' + escapeHtml(data.level_name) : ''}
+                        </div>
+                        <div class="text-muted small mt-1">${formattedDate}</div>
                     </div>
                 </div>
             </a>
@@ -88,6 +184,7 @@ function getSeverityClass(severity) {
 
 // Truncate message
 function truncateMessage(message, maxLength) {
+    if (!message) return '';
     if (message.length <= maxLength) {
         return message;
     }
@@ -142,6 +239,7 @@ function createErrorMessage() {
 
 // Escape HTML to prevent XSS
 function escapeHtml(text) {
+    if (!text) return '';
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -149,7 +247,7 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
 // Initialize notifications on page load
@@ -170,18 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationsDropdown = document.getElementById('notificationsDropdown');
     if (notificationsDropdown) {
         notificationsDropdown.addEventListener('click', function(e) {
-            // Prevent dropdown from closing when clicking inside
-            e.stopPropagation();
             loadRecentNotifications();
         });
         
         // Also load on dropdown show event
-        const dropdownElement = document.querySelector('#notificationsDropdown');
-        if (dropdownElement) {
-            dropdownElement.addEventListener('show.bs.dropdown', function() {
-                loadRecentNotifications();
-            });
-        }
+        notificationsDropdown.addEventListener('show.bs.dropdown', function() {
+            loadRecentNotifications();
+        });
     }
 });
 

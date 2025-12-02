@@ -4,6 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/budget.css') }}">
+<script src="{{ url_for('static', filename='js/budget.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -16,10 +17,10 @@
                     <i class="fas fa-plus-circle me-3"></i>
                     Create Weekly Budget
                 </h1>
-                <p class="mb-0 text-muted">Plan your spending for the week ahead</p>
+                <p class="mb-0">Plan your spending for the week ahead</p>
             </div>
             <div class="col-md-4 text-md-end">
-                <a href="{{ url_for('budget.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ url_for('budget.index') }}" class="btn btn-back-budget">
                     <i class="fas fa-arrow-left me-2"></i>Back to Budget
                 </a>
             </div>
@@ -42,7 +43,7 @@
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-niner-green text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-wallet me-2"></i>
                         Weekly Budget Setup
@@ -66,7 +67,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <button type="button" class="btn btn-outline-info w-100" 
+                                    <button type="button" class="btn btn-suggest w-100" 
                                             onclick="getSuggestions()">
                                         <i class="fas fa-lightbulb me-1"></i>
                                         Suggest
@@ -211,7 +212,7 @@
                             </h6>
                             <div class="row">
                                 <div class="col-md-4 mb-2">
-                                    <button type="button" class="btn btn-outline-primary w-100" 
+                                    <button type="button" class="btn btn-outline-success w-100" 
                                             onclick="applyPreset('conservative')">
                                         <i class="fas fa-shield-alt me-1"></i>
                                         Conservative
@@ -225,7 +226,7 @@
                                     </button>
                                 </div>
                                 <div class="col-md-4 mb-2">
-                                    <button type="button" class="btn btn-outline-warning w-100" 
+                                    <button type="button" class="btn btn-outline-success w-100" 
                                             onclick="applyPreset('flexible')">
                                         <i class="fas fa-hand-paper me-1"></i>
                                         Flexible
@@ -246,7 +247,7 @@
                                     </a>
                                 </div>
                                 <div class="col-md-6">
-                                    <button type="submit" class="btn btn-primary w-100" id="submit-btn">
+                                    <button type="submit" class="btn btn-niner-green w-100" id="submit-btn">
                                         <i class="fas fa-save me-2"></i>Create Budget
                                     </button>
                                 </div>
@@ -258,304 +259,4 @@
         </div>
     </div>
 </div>
-
-<style>
-/* Additional styles for the budget creation form */
-.budget-section {
-    background: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 8px;
-    border-left: 4px solid #007bff;
-}
-
-.section-title {
-    color: #495057;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
-.category-input-group {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 1rem;
-    transition: all 0.3s ease;
-}
-
-.category-input-group:hover {
-    border-color: #007bff;
-    box-shadow: 0 2px 8px rgba(0,123,255,0.1);
-}
-
-.category-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.75rem;
-}
-
-.category-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 1rem;
-    color: white;
-    font-size: 1.1rem;
-}
-
-.category-icon.food { background: #dc3545; }
-.category-icon.transportation { background: #17a2b8; }
-.category-icon.entertainment { background: #6f42c1; }
-.category-icon.other { background: #6c757d; }
-
-.category-info {
-    flex: 1;
-}
-
-.category-input {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.percentage-display {
-    min-width: 50px;
-    text-align: center;
-    font-weight: 600;
-    color: #495057;
-    background: #f8f9fa;
-    padding: 0.375rem 0.75rem;
-    border-radius: 4px;
-    border: 1px solid #ced4da;
-}
-
-.budget-summary {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 1.5rem;
-}
-
-.summary-card {
-    background: white;
-    padding: 1rem;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
-}
-
-.budget-presets {
-    background: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 8px;
-    border-left: 4px solid #28a745;
-}
-
-.form-actions {
-    padding-top: 1.5rem;
-    border-top: 1px solid #e9ecef;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .category-input {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .percentage-display {
-        align-self: stretch;
-        text-align: center;
-    }
-    
-    .category-header {
-        flex-direction: column;
-        text-align: center;
-        gap: 0.5rem;
-    }
-    
-    .category-icon {
-        margin-right: 0;
-    }
-}
-
-/* Animation for validation states */
-.is-valid {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
-
-.is-invalid {
-    border-color: #dc3545;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-
-.progress-bar {
-    transition: width 0.3s ease;
-}
-
-.budget-input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-</style>
-
-<script>
-// Budget creation form functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const totalAmountInput = document.getElementById('total_amount');
-    const budgetInputs = document.querySelectorAll('.budget-input');
-    const submitBtn = document.getElementById('submit-btn');
-    
-    // Update calculations when inputs change
-    totalAmountInput.addEventListener('input', updateCalculations);
-    budgetInputs.forEach(input => {
-        input.addEventListener('input', updateCalculations);
-    });
-    
-    // Form submission
-    document.getElementById('budgetCreateForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const totalBudget = parseFloat(totalAmountInput.value) || 0;
-        const totalAllocated = Array.from(budgetInputs).reduce((sum, input) => {
-            return sum + (parseFloat(input.value) || 0);
-        }, 0);
-        
-        if (Math.abs(totalBudget - totalAllocated) > 0.01) {
-            alert('Total allocated amount must equal the total budget amount.');
-            return;
-        }
-        
-        // Submit the form
-        this.submit();
-    });
-});
-
-function updateCalculations() {
-    const totalAmount = parseFloat(document.getElementById('total_amount').value) || 0;
-    const budgetInputs = document.querySelectorAll('.budget-input');
-    const percentageDisplays = document.querySelectorAll('.percentage-display');
-    
-    let totalAllocated = 0;
-    
-    // Calculate totals and percentages
-    budgetInputs.forEach((input, index) => {
-        const value = parseFloat(input.value) || 0;
-        totalAllocated += value;
-        
-        const percentage = totalAmount > 0 ? (value / totalAmount * 100) : 0;
-        percentageDisplays[index].textContent = `${percentage.toFixed(1)}%`;
-        
-        // Add validation classes
-        if (value > 0 && totalAmount > 0) {
-            input.classList.add('is-valid');
-            input.classList.remove('is-invalid');
-        } else if (totalAmount > 0) {
-            input.classList.remove('is-valid', 'is-invalid');
-        }
-    });
-    
-    // Update summary
-    const remaining = totalAmount - totalAllocated;
-    const allocationPercentage = totalAmount > 0 ? (totalAllocated / totalAmount * 100) : 0;
-    
-    document.getElementById('total-allocated').textContent = `$${totalAllocated.toFixed(2)}`;
-    document.getElementById('budget-amount').textContent = `$${totalAmount.toFixed(2)}`;
-    document.getElementById('remaining-amount').textContent = `$${remaining.toFixed(2)}`;
-    
-    // Update progress bar
-    const progressBar = document.getElementById('allocation-progress');
-    const statusText = document.getElementById('allocation-status');
-    
-    progressBar.style.width = `${Math.min(allocationPercentage, 100)}%`;
-    
-    if (totalAmount === 0) {
-        progressBar.className = 'progress-bar';
-        statusText.textContent = 'Enter your budget to see allocation';
-    } else if (remaining === 0) {
-        progressBar.className = 'progress-bar bg-success';
-        statusText.textContent = 'Perfect allocation!';
-    } else if (remaining > 0) {
-        progressBar.className = 'progress-bar bg-warning';
-        statusText.textContent = `$${remaining.toFixed(2)} remaining to allocate`;
-    } else {
-        progressBar.className = 'progress-bar bg-danger';
-        statusText.textContent = `Over budget by $${Math.abs(remaining).toFixed(2)}`;
-    }
-    
-    // Update submit button
-    const submitBtn = document.getElementById('submit-btn');
-    if (totalAmount > 0 && Math.abs(remaining) < 0.01) {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('btn-secondary');
-        submitBtn.classList.add('btn-primary');
-    } else {
-        submitBtn.disabled = true;
-        submitBtn.classList.remove('btn-primary');
-        submitBtn.classList.add('btn-secondary');
-    }
-}
-
-function applyPreset(type) {
-    const totalAmount = parseFloat(document.getElementById('total_amount').value) || 0;
-    
-    if (totalAmount === 0) {
-        alert('Please enter a total budget amount first.');
-        return;
-    }
-    
-    let distribution;
-    
-    switch(type) {
-        case 'conservative':
-            distribution = { food: 0.5, transportation: 0.25, entertainment: 0.1, other: 0.15 };
-            break;
-        case 'balanced':
-            distribution = { food: 0.4, transportation: 0.3, entertainment: 0.15, other: 0.15 };
-            break;
-        case 'flexible':
-            distribution = { food: 0.35, transportation: 0.25, entertainment: 0.25, other: 0.15 };
-            break;
-        default:
-            return;
-    }
-    
-    // Apply distribution
-    document.getElementById('food_budget').value = (totalAmount * distribution.food).toFixed(2);
-    document.getElementById('transportation_budget').value = (totalAmount * distribution.transportation).toFixed(2);
-    document.getElementById('entertainment_budget').value = (totalAmount * distribution.entertainment).toFixed(2);
-    document.getElementById('other_budget').value = (totalAmount * distribution.other).toFixed(2);
-    
-    updateCalculations();
-}
-
-async function getSuggestions() {
-    try {
-        const response = await fetch('/budget/api/suggestions');
-        if (response.ok) {
-            const suggestions = await response.json();
-            
-            if (suggestions.total > 0) {
-                document.getElementById('total_amount').value = suggestions.total.toFixed(2);
-                
-                if (suggestions.Food) document.getElementById('food_budget').value = suggestions.Food.toFixed(2);
-                if (suggestions.Transportation) document.getElementById('transportation_budget').value = suggestions.Transportation.toFixed(2);
-                if (suggestions.Entertainment) document.getElementById('entertainment_budget').value = suggestions.Entertainment.toFixed(2);
-                if (suggestions.Other) document.getElementById('other_budget').value = suggestions.Other.toFixed(2);
-                
-                updateCalculations();
-                
-                alert('Budget suggestions applied based on your spending history!');
-            } else {
-                alert('No spending history found. Add some transactions first to get suggestions.');
-            }
-        }
-    } catch (error) {
-        console.error('Error getting suggestions:', error);
-        alert('Unable to get suggestions at this time.');
-    }
-}
-</script>
 {% endblock %}

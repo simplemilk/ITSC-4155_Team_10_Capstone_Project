@@ -38,14 +38,19 @@ def get_financial_summary(user_id):
     # Weekly spending by category
     week_spending_rows = db.execute('''
         SELECT 
-            category,
-            COALESCE(SUM(amount), 0) as spent
-        FROM transactions 
-        WHERE user_id = ? 
-        AND type = 'expense'
-        AND date >= ? AND date <= ?
-        GROUP BY category
-    ''', (user_id, week_start.isoformat(), week_end.isoformat())).fetchall()
+            COALESCE(e.category, 'Other') as category,
+            SUM(t.amount) as total
+        FROM transactions t
+        LEFT JOIN expenses e ON t.user_id = e.user_id 
+            AND t.description = e.description 
+            AND t.date = e.date
+        WHERE t.user_id = ? 
+          AND t.date >= ? 
+          AND t.date <= ?
+          AND t.transaction_type = 'expense'
+          AND t.is_active = 1
+        GROUP BY e.category
+    ''', (user_id, week_start, week_end)).fetchall()
     
     # Convert to list of dicts
     week_spending = [dict(row) for row in week_spending_rows]
@@ -55,7 +60,7 @@ def get_financial_summary(user_id):
         SELECT COALESCE(SUM(amount), 0) as total
         FROM transactions 
         WHERE user_id = ? 
-        AND type = 'expense'
+        AND transaction_type = 'expense'
         AND date >= ? AND date <= ?
     ''', (user_id, week_start.isoformat(), week_end.isoformat())).fetchone()
     
@@ -66,7 +71,7 @@ def get_financial_summary(user_id):
         SELECT COALESCE(SUM(amount), 0) as total
         FROM transactions 
         WHERE user_id = ? 
-        AND type = 'income'
+        AND transaction_type = 'income'
         AND date >= ? AND date <= ?
     ''', (user_id, month_start.isoformat(), month_end.isoformat())).fetchone()
     
@@ -77,7 +82,7 @@ def get_financial_summary(user_id):
         SELECT COALESCE(SUM(amount), 0) as total
         FROM transactions 
         WHERE user_id = ? 
-        AND type = 'expense'
+        AND transaction_type = 'expense'
         AND date >= ? AND date <= ?
     ''', (user_id, month_start.isoformat(), month_end.isoformat())).fetchone()
     
@@ -148,44 +153,81 @@ def get_financial_summary(user_id):
 @bp.route('/')
 @login_required
 def index():
-    """Budget management page with real financial data"""
-    financial_summary = get_financial_summary(g.user['id'])
+    """Budget planning page"""
+    from db import get_db
+    from datetime import datetime, timedelta
     
-    # Get additional budget-specific data
     db = get_db()
     user_id = g.user['id']
     
-    # Get budget history
-    budget_history_rows = db.execute('''
+    # Get current week's budget
+    today = datetime.now()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+    
+    current_budget = db.execute('''
         SELECT * FROM budgets 
+        WHERE user_id = ? AND week_start_date = ?
+        ORDER BY created_at DESC LIMIT 1
+    ''', (user_id, week_start.date())).fetchone()
+    
+    # Get current week's expenses by category
+    expenses = {}
+    expense_rows = db.execute('''
+        SELECT category, SUM(amount) as total
+        FROM expenses
         WHERE user_id = ? 
-        ORDER BY week_start_date DESC
-        LIMIT 10
+        AND date >= ? 
+        AND date <= ?
+        AND is_active = 1
+        GROUP BY category
+    ''', (user_id, week_start.date(), week_end.date())).fetchall()
+    
+    for row in expense_rows:
+        expenses[row['category']] = float(row['total'])
+    
+    # Get monthly income (sum of all income for current month)
+    current_month_start = today.replace(day=1)
+    monthly_income = db.execute('''
+        SELECT COALESCE(SUM(amount), 0) as total
+        FROM income
+        WHERE user_id = ? 
+        AND date >= ?
+        AND is_active = 1
+    ''', (user_id, current_month_start.date())).fetchone()
+    
+    monthly_income_value = float(monthly_income['total']) if monthly_income else 0.0
+    
+    # Get spending patterns for suggestions
+    spending_patterns = {}
+    pattern_rows = db.execute('''
+        SELECT category, 
+               AVG(amount) as avg_amount,
+               COUNT(*) as frequency
+        FROM expenses
+        WHERE user_id = ?
+        AND date >= date('now', '-30 days')
+        AND is_active = 1
+        GROUP BY category
     ''', (user_id,)).fetchall()
     
-    budget_history = [dict(row) for row in budget_history_rows]
+    for row in pattern_rows:
+        spending_patterns[row['category']] = {
+            'avg_amount': float(row['avg_amount']),
+            'frequency': int(row['frequency'])
+        }
     
-    # Get spending trends
-    spending_trends_rows = db.execute('''
-        SELECT 
-            DATE(date) as day,
-            COALESCE(SUM(amount), 0) as daily_total
-        FROM transactions 
-        WHERE user_id = ? 
-        AND type = 'expense'
-        AND date >= ?
-        GROUP BY DATE(date)
-        ORDER BY date DESC
-        LIMIT 7
-    ''', (user_id, financial_summary['week_dates']['start'])).fetchall()
+    # Get financial summary
+    financial_summary = get_financial_summary(user_id)
     
-    spending_trends = [dict(row) for row in spending_trends_rows]
-    
-    # Add budget-specific data to the summary
-    financial_summary['budget_history'] = budget_history
-    financial_summary['spending_trends'] = spending_trends
-    
-    return render_template('home/budget.html', **financial_summary)
+    return render_template('home/budget.html',
+                         current_budget=dict(current_budget) if current_budget else None,
+                         expenses=expenses,
+                         monthly_income=monthly_income_value,
+                         spending_patterns=spending_patterns,
+                         week_start=week_start.strftime('%Y-%m-%d'),
+                         week_end=week_end.strftime('%Y-%m-%d'),
+                         **financial_summary)
 
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
@@ -267,7 +309,7 @@ def get_budget_suggestions():
                 SUM(amount) as weekly_total
             FROM transactions 
             WHERE user_id = ? 
-            AND type = 'expense'
+            AND transaction_type = 'expense'
             AND date >= date('now', '-28 days')
             GROUP BY category, week
         )

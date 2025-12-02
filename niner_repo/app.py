@@ -5,9 +5,14 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Create Flask app
 app = Flask(__name__)
+
+# Use instance folder for database
+instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
+os.makedirs(instance_path, exist_ok=True)
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
-app.config['DATABASE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'niner_finance.sqlite')
-app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for simplicity in this example
+app.config['DATABASE'] = os.path.join(instance_path, 'niner_finance.sqlite')
+app.config['WTF_CSRF_ENABLED'] = False
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
@@ -123,17 +128,17 @@ def quick_expense():
 @app.route('/profile')
 @auth.login_required
 def profile():
-    """User profile page"""
+    """users profile page"""
     return redirect(url_for('auth.profile'))
 
 # Financial Goals routes with traditional forms
 @app.route('/goals')
 @auth.login_required
 def financial_goals():
-    """Financial goals page with user data"""
+    """Financial goals page with users data"""
     from db import get_db
     
-    # Get user's financial goals if they exist in database
+    # Get users's financial goals if they exist in database
     db_conn = get_db()
     try:
         # Check if financial_goals table exists
@@ -144,7 +149,7 @@ def financial_goals():
         
         user_goals = []
         if table_check:
-            # Get user's goals from database
+            # Get users's goals from database
             user_goals = db_conn.execute('''
                 SELECT * FROM financial_goals 
                 WHERE user_id = ? 
@@ -429,8 +434,7 @@ def internal_error(error):
 # Context processor
 @app.context_processor
 def inject_user():
-    """Make user and datetime available in all templates"""
-    return dict(user=g.user, now=datetime.now)
+    return dict(user=g.user, now=datetime.now)  # Changed from g.user to g.user
 
 @app.template_filter('date_diff')
 def date_diff_filter(date_str):
@@ -453,9 +457,9 @@ if __name__ == '__main__':
             db.init_db()
             print("✓ Main database initialized")
             
-            # Create demo user
+            # Create demo users
             auth.create_demo_user()
-            print("✓ Demo user created/verified")
+            print("✓ Demo users created/verified")
             
             # Initialize subscriptions database
             print("\n🔄 Initializing subscriptions module...")
