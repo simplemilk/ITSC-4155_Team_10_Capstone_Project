@@ -117,21 +117,17 @@
                                     </td>
                                     <td>
                                         <div class="action-buttons">
-                                            <!-- Edit Button -->
                                             <button class="btn btn-outline-primary btn-sm" 
-                                                    onclick="editIncome('{{ record['id'] }}')" 
+                                                    onclick="editIncome({{ record['id'] }})" 
                                                     title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-    
-                                            <!-- Delete Button -->
                                             <button class="btn btn-outline-danger btn-sm" 
-                                                    onclick="deleteIncome('{{ record['id'] }}')" 
+                                                    onclick="deleteIncome({{ record['id'] }})" 
                                                     title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
-
                                     </td>
                                 </tr>
                                 {% endfor %}
