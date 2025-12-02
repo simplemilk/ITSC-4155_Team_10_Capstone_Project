@@ -390,6 +390,9 @@ def init_all_databases():
     if seed_demo_data(db_path):
         success_count += 1
     
+    # Remove duplicate milestones
+    remove_milestone_duplicates(db_path)
+    
     print("\n" + "=" * 60)
     print(f"📊 Initialization Summary: {success_count}/{total_count} successful")
     print("=" * 60)
@@ -401,6 +404,20 @@ def init_all_databases():
         print("   Password: demo123")
     
     return success_count == total_count
+
+def remove_milestone_duplicates(db_path):
+    """Remove duplicate milestones, keeping the one with the earliest creation date"""
+    conn = sqlite3.connect(db_path)
+    conn.execute("""
+        DELETE FROM milestones
+        WHERE rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM milestones
+            GROUP BY name, category
+        );
+    """)
+    conn.commit()
+    conn.close()
 
 if __name__ == '__main__':
     success = init_all_databases()

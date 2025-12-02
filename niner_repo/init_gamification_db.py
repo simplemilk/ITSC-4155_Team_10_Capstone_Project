@@ -232,7 +232,21 @@ def init_gamification_db():
         traceback.print_exc()
         return False
 
+def remove_milestone_duplicates(db_path):
+    conn = sqlite3.connect(db_path)
+    conn.execute("""
+        DELETE FROM milestones
+        WHERE rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM milestones
+            GROUP BY name, category
+        );
+    """)
+    conn.commit()
+    conn.close()
+
 if __name__ == '__main__':
     import sys
     success = init_gamification_db()
+    remove_milestone_duplicates('instance/niner_finance.sqlite')
     sys.exit(0 if success else 1)

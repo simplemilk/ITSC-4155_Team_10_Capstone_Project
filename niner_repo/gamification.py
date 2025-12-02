@@ -3,6 +3,7 @@ from db import get_db
 from auth import login_required
 from datetime import datetime, timedelta
 import json
+import sqlite3
 
 bp = Blueprint('gamification', __name__, url_prefix='/game')
 
@@ -190,7 +191,7 @@ def complete_milestone(user_id, milestone_id):
     ).fetchone()
     
     if achievement and achievement['is_completed']:
-        return  # Already completed
+        return  # Already completed - DON'T flash again
     
     # Get milestone details
     milestone = db.execute(
@@ -225,7 +226,7 @@ def complete_milestone(user_id, milestone_id):
         f'Completed: {milestone["name"]}'
     )
     
-    # Create achievement data for popup
+    # ONLY flash if we just completed it
     achievement_data = {
         'type': 'achievement',
         'name': milestone['name'],
@@ -236,7 +237,6 @@ def complete_milestone(user_id, milestone_id):
         'tier': milestone['tier']
     }
     
-    # Use a special category for achievement notifications
     flash(json.dumps(achievement_data), 'achievement')
     
     # Award tier-specific badges
@@ -354,12 +354,13 @@ def check_milestone_progress(user_id, milestone_category, current_value):
     """Check if user has achieved any milestones"""
     db = get_db()
     
-    # Get relevant milestones
+    # Get relevant milestones that are NOT completed yet
     milestones = db.execute(
         '''SELECT m.* FROM milestones m
            LEFT JOIN user_achievements ua ON m.id = ua.milestone_id AND ua.user_id = ?
            WHERE m.category = ? AND m.is_active = 1
-           AND (ua.is_completed = 0 OR ua.id IS NULL)''',
+           AND (ua.is_completed = 0 OR ua.id IS NULL)
+           ORDER BY m.criteria_value ASC''',
         (user_id, milestone_category)
     ).fetchall()
     
@@ -377,7 +378,7 @@ def check_milestone_progress(user_id, milestone_category, current_value):
                 (user_id, milestone['id'], current_value)
             )
             db.commit()
-        else:
+        elif not achievement['is_completed']:  # Only update if not completed
             # Update progress
             db.execute(
                 'UPDATE user_achievements SET progress_value = ? WHERE id = ?',
@@ -385,9 +386,11 @@ def check_milestone_progress(user_id, milestone_category, current_value):
             )
             db.commit()
         
-        # Check if milestone is achieved
+        # Check if milestone is achieved (and not already completed)
         if current_value >= milestone['criteria_value']:
-            complete_milestone(user_id, milestone['id'])
+            if not achievement or not achievement['is_completed']:
+                complete_milestone(user_id, milestone['id'])
+                break  # Only complete ONE milestone per check to avoid spam
 
 def update_streak(user_id):
     """Update user's activity streak"""
@@ -568,3 +571,19 @@ __all__ = [
     'award_badge',
     'update_streak'
 ]
+
+def remove_milestone_duplicates(db_path):
+    conn = sqlite3.connect(db_path)
+    conn.execute("""
+        DELETE FROM milestones
+        WHERE rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM milestones
+            GROUP BY name, category
+        );
+    """)
+    conn.commit()
+    conn.close()
+
+# Call this after all milestone inserts
+remove_milestone_duplicates('instance/niner_finance.sqlite')

@@ -104,6 +104,8 @@ CREATE INDEX IF NOT EXISTS idx_achievements_user ON user_achievements(user_id);
 CREATE INDEX IF NOT EXISTS idx_achievements_milestone ON user_achievements(milestone_id);
 CREATE INDEX IF NOT EXISTS idx_activities_user ON game_activities(user_id);
 CREATE INDEX IF NOT EXISTS idx_activities_date ON game_activities(created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_milestones_name_category
+ON milestones (name, category);
 
 -- Insert default levels
 INSERT OR IGNORE INTO levels (level_number, level_name, experience_required, points_multiplier, badge_icon) VALUES

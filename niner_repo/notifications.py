@@ -26,33 +26,55 @@ class NotificationEngine:
     SEVERITY_CRITICAL = 'critical'
     
     @staticmethod
+    def check_table_exists():
+        """Check if notifications tables exist"""
+        db = get_db()
+        try:
+            db.execute("SELECT 1 FROM notifications LIMIT 1")
+            return True
+        except sqlite3.OperationalError:
+            return False
+    
+    @staticmethod
     def get_user_settings(user_id):
         """Get notification settings for a user"""
+        if not NotificationEngine.check_table_exists():
+            return None
+            
         db = get_db()
-        settings = db.execute(
-            'SELECT * FROM notification_settings WHERE user_id = ?',
-            (user_id,)
-        ).fetchone()
-        
-        if not settings:
-            # Create default settings if they don't exist
-            db.execute(
-                'INSERT INTO notification_settings (user_id) VALUES (?)',
-                (user_id,)
-            )
-            db.commit()
+        try:
             settings = db.execute(
                 'SELECT * FROM notification_settings WHERE user_id = ?',
                 (user_id,)
             ).fetchone()
-        
-        return dict(settings) if settings else None
+            
+            if not settings:
+                # Create default settings if they don't exist
+                db.execute(
+                    'INSERT INTO notification_settings (user_id) VALUES (?)',
+                    (user_id,)
+                )
+                db.commit()
+                settings = db.execute(
+                    'SELECT * FROM notification_settings WHERE user_id = ?',
+                    (user_id,)
+                ).fetchone()
+            
+            return dict(settings) if settings else None
+        except sqlite3.OperationalError:
+            return None
     
     @staticmethod
     def create_notification(user_id, notification_type, title, message, severity, metadata=None):
         """Create a new notification"""
+        if not NotificationEngine.check_table_exists():
+            return None
+            
         db = get_db()
         settings = NotificationEngine.get_user_settings(user_id)
+        
+        if not settings:
+            return None
         
         # Check if this notification type is enabled
         enable_key = f'enable_{notification_type}'
@@ -341,35 +363,44 @@ class NotificationEngine:
     @staticmethod
     def get_notifications(user_id, unread_only=False, limit=50):
         """Get notifications for a user"""
+        if not NotificationEngine.check_table_exists():
+            return []
+            
         db = get_db()
         
-        query = '''SELECT * FROM notifications WHERE user_id = ?'''
-        params = [user_id]
-        
-        if unread_only:
-            query += ' AND is_read = 0'
-        
-        query += ' ORDER BY created_at DESC LIMIT ?'
-        params.append(limit)
-        
-        notifications = db.execute(query, params).fetchall()
-        
-        # Convert to list of dicts and parse metadata
-        result = []
-        for notif in notifications:
-            notif_dict = dict(notif)
-            if notif_dict['metadata']:
-                try:
-                    notif_dict['metadata'] = json.loads(notif_dict['metadata'])
-                except:
-                    notif_dict['metadata'] = {}
-            result.append(notif_dict)
-        
-        return result
+        try:
+            query = '''SELECT * FROM notifications WHERE user_id = ?'''
+            params = [user_id]
+            
+            if unread_only:
+                query += ' AND is_read = 0'
+            
+            query += ' ORDER BY created_at DESC LIMIT ?'
+            params.append(limit)
+            
+            notifications = db.execute(query, params).fetchall()
+            
+            # Convert to list of dicts and parse metadata
+            result = []
+            for notif in notifications:
+                notif_dict = dict(notif)
+                if notif_dict['metadata']:
+                    try:
+                        notif_dict['metadata'] = json.loads(notif_dict['metadata'])
+                    except:
+                        notif_dict['metadata'] = {}
+                result.append(notif_dict)
+            
+            return result
+        except sqlite3.OperationalError:
+            return []
     
     @staticmethod
     def get_unread_count(user_id):
         """Get count of unread notifications"""
+        if not NotificationEngine.check_table_exists():
+            return 0
+            
         db = get_db()
         try:
             count_row = db.execute(
@@ -378,7 +409,6 @@ class NotificationEngine:
             ).fetchone()
             return count_row['count'] if count_row else 0
         except sqlite3.OperationalError:
-            # If the notifications table does not exist (dev/demo DB), return 0
             return 0
     
     @staticmethod
