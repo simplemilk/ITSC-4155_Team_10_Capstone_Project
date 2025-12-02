@@ -69,7 +69,9 @@ def add():
     
     # Insert subscription
     db = get_db()
-    db.execute(
+    
+    # Create subscription
+    cursor = db.execute(
         '''INSERT INTO subscriptions 
            (user_id, name, amount, frequency, category, next_billing_date, 
             start_date, notes, auto_detected)
@@ -77,9 +79,60 @@ def add():
         (g.user['id'], name, float(amount), frequency, category, 
          next_billing_date, datetime.now().date().isoformat(), notes)
     )
+    subscription_id = cursor.lastrowid
+    
+    # ALSO CREATE TRANSACTION - Map subscription category to expense category
+    expense_category = map_subscription_to_expense_category(category)
+    
+    try:
+        # Check if transactions table has category column
+        cursor = db.execute("PRAGMA table_info(transactions)")
+        columns = [row[1] for row in cursor.fetchall()]
+        has_category = 'category' in columns
+        
+        # Insert into transactions table
+        if has_category:
+            trans_cursor = db.execute(
+                '''INSERT INTO transactions 
+                   (user_id, transaction_type, category, amount, description, date, is_active)
+                   VALUES (?, 'expense', ?, ?, ?, ?, 1)''',
+                (g.user['id'], expense_category, float(amount), 
+                 f'{name} (Subscription)', next_billing_date)
+            )
+        else:
+            trans_cursor = db.execute(
+                '''INSERT INTO transactions 
+                   (user_id, transaction_type, amount, description, date, is_active)
+                   VALUES (?, 'expense', ?, ?, ?, 1)''',
+                (g.user['id'], float(amount), f'{name} (Subscription)', next_billing_date)
+            )
+        
+        transaction_id = trans_cursor.lastrowid
+        
+        # Link subscription to transaction
+        db.execute(
+            'UPDATE subscriptions SET transaction_id = ? WHERE id = ?',
+            (transaction_id, subscription_id)
+        )
+        
+        # Also add to expenses table if it exists
+        try:
+            db.execute(
+                '''INSERT INTO expenses 
+                   (user_id, category, amount, description, date, created_by, is_active)
+                   VALUES (?, ?, ?, ?, ?, ?, 1)''',
+                (g.user['id'], expense_category, float(amount), 
+                 f'{name} (Subscription)', next_billing_date, g.user['id'])
+            )
+        except:
+            pass  # expenses table might not exist or have different schema
+        
+    except Exception as e:
+        print(f"Error creating transaction for subscription: {e}")
+    
     db.commit()
     
-    flash(f'Subscription "{name}" added successfully!', 'success')
+    flash(f'Subscription "{name}" added successfully and recorded as expense!', 'success')
     return redirect(url_for('subscriptions.index'))
 
 @bp.route('/<int:id>/edit', methods=['POST'])
@@ -189,11 +242,10 @@ def delete(id):
 @bp.route('/detect', methods=['POST'])
 @login_required
 def detect_recurring():
-    """Automatically detect recurring transactions"""
+    """Automatically detect recurring transactions from transaction history"""
     db = get_db()
     
     # Find transactions that occur regularly
-    # Look for similar amounts and descriptions within date ranges
     recurring_patterns = find_recurring_patterns(g.user['id'])
     
     detected_count = 0
@@ -206,14 +258,17 @@ def detect_recurring():
         ).fetchone()
         
         if not existing:
+            # Map category to subscription category
+            sub_category = map_expense_to_subscription_category(pattern.get('category', 'other'))
+            
             # Create subscription from pattern
             db.execute(
                 '''INSERT INTO subscriptions 
-                   (user_id, name, amount, frequency, next_billing_date, 
+                   (user_id, name, amount, frequency, category, next_billing_date, 
                     start_date, auto_detected, transaction_id)
-                   VALUES (?, ?, ?, ?, ?, ?, 1, ?)''',
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)''',
                 (g.user['id'], pattern['name'], pattern['amount'], 
-                 pattern['frequency'], pattern['next_date'], 
+                 pattern['frequency'], sub_category, pattern['next_date'], 
                  pattern['start_date'], pattern['transaction_id'])
             )
             detected_count += 1
@@ -221,9 +276,9 @@ def detect_recurring():
     db.commit()
     
     if detected_count > 0:
-        flash(f'Detected {detected_count} new recurring payment(s)!', 'success')
+        flash(f'🎉 Detected {detected_count} new recurring payment(s)!', 'success')
     else:
-        flash('No new recurring payments detected.', 'info')
+        flash('No new recurring payments detected. Try adding transactions first!', 'info')
     
     return redirect(url_for('subscriptions.index'))
 
@@ -258,12 +313,27 @@ def find_recurring_patterns(user_id):
     # Get all expense transactions from the last 6 months
     six_months_ago = (datetime.now() - timedelta(days=180)).date().isoformat()
     
-    transactions = db.execute(
-        '''SELECT * FROM transactions 
-           WHERE user_id = ? AND type = 'expense' AND date >= ?
-           ORDER BY date DESC''',
-        (user_id, six_months_ago)
-    ).fetchall()
+    # Check which columns exist
+    cursor = db.execute("PRAGMA table_info(transactions)")
+    columns = [row[1] for row in cursor.fetchall()]
+    type_column = 'transaction_type' if 'transaction_type' in columns else 'type'
+    has_category = 'category' in columns
+    
+    # Build query
+    if has_category:
+        query = f'''SELECT id, description, amount, date, category
+                   FROM transactions 
+                   WHERE user_id = ? AND {type_column} = 'expense' 
+                   AND date >= ? AND is_active = 1
+                   ORDER BY date DESC'''
+    else:
+        query = f'''SELECT id, description, amount, date, NULL as category
+                   FROM transactions 
+                   WHERE user_id = ? AND {type_column} = 'expense' 
+                   AND date >= ? AND is_active = 1
+                   ORDER BY date DESC'''
+    
+    transactions = db.execute(query, (user_id, six_months_ago)).fetchall()
     
     patterns = []
     
@@ -277,7 +347,7 @@ def find_recurring_patterns(user_id):
         
         if key not in grouped:
             grouped[key] = []
-        grouped[key].append(t)
+        grouped[key].append(dict(t))
     
     # Find patterns with 3+ occurrences
     for key, txns in grouped.items():
@@ -312,6 +382,7 @@ def find_recurring_patterns(user_id):
                 patterns.append({
                     'name': txns[0]['description'],
                     'amount': txns[0]['amount'],
+                    'category': txns[0].get('category', 'Other'),
                     'frequency': frequency,
                     'next_date': next_date.date().isoformat(),
                     'start_date': dates[0].date().isoformat(),
@@ -327,3 +398,28 @@ def normalize_description(description):
     normalized = re.sub(r'[^a-zA-Z\s]', '', normalized)
     normalized = normalized.strip().lower()
     return normalized
+
+def map_subscription_to_expense_category(sub_category):
+    """Map subscription category to transaction expense category"""
+    mapping = {
+        'Streaming': 'entertainment',
+        'Music': 'entertainment',
+        'Gaming': 'entertainment',
+        'Software': 'other',
+        'Cloud Storage': 'other',
+        'Fitness': 'other',
+        'News': 'other',
+        'Utilities': 'other',
+        'Insurance': 'other',
+    }
+    return mapping.get(sub_category, 'other')
+
+def map_expense_to_subscription_category(expense_category):
+    """Map transaction expense category to subscription category"""
+    mapping = {
+        'entertainment': 'Streaming',
+        'food': 'Other',
+        'transportation': 'Other',
+        'other': 'Other'
+    }
+    return mapping.get(expense_category, 'Other')

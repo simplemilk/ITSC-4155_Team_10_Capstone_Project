@@ -36,6 +36,15 @@
     {% endif %}
     {% endwith %}
 
+    <!-- Auto-Detect Info Banner -->
+    {% if subscriptions|length == 0 %}
+    <div class="alert alert-info alert-dismissible fade show">
+        <i class="fas fa-lightbulb me-2"></i>
+        <strong>Tip:</strong> Have recurring transactions? Click <strong>"Auto-Detect"</strong> to automatically find and track recurring payments from your transaction history!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
     <!-- Summary Cards -->
     <div class="row mb-4">
         <div class="col-md-4">
@@ -152,9 +161,14 @@
                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                 <h5>No Active Subscriptions</h5>
                 <p class="text-muted">Add your first subscription or use auto-detect to find recurring payments</p>
-                <button class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#addSubscriptionModal">
-                    <i class="fas fa-plus me-2"></i>Add Subscription
-                </button>
+                <div class="mt-3">
+                    <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#detectModal">
+                        <i class="fas fa-magic me-2"></i>Auto-Detect Subscriptions
+                    </button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addSubscriptionModal">
+                        <i class="fas fa-plus me-2"></i>Add Manually
+                    </button>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -171,6 +185,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This will create a subscription AND add it as an expense in your transactions.
+                    </div>
                     <div class="mb-3">
                         <label for="name" class="form-label">Service Name *</label>
                         <input type="text" class="form-control" id="name" name="name" required 
@@ -280,15 +298,25 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="{{ url_for('subscriptions.detect_recurring') }}">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title"><i class="fas fa-magic me-2"></i>Auto-Detect Subscriptions</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>We'll analyze your transactions from the last 6 months to find recurring payments.</p>
+                    <div class="alert alert-primary">
+                        <i class="fas fa-robot me-2"></i>
+                        <strong>Smart Detection</strong> - We'll analyze your transaction history to find recurring payments!
+                    </div>
+                    <p><strong>How it works:</strong></p>
+                    <ul>
+                        <li>Scans your transactions from the last 6 months</li>
+                        <li>Identifies patterns with similar amounts</li>
+                        <li>Detects weekly, monthly, and yearly recurring payments</li>
+                        <li>Requires at least 3 occurrences to detect a pattern</li>
+                    </ul>
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        We look for transactions with similar amounts that occur regularly (weekly, monthly, or yearly).
+                        Make sure you have expense transactions added first for best results!
                     </div>
                 </div>
                 <div class="modal-footer">
