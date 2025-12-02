@@ -428,7 +428,7 @@
 
 .budget-item {
     padding: 1.5rem;
-    background: #f8f9fa;
+    background: #f9f8fa;
     border-radius: 8px;
     border-left: 4px solid #007bff;
     transition: transform 0.3s ease;
@@ -452,7 +452,8 @@
 
 .budget-category .category-name {
     font-weight: 600;
-    color: #2c3e50;
+    margin-left: 0.75rem;
+    color: #fcfcfc;
 }
 
 .budget-progress {
